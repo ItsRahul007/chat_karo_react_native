@@ -1,35 +1,127 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { ColorTheme } from "@/constants/colors";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import MaskedView from "@react-native-masked-view/masked-view";
+import { LinearGradient } from "expo-linear-gradient";
+import { Tabs } from "expo-router";
+import React, { ReactElement } from "react";
+import { useColorScheme, View } from "react-native";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+const tabs = ({ icon, focused }: { icon: ReactElement; focused: boolean }) => {
+  return (
+    <View
+      className={`flex flex-1 flex-row w-full min-w-[112px] min-h-16 mt-3 justify-center items-center rounded-full overflow-hidden`}
+    >
+      {focused ? (
+        <MaskedView maskElement={icon}>
+          <LinearGradient
+            colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ width: 23, height: 23 }}
+          />
+        </MaskedView>
+      ) : (
+        icon
+      )}
+    </View>
+  );
+};
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+const _layout = () => {
+  const theme = useColorScheme();
+  const tabBarBgColor =
+    theme === "light"
+      ? ColorTheme.light.bottomNav.background
+      : ColorTheme.dark.bottomNav.background;
+
+  const iconUnfocusedColor =
+    theme === "light"
+      ? ColorTheme.light.bottomNav.iconUnfocused
+      : ColorTheme.dark.bottomNav.iconUnfocused;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarShowLabel: false,
+        tabBarItemStyle: {
+          height: "100%",
+          width: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+        },
+        tabBarStyle: {
+          backgroundColor: tabBarBgColor,
+          borderRadius: 50,
+          marginHorizontal: 20,
+          marginBottom: 26,
+          height: 50,
+          position: "absolute",
+          overflow: "hidden",
+          borderColor: tabBarBgColor,
+          borderWidth: 0,
+          //   boxShadow: "none",
+          //   elevation: 0,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          headerShown: false,
+          title: "Chats",
+          tabBarIcon: ({ focused }) =>
+            tabs({
+              focused,
+              icon: (
+                <Ionicons
+                  name="chatbubble"
+                  size={23}
+                  color={iconUnfocusedColor}
+                />
+              ),
+            }),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="status"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          headerShown: false,
+          title: "Status",
+          tabBarIcon: ({ focused }) =>
+            tabs({
+              focused,
+              icon: (
+                <FontAwesome
+                  name="microchip"
+                  size={23}
+                  color={iconUnfocusedColor}
+                />
+              ),
+            }),
+        }}
+      />
+      <Tabs.Screen
+        name="calls"
+        options={{
+          headerShown: false,
+          title: "Calls",
+          tabBarIcon: ({ focused }) =>
+            tabs({
+              focused,
+              icon: (
+                <MaterialCommunityIcons
+                  name="phone"
+                  size={23}
+                  color={iconUnfocusedColor}
+                />
+              ),
+            }),
         }}
       />
     </Tabs>
   );
-}
+};
+
+export default _layout;
