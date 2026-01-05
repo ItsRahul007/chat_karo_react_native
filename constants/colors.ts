@@ -17,6 +17,11 @@ const ColorTheme = {
       primary: "#eeebfe",
       secondary: "#ffffff",
     },
+    comunityCard: {
+      background: "#ffffff",
+      textPrimary: "#1a1067",
+      textSecondary: "#615a96",
+    }
   },
   dark: {
     bottomNav: {
@@ -32,6 +37,11 @@ const ColorTheme = {
       primary: "#220c61",
       secondary: "#0e0848",
     },
+    comunityCard: {
+      background: "#ffffff",
+      textPrimary: "",
+      textSecondary: "",
+    }
   },
 };
 
