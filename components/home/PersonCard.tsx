@@ -1,8 +1,9 @@
 import UnreadMessageCount from "@/components/home/UnreadMessageCount";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import React from "react";
-import { Image, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Image, Pressable, Text, View } from "react-native";
+import ShowAvatar from "./ShowAvatar";
 
 const PersonCard = ({
   personImage,
@@ -13,9 +14,18 @@ const PersonCard = ({
   isTyping = false,
   isPined = false,
 }: PersonCardProps) => {
+  const [isProfileClicked, setIsProfileClicked] = useState<boolean>(false);
+
   return (
     <View className="w-full flex-row items-center justify-start gap-x-4">
-      <View className="relative">
+      <ShowAvatar
+        visible={isProfileClicked}
+        onClose={() => setIsProfileClicked(false)}
+        image={personImage}
+        name={name}
+        unreadMessageCount={unreadMessageCount}
+      />
+      <Pressable className="relative" onPress={() => setIsProfileClicked(true)}>
         <Image
           source={{ uri: personImage }}
           className="w-16 h-16 rounded-full"
@@ -25,22 +35,35 @@ const PersonCard = ({
             <AntDesign name="pushpin" size={10} color="white" />
           </View>
         ) : null}
-      </View>
+      </Pressable>
       <View className="flex-1 flex-row items-start justify-between">
         <View className="flex-1">
-          <Text className="text-light-text-primary font-bold overflow-ellipsis" numberOfLines={1}>
+          <Text
+            className="text-light-text-primary font-bold overflow-ellipsis"
+            numberOfLines={1}
+          >
             {name}
           </Text>
           {isTyping ? (
             <Text className="text-gradientSecond font-semibold">Typing...</Text>
           ) : (
-            <Text className={`overflow-ellipsis ${unreadMessageCount && unreadMessageCount > 0 ? 'text-light-text-secondaryDark' : 'text-light-text-secondaryLight'}`} numberOfLines={1}>
+            <Text
+              className={`overflow-ellipsis ${
+                unreadMessageCount && unreadMessageCount > 0
+                  ? "text-light-text-secondaryDark"
+                  : "text-light-text-secondaryLight"
+              }`}
+              numberOfLines={1}
+            >
               {lastMessage}
             </Text>
           )}
         </View>
         <View className="items-end gap-y-1">
-          <Text className="text-light-text-secondaryLight text-sm" numberOfLines={1}>
+          <Text
+            className="text-light-text-secondaryLight text-sm"
+            numberOfLines={1}
+          >
             {lastMessageTime}
           </Text>
           {unreadMessageCount && unreadMessageCount > 0 ? (

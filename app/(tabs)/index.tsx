@@ -68,7 +68,7 @@ const index = () => {
             contentContainerStyle={{
               gap: 15,
               paddingVertical: 20,
-              paddingBottom: 100,
+              paddingBottom: 150,
             }}
           /> : (
             <View className="items-center mx-auto w-56 mt-20">
