@@ -3,7 +3,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
-import { Pressable, Text, View, Image } from "react-native";
+import { Image, Pressable, Text, useColorScheme, View } from "react-native";
 
 interface CommonTopBarProps {
   name: string;
@@ -20,32 +20,36 @@ const CommonTopBar = ({
   showBackButton = false,
   onBackPress,
 }: CommonTopBarProps) => {
+  const theme = useColorScheme();
+  const iconColor =
+    theme === "light"
+      ? ColorTheme.light.text.primary
+      : ColorTheme.dark.text.primary;
+
   return (
-    <View className="flex-row items-center justify-between px-6">
+    <View className="flex-row items-center justify-between px-6 h-10 w-full">
       <View className="flex-row gap-x-4 items-center">
         {showBackButton ? (
           <Pressable onPress={onBackPress}>
-            <Ionicons name="arrow-back" size={24} color="black" />
+            <Ionicons name="arrow-back" size={24} color={iconColor} />
           </Pressable>
         ) : null}
-        <LinearGradient
-          colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          className="rounded-full h-14 w-14 overflow-hidden"
-        >
-          <Image source={{ uri: image }} className="w-full h-full" />
-        </LinearGradient>
-        <Text className="text-light-text-primary text-2xl font-bold">
+        <View className="rounded-full h-14 w-14 overflow-hidden">
+          <LinearGradient
+            colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ height: 56, width: 56 }}
+          >
+            <Image source={{ uri: image }} className="w-full h-full" />
+          </LinearGradient>
+        </View>
+        <Text className="text-light-text-primary dark:text-dark-text-primary text-2xl font-bold">
           {name}
         </Text>
       </View>
       <Pressable onPress={onPress}>
-        <FontAwesome
-          name="search"
-          size={26}
-          color={ColorTheme.light.text.primary}
-        />
+        <FontAwesome name="search" size={26} color={iconColor} />
       </Pressable>
     </View>
   );

@@ -21,7 +21,7 @@ const CommonRoundedIconButton = ({
 
   return (
     <Pressable
-      className="h-12 w-12 rounded-full justify-center items-center bg-white"
+      className="h-12 w-12 rounded-full justify-center items-center bg-white dark:bg-dark-viewProfileButtonBg"
       onPress={onPress}
     >
       <MaskedView

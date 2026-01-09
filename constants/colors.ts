@@ -6,7 +6,6 @@ const ColorTheme = {
   light: {
     bottomNav: {
       iconUnfocused: "#afaad2",
-      background: "#eeebfe"
     },
     text: {
       primary: "#1a1067",
@@ -21,12 +20,12 @@ const ColorTheme = {
       background: "#ffffff",
       textPrimary: "#1a1067",
       textSecondary: "#615a96",
-    }
+    },
+    viewProfileButtonBg: "#ffffff"
   },
   dark: {
     bottomNav: {
       iconUnfocused: "#5d4b8f",
-      background: "#eeebfe"
     },
     text: {
       primary: "#e6e4fc",
@@ -38,10 +37,11 @@ const ColorTheme = {
       secondary: "#0e0848",
     },
     comunityCard: {
-      background: "#ffffff",
-      textPrimary: "",
-      textSecondary: "",
-    }
+      background: "#0e0848",
+      textPrimary: "#e5e3fb",
+      textSecondary: "#9891cc",
+    },
+    viewProfileButtonBg: "#220c61"
   },
 };
 

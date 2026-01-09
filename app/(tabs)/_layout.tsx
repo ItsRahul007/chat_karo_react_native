@@ -1,7 +1,7 @@
 import { ColorTheme } from "@/constants/colors";
+import { navBarIconSize } from "@/util/constants";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
@@ -19,7 +19,7 @@ const tabs = ({ icon, focused }: { icon: ReactElement; focused: boolean }) => {
             colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ width: 23, height: 23 }}
+            style={{ width: navBarIconSize, height: navBarIconSize }}
           />
         </MaskedView>
       ) : (
@@ -33,8 +33,8 @@ const _layout = () => {
   const theme = useColorScheme();
   const tabBarBgColor =
     theme === "light"
-      ? ColorTheme.light.bottomNav.background
-      : ColorTheme.dark.bottomNav.background;
+      ? ColorTheme.light.background.primary
+      : ColorTheme.dark.background.primary;
 
   const iconUnfocusedColor =
     theme === "light"
@@ -61,8 +61,6 @@ const _layout = () => {
           overflow: "hidden",
           borderColor: tabBarBgColor,
           borderWidth: 0,
-          //   boxShadow: "none",
-          //   elevation: 0,
         },
       }}
     >
@@ -77,7 +75,7 @@ const _layout = () => {
               icon: (
                 <Ionicons
                   name="chatbubble"
-                  size={23}
+                  size={navBarIconSize}
                   color={iconUnfocusedColor}
                 />
               ),
@@ -95,7 +93,7 @@ const _layout = () => {
               icon: (
                 <FontAwesome
                   name="microchip"
-                  size={23}
+                  size={navBarIconSize}
                   color={iconUnfocusedColor}
                 />
               ),
@@ -111,9 +109,9 @@ const _layout = () => {
             tabs({
               focused,
               icon: (
-                <MaterialCommunityIcons
-                  name="phone"
-                  size={23}
+                <Ionicons
+                  name="call"
+                  size={navBarIconSize}
                   color={iconUnfocusedColor}
                 />
               ),

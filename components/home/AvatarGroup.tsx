@@ -7,7 +7,7 @@ const AvatarGroup = ({ users, limit = 4 }: AvatarGroupProps) => {
   const usersToShow = users.slice(0, limit);
   const excessCount = users.length - limit;
 
-  const avatarClass = "w-12 h-12 rounded-full border-[3px] border-white";
+  const avatarClass = "w-12 h-12 rounded-full border-[3px] border-light-comunityCard-background dark:border-dark-comunityCard-background";
 
   return (
     <View className="flex-row items-center">
@@ -16,7 +16,7 @@ const AvatarGroup = ({ users, limit = 4 }: AvatarGroupProps) => {
           key={user.id}
           source={{ uri: user.uri }}
           className={`
-            ${avatarClass} 
+            ${avatarClass}
             ${index !== 0 ? `-ml-3` : ''} 
           `}
           style={{ zIndex: limit - index }}

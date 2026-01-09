@@ -16,7 +16,7 @@ const CommunityCard = ({
 }: CommunityCardProps) => {
   return (
     <View
-      className={`bg-light-comunityCard-background h-48 ${
+      className={`bg-light-comunityCard-background dark:bg-dark-comunityCard-background h-48 ${
         isExpanded ? "w-[26rem]" : "w-72"
       } flex flex-col rounded-3xl px-4 py-2 justify-evenly`}
     >
@@ -27,7 +27,7 @@ const CommunityCard = ({
         <View className="flex-1 flex-row justify-between items-center gap-x-3">
           <View className="flex-1">
             <Text
-              className="font-semibold text-lg text-light-comunityCard-textPrimary overflow-ellipsis"
+              className="font-semibold text-lg text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary overflow-ellipsis"
               numberOfLines={1}
             >
               {name}
@@ -40,12 +40,12 @@ const CommunityCard = ({
       </View>
 
       <View className="flex-row gap-x-1 items-center">
-        <Text className="text-light-comunityCard-textPrimary font-bold text-base">
+        <Text className="text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary font-bold text-base">
           {messagedPersonName}
         </Text>
         <View className="flex-1">
           <Text
-            className="overflow-ellipsis text-light-comunityCard-textSecondary font-semibold text-base"
+            className="overflow-ellipsis text-light-comunityCard-textSecondary dark:text-light-comunityCard-textSecondary font-semibold text-base"
             numberOfLines={1}
           >
             {lastMessage}

@@ -10,7 +10,7 @@ const index = () => {
   const router = useRouter();
 
   return (
-    <View className="bg-light-background-primary flex flex-1">
+    <View className="bg-light-background-primary dark:bg-dark-background-primary flex flex-1">
       <SafeAreaView className="flex-1">
         <CommonTopBar
           name="Rahul"
@@ -26,7 +26,7 @@ const index = () => {
             renderItem={({ item }) => <CommunityCard {...item} isExpanded />}
             keyExtractor={(item) => item.id!}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ gap: 15, paddingVertical: 15 }}
+            contentContainerStyle={{ gap: 10, paddingVertical: 15 }}
           />
         </View>
       </SafeAreaView>

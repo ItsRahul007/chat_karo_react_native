@@ -52,7 +52,7 @@ const CustomIconSwitch = ({
     >
       {/* --- TRACK --- */}
       <View
-        className="justify-center overflow-hidden bg-white"
+        className="justify-center overflow-hidden bg-white dark:bg-dark-viewProfileButtonBg"
         style={{
           width: TRACK_WIDTH,
           height: TRACK_HEIGHT,
