@@ -68,7 +68,7 @@ const CustomIconSwitch = ({
             colors={activeGradientColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            className="flex-1 opacity-90"
+            style={{ opacity: 0.9, flex: 1 }}
           />
         </Animated.View>
 
@@ -101,7 +101,7 @@ const CustomIconSwitch = ({
               colors={activeGradientColors}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              className="flex-1"
+              style={{ flex: 1 }}
             />
           </Animated.View>
 
@@ -132,7 +132,7 @@ const CustomIconSwitch = ({
                   colors={activeGradientColors}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 2, y: 1 }}
-                  className="flex-1"
+                  style={{ flex: 1 }}
                 />
               </MaskedView>
             </Animated.View>

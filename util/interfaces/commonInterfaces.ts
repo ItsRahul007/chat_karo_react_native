@@ -1,3 +1,5 @@
+import { I_Messages } from "../types/chat.types";
+
 interface AvatarGroupProps {
   users: { id: string; uri: string }[];
   limit?: number;
@@ -22,6 +24,7 @@ interface PersonCardProps {
   lastMessageTime: string;
   isTyping?: boolean;
   isPined?: boolean;
+  messages?: I_Messages[];
 }
 
 export type { AvatarGroupProps, CommunityCardProps, PersonCardProps };

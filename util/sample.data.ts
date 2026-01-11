@@ -1,50 +1,95 @@
-import { CommunityCardProps, PersonCardProps } from "./interfaces/commonInterfaces";
+import {
+  CommunityCardProps,
+  PersonCardProps,
+} from "./interfaces/commonInterfaces";
 
 export const sampleCommunityData: CommunityCardProps[] = [
   {
-    id: 'c1',
+    id: "c1",
     name: "React Native Developers",
     lastMessage: "Has anyone tried the new fabric architecture yet?",
     messagedPersonName: "Jordan",
     unreadMessageCount: 5,
-    communityAvatar: "https://ui-avatars.com/api/?name=React+Native&background=61dafb&color=fff",
+    communityAvatar:
+      "https://ui-avatars.com/api/?name=React+Native&background=61dafb&color=fff",
     limit: 3, // Optional limit for this specific card
     users: [
-      { id: 'u1', uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u2', uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u3', uri: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u4', uri: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&auto=format&fit=crop&q=60' },
+      {
+        id: "u1",
+        uri: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u2",
+        uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u3",
+        uri: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u4",
+        uri: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&auto=format&fit=crop&q=60",
+      },
     ],
   },
   {
-    id: 'c2',
+    id: "c2",
     name: "Weekend Football",
     lastMessage: "I'll bring the extra ball, see you at 5!",
     messagedPersonName: "Mike",
     unreadMessageCount: 0, // No unread badge should show
-    communityAvatar: "https://www.independent.com.mt/file.aspx?f=167366&width=630&height=340",
+    communityAvatar:
+      "https://www.independent.com.mt/file.aspx?f=167366&width=630&height=340",
     limit: 4,
     users: [
-      { id: 'u5', uri: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u6', uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u7', uri: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60' },
+      {
+        id: "u5",
+        uri: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u6",
+        uri: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u7",
+        uri: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60",
+      },
     ],
   },
   {
-    id: 'c3',
+    id: "c3",
     name: "Design Team",
     lastMessage: "Can we review the Figma prototypes?",
     messagedPersonName: "Sarah",
     unreadMessageCount: 12,
-    communityAvatar: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=100&auto=format&fit=crop&q=60",
+    communityAvatar:
+      "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=100&auto=format&fit=crop&q=60",
     // limit is undefined here, your component should use its default
     users: [
-      { id: 'u8', uri: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u9', uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u10', uri: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u11', uri: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u12', uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=60' },
-      { id: 'u13', uri: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=60' },
+      {
+        id: "u8",
+        uri: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u9",
+        uri: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u10",
+        uri: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u11",
+        uri: "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u12",
+        uri: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=60",
+      },
+      {
+        id: "u13",
+        uri: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=60",
+      },
     ],
   },
 ];
@@ -59,6 +104,227 @@ export const chatList: PersonCardProps[] = [
     lastMessageTime: "10:30 AM",
     isTyping: false,
     isPined: true,
+    messages: [
+      {
+        id: "m1",
+        message: "Hey! How are you doing?",
+        sender: "1",
+        timestamp: "2026-01-11T09:00:00",
+        isRead: true,
+      },
+      {
+        id: "m2",
+        message: "I'm doing great! Just finished that project we talked about.",
+        sender: "me",
+        timestamp: "2026-01-11T09:02:00",
+        isRead: true,
+      },
+      {
+        id: "m3",
+        message:
+          "That's awesome! How did it turn out? aushgdf usah iudsag ciudsg ficgd",
+        sender: "1",
+        timestamp: "2026-01-11T09:03:00",
+        isRead: true,
+      },
+      {
+        id: "m4",
+        message:
+          "Better than expected! The client loved it. osudhf dshfd sbgfvod sgfuids ficudgs",
+        sender: "me",
+        timestamp: "2026-01-11T09:05:00",
+        isRead: true,
+      },
+      {
+        id: "m5",
+        message: "I knew you could do it! 🎉",
+        sender: "1",
+        timestamp: "2026-01-11T09:06:00",
+        isRead: true,
+      },
+      {
+        id: "m6",
+        message: "Thanks for the encouragement!",
+        sender: "me",
+        timestamp: "2026-01-11T09:07:00",
+        isRead: true,
+      },
+      {
+        id: "m7",
+        message: "So, I was thinking about lunch today...",
+        sender: "1",
+        timestamp: "2026-01-11T09:15:00",
+        isRead: true,
+      },
+      {
+        id: "m8",
+        message: "Yeah? What did you have in mind?",
+        sender: "me",
+        timestamp: "2026-01-11T09:16:00",
+        isRead: true,
+      },
+      {
+        id: "m9",
+        message: "There's this new Italian place downtown",
+        sender: "1",
+        timestamp: "2026-01-11T09:17:00",
+        isRead: true,
+      },
+      {
+        id: "m10",
+        message: "I've heard great things about their pasta!",
+        sender: "1",
+        timestamp: "2026-01-11T09:17:30",
+        isRead: true,
+      },
+      {
+        id: "m11",
+        message: "Sounds perfect! I love Italian food 🍝",
+        sender: "me",
+        timestamp: "2026-01-11T09:18:00",
+        isRead: true,
+      },
+      {
+        id: "m12",
+        message: "Great! What time works for you?",
+        sender: "1",
+        timestamp: "2026-01-11T09:20:00",
+        isRead: true,
+      },
+      {
+        id: "m13",
+        message: "How about 12:30?",
+        sender: "me",
+        timestamp: "2026-01-11T09:21:00",
+        isRead: true,
+      },
+      {
+        id: "m14",
+        message: "Perfect timing!",
+        sender: "1",
+        timestamp: "2026-01-11T09:22:00",
+        isRead: true,
+      },
+      {
+        id: "m15",
+        message: "Should I make a reservation?",
+        sender: "1",
+        timestamp: "2026-01-11T09:23:00",
+        isRead: true,
+      },
+      {
+        id: "m16",
+        message: "Yes please! For 2 people.",
+        sender: "me",
+        timestamp: "2026-01-11T09:24:00",
+        isRead: true,
+      },
+      {
+        id: "m17",
+        message: "Done! Just booked it.",
+        sender: "1",
+        timestamp: "2026-01-11T09:26:00",
+        isRead: true,
+      },
+      {
+        id: "m18",
+        message: "You're the best! 😊",
+        sender: "me",
+        timestamp: "2026-01-11T09:27:00",
+        isRead: true,
+      },
+      {
+        id: "m19",
+        message: "By the way, did you see the game last night?",
+        sender: "1",
+        timestamp: "2026-01-11T09:30:00",
+        isRead: true,
+      },
+      {
+        id: "m20",
+        message: "No! I missed it. Who won?",
+        sender: "me",
+        timestamp: "2026-01-11T09:31:00",
+        isRead: true,
+      },
+      {
+        id: "m21",
+        message: "Lakers won by 10 points! It was intense.",
+        sender: "1",
+        timestamp: "2026-01-11T09:32:00",
+        isRead: true,
+      },
+      {
+        id: "m22",
+        message: "Wow! I should have watched it.",
+        sender: "me",
+        timestamp: "2026-01-11T09:33:00",
+        isRead: true,
+      },
+      {
+        id: "m23",
+        message: "I'll send you the highlights!",
+        sender: "1",
+        timestamp: "2026-01-11T09:34:00",
+        isRead: true,
+      },
+      {
+        id: "m24",
+        message: "Thanks! That would be great.",
+        sender: "me",
+        timestamp: "2026-01-11T09:35:00",
+        isRead: true,
+      },
+      {
+        id: "m25",
+        message: "Also, are you bringing your laptop to lunch?",
+        sender: "1",
+        timestamp: "2026-01-11T09:40:00",
+        isRead: true,
+      },
+      {
+        id: "m26",
+        message: "I can if you need me to. Why?",
+        sender: "me",
+        timestamp: "2026-01-11T09:41:00",
+        isRead: true,
+      },
+      {
+        id: "m27",
+        message: "I wanted to show you something I've been working on",
+        sender: "1",
+        timestamp: "2026-01-11T09:42:00",
+        isRead: true,
+      },
+      {
+        id: "m28",
+        message: "Sure! I'll bring it along.",
+        sender: "me",
+        timestamp: "2026-01-11T09:43:00",
+        isRead: true,
+      },
+      {
+        id: "m29",
+        message: "Awesome! See you soon then.",
+        sender: "1",
+        timestamp: "2026-01-11T09:45:00",
+        isRead: true,
+      },
+      {
+        id: "m30",
+        message: "Hey, are we still on for lunch?",
+        sender: "1",
+        timestamp: "2026-01-11T10:30:00",
+        isRead: false,
+      },
+      {
+        id: "m31",
+        message: "Just confirming the time!",
+        sender: "1",
+        timestamp: "2026-01-11T10:31:00",
+        isRead: false,
+      },
+    ],
   },
   {
     id: "2",

@@ -9,7 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import React from "react";
 import { FlatList, Pressable, Text, useColorScheme, View } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const index = () => {
   const theme = useColorScheme();
@@ -19,7 +19,6 @@ const index = () => {
       : ColorTheme.dark.text.primary;
 
   return (
-    <SafeAreaProvider>
       <SafeAreaView
         className="relative bg-light-background-primary dark:bg-dark-background-primary"
         style={{ flex: 1 }}
@@ -102,7 +101,6 @@ const index = () => {
           </View>
         </Pressable>
       </SafeAreaView>
-    </SafeAreaProvider>
   );
 };
 

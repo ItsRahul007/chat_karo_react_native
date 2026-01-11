@@ -1,6 +1,6 @@
 import { ColorTheme } from "@/constants/colors";
+import { Entypo } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Image, Pressable, Text, useColorScheme, View } from "react-native";
@@ -31,7 +31,7 @@ const CommonTopBar = ({
       <View className="flex-row gap-x-4 items-center">
         {showBackButton ? (
           <Pressable onPress={onBackPress}>
-            <Ionicons name="arrow-back" size={24} color={iconColor} />
+            <Entypo name="chevron-left" size={30} color={iconColor} />
           </Pressable>
         ) : null}
         <View className="rounded-full h-14 w-14 overflow-hidden">
