@@ -4,6 +4,7 @@ import { chatTopBarIconSize, gradientColors } from "@/util/constants";
 import { I_Messages } from "@/util/types/chat.types";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -12,6 +13,7 @@ import {
   Image,
   Keyboard,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   Text,
@@ -73,6 +75,7 @@ const Chat = () => {
           Platform.OS === "ios" ? 10 : !isKeyboardOpen ? 0 : -40
         }
       >
+        {/* header component */}
         <View className="bg-light-background-primary dark:bg-dark-background-primary h-24 w-full">
           <View className="h-full w-full bg-light-background-secondary dark:bg-dark-background-secondary rounded-b-[2.5rem] flex-row items-center justify-center px-6">
             <Pressable onPress={router.back}>
@@ -126,7 +129,7 @@ const Chat = () => {
           </View>
         </View>
 
-        {/* showthe chat here */}
+        {/* chat messages */}
         <View className="flex-1 py-1">
           {!chat || !chat.messages || chat.messages?.length <= 0 ? (
             <View className="flex-1 items-center justify-center">
@@ -223,55 +226,225 @@ const ChatMessage = ({ message, sender, timestamp }: I_Messages) => {
     minute: "2-digit",
   });
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [messageLayout, setMessageLayout] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+  const messageRef = React.useRef<View>(null);
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(message);
+    setModalVisible(false);
+  };
+
+  const handleReply = () => {
+    // TODO: Implement reply functionality
+    setModalVisible(false);
+  };
+
+  const handleDelete = () => {
+    // TODO: Implement delete functionality
+    setModalVisible(false);
+  };
+
+  const handleLongPress = () => {
+    messageRef.current?.measure((_, __, width, height, pageX, pageY) => {
+      setMessageLayout({ x: pageX, y: pageY, width, height });
+      setModalVisible(true);
+    });
+  };
+
+  // Calculate if modal should appear above or below the message
+  const showAbove = messageLayout.y > 350;
+  const optionModalTopPositionForAndroid =
+    messageLayout.y - (isMyMessage ? 190 : 150);
+  const optionModalTopPositionForIOS =
+    messageLayout.y - (isMyMessage ? 140 : 100);
+  const optionModalTopPosition =
+    Platform.OS === "ios"
+      ? optionModalTopPositionForIOS
+      : optionModalTopPositionForAndroid;
+
+  const optionModalBottomPositionForAndroid =
+    messageLayout.y + messageLayout.height - 30;
+  const optionModalBottomPositionForIOS =
+    messageLayout.y + messageLayout.height + (isMyMessage ? +10 : -10);
+
+  const optionModalBottomPosition =
+    Platform.OS === "ios"
+      ? optionModalBottomPositionForIOS
+      : optionModalBottomPositionForAndroid;
+
   return (
-    <View
-      className={`w-full ${
-        isMyMessage ? "items-end pr-2" : "items-start pl-2"
-      }`}
-    >
-      <View
-        className={`px-3 py-2 rounded-2xl ${
-          isMyMessage
-            ? "bg-gradientSecond rounded-tr-none"
-            : "bg-light-background-secondary dark:bg-dark-background-secondary rounded-tl-none"
+    <>
+      <Pressable
+        onLongPress={handleLongPress}
+        className={`w-full ${
+          isMyMessage ? "items-end pr-2" : "items-start pl-2"
         }`}
-        style={{ maxWidth: "85%" }}
       >
-        <Text
-          className={`${
-            isMyMessage ? "text-white" : "text-black dark:text-white"
-          } text-base`}
+        <View
+          ref={messageRef}
+          className={`px-3 py-2 rounded-2xl ${
+            isMyMessage
+              ? "bg-gradientSecond rounded-tr-none"
+              : "bg-light-background-secondary dark:bg-dark-background-secondary rounded-tl-none"
+          }`}
+          style={{
+            maxWidth: "85%",
+            opacity: modalVisible ? 0 : 1,
+          }}
         >
-          {message}
-          {"   "}
           <Text
-            className={
-              isMyMessage
-                ? "text-gradientSecond"
-                : "text-light-background-secondary dark:text-dark-background-secondary"
-            }
+            className={`${
+              isMyMessage ? "text-white" : "text-black dark:text-white"
+            } text-base`}
+          >
+            {message}
+            {"   "}
+            <Text
+              className={
+                isMyMessage
+                  ? "text-gradientSecond"
+                  : "text-light-background-secondary dark:text-dark-background-secondary"
+              }
+              style={{
+                fontSize: 10,
+                opacity: 0,
+                includeFontPadding: false,
+              }}
+            >
+              {formatedTimestamp}
+            </Text>
+          </Text>
+          <Text
+            className={`text-[10px] ${
+              isMyMessage ? "text-white/60" : "text-gray-400 dark:text-white/60"
+            }`}
             style={{
-              fontSize: 10,
-              opacity: 0,
-              includeFontPadding: false,
+              position: "absolute",
+              right: 8,
+              bottom: 6,
             }}
           >
             {formatedTimestamp}
           </Text>
-        </Text>
-        <Text
-          className={`text-[10px] ${
-            isMyMessage ? "text-white/60" : "text-gray-400 dark:text-white/60"
-          }`}
-          style={{
-            position: "absolute",
-            right: 8,
-            bottom: 6,
-          }}
+        </View>
+      </Pressable>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <Pressable
+          className="flex-1"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+          onPress={() => setModalVisible(false)}
         >
-          {formatedTimestamp}
-        </Text>
-      </View>
-    </View>
+          {/* Message preview - always at actual position */}
+          <View
+            style={{
+              position: "absolute",
+              top: messageLayout.y - (Platform.OS !== "ios" ? 43 : 0),
+              left: isMyMessage ? undefined : messageLayout.x,
+              right: isMyMessage ? 8 : undefined,
+              maxWidth: "85%",
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <View
+              className={`px-3 py-2 rounded-2xl ${
+                isMyMessage
+                  ? "bg-gradientSecond rounded-tr-none"
+                  : "bg-light-background-secondary dark:bg-dark-background-secondary rounded-tl-none"
+              }`}
+            >
+              <Text
+                className={`${
+                  isMyMessage ? "text-white" : "text-black dark:text-white"
+                } text-base`}
+              >
+                {message}
+                {"   "}
+                <Text
+                  className={
+                    isMyMessage
+                      ? "text-gradientSecond"
+                      : "text-light-background-secondary dark:text-dark-background-secondary"
+                  }
+                  style={{
+                    fontSize: 10,
+                    opacity: 0,
+                    includeFontPadding: false,
+                  }}
+                >
+                  {formatedTimestamp}
+                </Text>
+              </Text>
+              <Text
+                className={`text-[10px] ${
+                  isMyMessage
+                    ? "text-white/60"
+                    : "text-gray-400 dark:text-white/60"
+                }`}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  bottom: 6,
+                }}
+              >
+                {formatedTimestamp}
+              </Text>
+            </View>
+          </View>
+
+          {/* Options menu - positioned above or below message */}
+          <View
+            className="bg-light-background-primary dark:bg-dark-background-primary rounded-2xl w-48 overflow-hidden shadow-lg"
+            style={{
+              position: "absolute",
+              top: showAbove
+                ? optionModalTopPosition
+                : optionModalBottomPosition,
+              left: isMyMessage ? undefined : messageLayout.x,
+              right: isMyMessage ? 8 : undefined,
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <Pressable
+              onPress={handleReply}
+              className="px-5 py-3 border-b border-light-background-secondary dark:border-dark-background-secondary active:bg-light-background-secondary dark:active:bg-dark-background-secondary"
+            >
+              <Text className="text-light-text-primary dark:text-dark-text-primary text-base">
+                Reply
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleCopy}
+              className="px-5 py-3 border-b border-light-background-secondary dark:border-dark-background-secondary active:bg-light-background-secondary dark:active:bg-dark-background-secondary"
+            >
+              <Text className="text-light-text-primary dark:text-dark-text-primary text-base">
+                Copy
+              </Text>
+            </Pressable>
+
+            {isMyMessage && (
+              <Pressable
+                onPress={handleDelete}
+                className="px-5 py-3 active:bg-light-background-secondary dark:active:bg-dark-background-secondary"
+              >
+                <Text className="text-red-500 text-base">Delete</Text>
+              </Pressable>
+            )}
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 };
