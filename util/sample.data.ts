@@ -267,6 +267,13 @@ export const chatList: PersonCardProps[] = [
         sender: "1",
         timestamp: "2026-01-11T09:34:00",
         isRead: true,
+        media: [
+          {
+            mediaUrl:
+              "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            mediaType: "video",
+          },
+        ],
       },
       {
         id: "m24",
@@ -295,6 +302,23 @@ export const chatList: PersonCardProps[] = [
         sender: "1",
         timestamp: "2026-01-11T09:42:00",
         isRead: true,
+        media: [
+          {
+            mediaUrl:
+              "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&auto=format&fit=crop&q=60",
+            mediaType: "image",
+          },
+          {
+            mediaUrl:
+              "https://images.unsplash.com/photo-1657598339759-fd1432d833f0?w=500&auto=format&fit=crop&q=60",
+            mediaType: "image",
+          },
+          {
+            mediaUrl:
+              "https://images.unsplash.com/photo-1767858874498-8fd814ef8548?q=80&w=500&auto=format&fit=crop",
+            mediaType: "image",
+          },
+        ],
       },
       {
         id: "m28",
@@ -334,6 +358,43 @@ export const chatList: PersonCardProps[] = [
     unreadMessageCount: 0,
     lastMessageTime: "9:15 AM",
     isTyping: true,
+    messages: [
+      {
+        id: "m2-1",
+        message: "Hey Sarah, any updates on the design?",
+        sender: "me",
+        timestamp: "2026-01-11T08:50:00",
+        isRead: true,
+      },
+      {
+        id: "m2-2",
+        message: "Yes! Check this out.",
+        sender: "2",
+        timestamp: "2026-01-11T09:00:00",
+        isRead: true,
+        media: [
+          {
+            mediaUrl:
+              "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=500&auto=format&fit=crop&q=60",
+            mediaType: "image",
+          },
+        ],
+      },
+      {
+        id: "m2-3",
+        message: "I just sent over the design files.",
+        sender: "2",
+        timestamp: "2026-01-11T09:15:00",
+        isRead: true,
+        media: [
+          {
+            mediaUrl:
+              "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+            mediaType: "file",
+          },
+        ],
+      },
+    ],
   },
   {
     id: "3",

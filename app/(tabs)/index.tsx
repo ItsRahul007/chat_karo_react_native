@@ -9,7 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import React from "react";
 import { FlatList, Pressable, Text, useColorScheme, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const index = () => {
   const theme = useColorScheme();
@@ -19,6 +19,7 @@ const index = () => {
       : ColorTheme.dark.text.primary;
 
   return (
+    <SafeAreaProvider>
       <SafeAreaView
         className="relative bg-light-background-primary dark:bg-dark-background-primary"
         style={{ flex: 1 }}
@@ -90,7 +91,12 @@ const index = () => {
               colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
               start={{ x: 0.5, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={{ width: 80, height: 80, justifyContent: "center", alignItems: "center"}}
+              style={{
+                width: 80,
+                height: 80,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
             >
               <MaterialCommunityIcons
                 name="chat-plus"
@@ -101,6 +107,7 @@ const index = () => {
           </View>
         </Pressable>
       </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 

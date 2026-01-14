@@ -16,7 +16,7 @@ interface CommunityCardProps extends AvatarGroupProps {
 }
 
 interface PersonCardProps {
-  id?: string;
+  id: string;
   personImage: string;
   name: string;
   lastMessage: string;
