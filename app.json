@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "chat_karo",
-    "slug": "chat_karo",
+    "name": "Chat Karo",
+    "slug": "chat-karo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -61,9 +61,7 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
           "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos.",
           "isAccessMediaLocationEnabled": true,
-          "granularPermissions": [
-            "photo"
-          ]
+          "granularPermissions": ["photo"]
         }
       ],
       "expo-web-browser"
@@ -71,6 +69,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2d7dddbe-113d-4bbc-b589-ac4a46e4ae77"
+      }
+    },
+    "owner": "rahulghoshs-organization"
   }
 }

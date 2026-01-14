@@ -13,7 +13,6 @@ const usePushNotification = (): I_PushNotification => {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldPlaySound: true,
-      shouldShowAlert: true,
       shouldSetBadge: false,
       shouldShowBanner: true,
       shouldShowList: true,
@@ -53,10 +52,11 @@ const usePushNotification = (): I_PushNotification => {
       return;
     }
 
-    if (Constants.expoConfig?.extra?.projectId) {
+    if (Constants.expoConfig?.extra?.eas?.projectId) {
       try {
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
         token = await Notifications.getExpoPushTokenAsync({
-          projectId: Constants.expoConfig?.extra?.projectId,
+          projectId,
         });
         console.log("Push Token:", token);
       } catch (error) {
