@@ -22,7 +22,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Chat = () => {
-  const { id } = useLocalSearchParams();
+  const data = useLocalSearchParams();
+  const { id, isCommunity } = data;
+
   const theme = useColorScheme();
   const router = useRouter();
   const insects = useSafeAreaInsets();
@@ -40,7 +42,7 @@ const Chat = () => {
       ? ColorTheme.light.text.secondaryLight
       : ColorTheme.dark.text.secondaryLight;
 
-  const chat = getChatHistoryById(id as string);
+  const chat = getChatHistoryById(id as string, isCommunity === "true");
 
   useEffect(() => {
     const showListener = Keyboard.addListener(
@@ -81,14 +83,16 @@ const Chat = () => {
             </Pressable>
 
             <Link
-              href={`/chat/profile-info/${chat?.id}`}
+              href={`/chat/profile-info/${chat?.id}?isCommunity=${
+                isCommunity === "true"
+              }`}
               className="flex-1 items-center justify-center ml-2"
             >
               <View className="flex-1 items-center justify-between flex-row gap-x-6">
                 <View className="flex-row items-center gap-x-2 flex-1">
                   <View className="rounded-full h-14 w-14 overflow-hidden">
                     <Image
-                      source={{ uri: chat?.personImage }}
+                      source={{ uri: chat?.avatar }}
                       className="h-full w-full"
                       resizeMode="contain"
                     />
@@ -143,7 +147,9 @@ const Chat = () => {
           ) : (
             <FlatList
               data={[...chat.messages].reverse()}
-              renderItem={({ item }) => <ChatMessage {...item} />}
+              renderItem={({ item }) => (
+                <ChatMessage {...item} isCommunity={isCommunity === "true"} />
+              )}
               ItemSeparatorComponent={({ leadingItem }) => {
                 const isSameSender =
                   lastSender == undefined || leadingItem?.sender === lastSender;

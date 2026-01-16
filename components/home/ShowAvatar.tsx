@@ -20,6 +20,7 @@ interface ShowAvatarProps {
   name: string;
   unreadMessageCount?: number;
   isCommunity?: boolean;
+  onNotificationChange?: (isEnabled: boolean) => void;
 }
 
 const personActionIcons: (typeof Ionicons.defaultProps)[] = [
@@ -39,9 +40,13 @@ const ShowAvatar = ({
   name,
   unreadMessageCount,
   isCommunity = false,
+  onNotificationChange,
 }: ShowAvatarProps) => {
   const [isEnabled, setIsEnabled] = useState<boolean>(false);
-  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+  const toggleSwitch = () => {
+    onNotificationChange?.(!isEnabled);
+    setIsEnabled(() => !isEnabled);
+  };
   const actionIcons = isCommunity ? communityActionIcon : personActionIcons;
 
   return (

@@ -6,18 +6,20 @@ interface AvatarGroupProps {
 }
 
 interface CommunityCardProps extends AvatarGroupProps {
-  id?: string;
+  id: string;
   name: string;
   lastMessage: string;
+  lastMessageTime: string;
   messagedPersonName: string;
   unreadMessageCount?: number;
-  communityAvatar: string;
+  avatar: string;
   isExpanded?: boolean;
+  messages?: I_Messages[];
 }
 
 interface PersonCardProps {
   id: string;
-  personImage: string;
+  avatar: string;
   name: string;
   lastMessage: string;
   unreadMessageCount?: number;

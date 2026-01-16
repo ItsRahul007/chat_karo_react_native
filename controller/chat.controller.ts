@@ -1,13 +1,23 @@
-import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
-import { chatList } from "@/util/sample.data";
+import {
+  CommunityCardProps,
+  PersonCardProps,
+} from "@/util/interfaces/commonInterfaces";
+import { chatList, sampleCommunityData } from "@/util/sample.data";
 import { I_Media } from "@/util/types/chat.types";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import * as Notifications from "expo-notifications";
 import { Alert, Platform } from "react-native";
 
-const getChatHistoryById = (chatId: string): PersonCardProps | null => {
+const getChatHistoryById = (
+  chatId: string,
+  isCommunity: boolean
+): PersonCardProps | CommunityCardProps | null => {
   try {
+    if (isCommunity) {
+      return sampleCommunityData.filter((chat) => chat.id === chatId)[0];
+    }
+
     return chatList.filter((chat) => chat.id === chatId)[0];
   } catch (error) {
     console.log(error);

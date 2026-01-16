@@ -24,7 +24,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const ProfileInfo = () => {
-  const { id } = useLocalSearchParams();
+  const { id, isCommunity } = useLocalSearchParams();
   const theme = useColorScheme();
   const router = useRouter();
 
@@ -33,20 +33,23 @@ const ProfileInfo = () => {
       ? ColorTheme.light.text.primary
       : ColorTheme.dark.text.primary;
 
-  const chat = getChatHistoryById(id as string);
+  const chat = getChatHistoryById(id as string, isCommunity === "true");
   const mediaFiles: I_Media[] =
     chat?.messages?.flatMap((msg) => msg.media || []) || [];
   const first10MediaFiles = mediaFiles?.reverse()?.slice(0, 10);
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView className="bg-light-background-secondary dark:bg-dark-background-secondary flex-1">
+      <SafeAreaView
+        className="bg-light-background-secondary dark:bg-dark-background-secondary flex-1"
+        edges={["top"]}
+      >
         <View className="flex-1">
           <ScrollView className="h-full bg-light-background-primary dark:bg-dark-background-primary">
             <View className="h-auto w-full pb-4 overflow-hidden rounded-[3.5rem] rounded-t-none bg-light-background-secondary dark:bg-dark-background-secondary">
               <View className="h-96 w-full items-start justify-center relative">
                 <Image
-                  source={{ uri: chat?.personImage }}
+                  source={{ uri: chat?.avatar }}
                   className="h-full w-full"
                   resizeMode="contain"
                 />
@@ -97,7 +100,7 @@ const ProfileInfo = () => {
                 <InfoBox title="Email" value="me@rahul-ghosh.in" />
               </View>
             </View>
-            <View className="flex-1 py-3 gap-y-2">
+            <View className="py-3 gap-y-2">
               <Options
                 icon={<Fontisto name="bell" size={24} color="white" />}
                 title="Notification"
@@ -134,6 +137,39 @@ const ProfileInfo = () => {
                       paddingHorizontal: 16,
                     }}
                   />
+                </View>
+              ) : null}
+
+              {isCommunity === "true" && (chat as any)?.users ? (
+                <View className="mt-6 px-6 gap-y-4 pb-10">
+                  <View className="items-center justify-between flex-row">
+                    <Text className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                      Members
+                    </Text>
+                    <Pressable className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                      <Entypo name="plus" size={28} color={iconColor} />
+                    </Pressable>
+                  </View>
+                  {(chat as any).users.map((user: any, index: number) => {
+                    const name =
+                      (chat as any).messages?.find(
+                        (m: any) => m.sender === user.id
+                      )?.senderName || `Member ${index + 1}`;
+                    return (
+                      <View
+                        key={user.id || index}
+                        className="flex-row items-center gap-x-4 mb-0.5"
+                      >
+                        <Image
+                          source={{ uri: user.uri }}
+                          className="w-12 h-12 rounded-full"
+                        />
+                        <Text className="text-lg text-light-text-primary dark:text-dark-text-primary font-medium">
+                          {name}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </View>
               ) : null}
             </View>

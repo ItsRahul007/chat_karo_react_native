@@ -7,6 +7,8 @@ interface I_Messages {
   timestamp: string;
   isRead: boolean;
   media?: I_Media[];
+  avatar?: string;
+  senderName?: string;
 }
 
 interface I_Media {
