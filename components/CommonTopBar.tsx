@@ -7,9 +7,10 @@ import { Image, Pressable, Text, useColorScheme, View } from "react-native";
 
 interface CommonTopBarProps {
   name: string;
-  onPress: () => void;
-  image: string;
+  onPress?: () => void;
+  image?: string;
   showBackButton?: boolean;
+  showSearch?: boolean;
   onBackPress?: () => void;
 }
 
@@ -18,6 +19,7 @@ const CommonTopBar = ({
   onPress,
   image,
   showBackButton = false,
+  showSearch = true,
   onBackPress,
 }: CommonTopBarProps) => {
   const theme = useColorScheme();
@@ -34,23 +36,27 @@ const CommonTopBar = ({
             <Entypo name="chevron-left" size={30} color={iconColor} />
           </Pressable>
         ) : null}
-        <View className="rounded-full h-14 w-14 overflow-hidden">
-          <LinearGradient
-            colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ height: 56, width: 56 }}
-          >
-            <Image source={{ uri: image }} className="w-full h-full" />
-          </LinearGradient>
-        </View>
+        {image ? (
+          <View className="rounded-full h-14 w-14 overflow-hidden">
+            <LinearGradient
+              colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ height: 56, width: 56 }}
+            >
+              <Image source={{ uri: image }} className="w-full h-full" />
+            </LinearGradient>
+          </View>
+        ) : null}
         <Text className="text-light-text-primary dark:text-dark-text-primary text-2xl font-bold">
           {name}
         </Text>
       </View>
-      <Pressable onPress={onPress}>
-        <FontAwesome name="search" size={26} color={iconColor} />
-      </Pressable>
+      {showSearch ? (
+        <Pressable onPress={onPress}>
+          <FontAwesome name="search" size={26} color={iconColor} />
+        </Pressable>
+      ) : null}
     </View>
   );
 };

@@ -1,30 +1,16 @@
+import GredientIcon from "@/components/GredientIcon";
 import { ColorTheme } from "@/constants/colors";
 import { navBarIconSize } from "@/util/constants";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import MaskedView from "@react-native-masked-view/masked-view";
-import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import React, { ReactElement } from "react";
 import { useColorScheme, View } from "react-native";
 
 const tabs = ({ icon, focused }: { icon: ReactElement; focused: boolean }) => {
   return (
-    <View
-      className={`flex flex-1 flex-row w-full min-w-[112px] min-h-16 mt-3 justify-center items-center rounded-full overflow-hidden`}
-    >
-      {focused ? (
-        <MaskedView maskElement={icon}>
-          <LinearGradient
-            colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ width: navBarIconSize, height: navBarIconSize }}
-          />
-        </MaskedView>
-      ) : (
-        icon
-      )}
+    <View className="flex flex-1 flex-row w-full min-w-[112px] min-h-16 mt-3 justify-center items-center rounded-full overflow-hidden">
+      {focused ? <GredientIcon icon={icon} size={navBarIconSize} /> : icon}
     </View>
   );
 };

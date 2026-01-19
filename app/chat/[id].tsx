@@ -1,9 +1,10 @@
 import ChatMessage from "@/components/chat/ChatMessage";
+import GredientIcon from "@/components/GredientIcon";
 import { ColorTheme } from "@/constants/colors";
 import { getChatHistoryById } from "@/controller/chat.controller";
 import { chatTopBarIconSize, gradientColors } from "@/util/constants";
+import { I_Messages } from "@/util/types/chat.types";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
-import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -28,9 +29,9 @@ const Chat = () => {
   const theme = useColorScheme();
   const router = useRouter();
   const insects = useSafeAreaInsets();
-
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [value, onChangeText] = useState<string>("");
+  const chat = getChatHistoryById(id as string, isCommunity === "true");
+  let lastSender: string | undefined;
+  const myId = "me";
 
   const iconColor =
     theme === "light"
@@ -42,16 +43,18 @@ const Chat = () => {
       ? ColorTheme.light.text.secondaryLight
       : ColorTheme.dark.text.secondaryLight;
 
-  const chat = getChatHistoryById(id as string, isCommunity === "true");
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [value, onChangeText] = useState<string>("");
+  const [replyingTo, setReplyingTo] = useState<I_Messages | null>(null);
 
   useEffect(() => {
     const showListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => setIsKeyboardOpen(true)
+      () => setIsKeyboardOpen(true),
     );
     const hideListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setIsKeyboardOpen(false)
+      () => setIsKeyboardOpen(false),
     );
 
     return () => {
@@ -60,7 +63,9 @@ const Chat = () => {
     };
   }, []);
 
-  let lastSender: string | undefined;
+  const handleReply = (message: I_Messages) => {
+    setReplyingTo(message);
+  };
 
   return (
     <View
@@ -110,7 +115,7 @@ const Chat = () => {
                   </View>
                 </View>
                 <View className="flex-row items-center justify-end gap-x-5">
-                  <ActionIconButton
+                  <GredientIcon
                     icon={
                       <Ionicons
                         name={"videocam"}
@@ -120,7 +125,7 @@ const Chat = () => {
                     }
                     onPress={() => {}}
                   />
-                  <ActionIconButton
+                  <GredientIcon
                     icon={
                       <Ionicons
                         name={"call"}
@@ -138,36 +143,39 @@ const Chat = () => {
 
         {/* chat messages */}
         <View className="flex-1 py-1">
-          {!chat || !chat.messages || chat.messages?.length <= 0 ? (
-            <View className="flex-1 items-center justify-center">
-              <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-sm">
-                Say <Text className="font-bold">Hi</Text> to your friends 👋
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={[...chat.messages].reverse()}
-              renderItem={({ item }) => (
-                <ChatMessage {...item} isCommunity={isCommunity === "true"} />
-              )}
-              ItemSeparatorComponent={({ leadingItem }) => {
-                const isSameSender =
-                  lastSender == undefined || leadingItem?.sender === lastSender;
-                lastSender = leadingItem?.sender;
-                return (
-                  <View
-                    style={{
-                      height: isSameSender ? 4 : 12,
-                    }}
-                  />
-                );
-              }}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ paddingVertical: 10 }}
-              showsVerticalScrollIndicator={false}
-              inverted
-            />
-          )}
+          <FlatList
+            data={[...(chat?.messages ?? [])].reverse()}
+            renderItem={({ item }) => (
+              <ChatMessage
+                {...item}
+                isCommunity={isCommunity === "true"}
+                onReply={handleReply}
+              />
+            )}
+            ItemSeparatorComponent={({ leadingItem }) => {
+              const isSameSender =
+                lastSender == undefined || leadingItem?.sender === lastSender;
+              lastSender = leadingItem?.sender;
+              return (
+                <View
+                  style={{
+                    height: isSameSender ? 4 : 12,
+                  }}
+                />
+              );
+            }}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingVertical: 10, flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+            inverted
+            ListEmptyComponent={
+              <View className="flex-1 items-center justify-center">
+                <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-sm">
+                  Say <Text className="font-bold">Hi</Text> to your friends 👋
+                </Text>
+              </View>
+            }
+          />
         </View>
 
         {/* the input box for sending messages */}
@@ -176,35 +184,53 @@ const Chat = () => {
             isKeyboardOpen ? "" : "pb-5"
           }`}
         >
-          <View className="bg-light-background-secondary dark:bg-dark-background-secondary w-11/12 mx-auto my-auto rounded-full flex-row items-center px-2 py-2 h-auto max-h-28">
-            <Pressable className="h-10 w-10 rounded-full overflow-hidden items-center justify-center">
-              <LinearGradient
-                colors={gradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{
-                  width: 40,
-                  height: 40,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <FontAwesome5 name="plus" size={16} color="white" />
-              </LinearGradient>
-            </Pressable>
-            <TextInput
-              multiline
-              editable
-              placeholder="Type something..."
-              placeholderTextColor={placeholderColor}
-              className="ml-2 flex-1 text-light-text-primary dark:text-dark-text-primary font-normal text-lg"
-              onChangeText={(text) => onChangeText(text)}
-              value={value}
-              style={{
-                textAlignVertical: "center",
-                paddingVertical: Platform.OS === "ios" ? 10 : 0,
-              }}
+          <View
+            className={`bg-light-background-secondary dark:bg-dark-background-secondary w-[95%] mx-auto my-auto ${replyingTo ? "max-h-40" : "max-h-28"} items-center px-2 py-2 h-auto rounded-3xl`}
+          >
+            <ReplyMessage
+              message={replyingTo}
+              onPress={() => setReplyingTo(null)}
+              iconColor={iconColor}
+              sender={
+                replyingTo?.sender === myId
+                  ? "You"
+                  : (isCommunity === "true"
+                      ? replyingTo?.senderName
+                      : chat?.name) || "Unknown"
+              }
             />
+
+            <View className="flex-row items-center">
+              <Pressable className="h-10 w-10 rounded-full overflow-hidden items-center justify-center">
+                <LinearGradient
+                  colors={gradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <FontAwesome5 name="plus" size={16} color="white" />
+                </LinearGradient>
+              </Pressable>
+              <TextInput
+                multiline
+                editable
+                numberOfLines={3}
+                placeholder="Type something..."
+                placeholderTextColor={placeholderColor}
+                className="ml-2 flex-1 text-light-text-primary dark:text-dark-text-primary font-normal text-lg"
+                onChangeText={(text) => onChangeText(text)}
+                value={value}
+                style={{
+                  textAlignVertical: "center",
+                  paddingVertical: Platform.OS === "ios" ? 10 : 0,
+                }}
+              />
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -214,22 +240,40 @@ const Chat = () => {
 
 export default Chat;
 
-interface ActionIconButtonProps {
-  icon: React.ReactElement;
+interface ReplyMessageProps {
+  message?: I_Messages | null;
   onPress: () => void;
+  iconColor: string;
+  sender: string;
 }
 
-const ActionIconButton = ({ icon, onPress }: ActionIconButtonProps) => {
+const ReplyMessage = ({
+  message,
+  onPress,
+  iconColor,
+  sender,
+}: ReplyMessageProps) => {
+  if (!message) return null;
+
   return (
-    <Pressable onPress={onPress}>
-      <MaskedView maskElement={icon}>
-        <LinearGradient
-          colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ width: chatTopBarIconSize, height: chatTopBarIconSize }}
-        />
-      </MaskedView>
-    </Pressable>
+    <View className="flex-row items-center w-full px-2 pt-1 pb-2 justify-between">
+      <View className="flex-1">
+        <Text
+          className="text-orange-500 font-normal text-base text-ellipsis"
+          numberOfLines={1}
+        >
+          {sender}
+        </Text>
+        <Text
+          className="text-light-text-primary dark:text-dark-text-primary font-normal text-base text-ellipsis"
+          numberOfLines={1}
+        >
+          {message.message}
+        </Text>
+      </View>
+      <Pressable onPress={onPress}>
+        <Entypo name="cross" size={24} color={iconColor} />
+      </Pressable>
+    </View>
   );
 };

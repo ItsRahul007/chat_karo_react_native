@@ -9,7 +9,6 @@ interface MessageOptionsModalProps {
   media?: I_Media[];
   message?: string;
   formatedTimestamp: string;
-  handleReply: () => void;
   handleCopy: () => void;
   handleDelete: () => void;
   messageLayout: {
@@ -27,7 +26,6 @@ const MessageOptionsModal = ({
   media,
   message,
   formatedTimestamp,
-  handleReply,
   handleCopy,
   handleDelete,
   messageLayout,
@@ -35,9 +33,9 @@ const MessageOptionsModal = ({
   // Calculate if modal should appear above or below the message
   const showAbove = messageLayout.y > 350;
   const optionModalTopPositionForAndroid =
-    messageLayout.y - (isMyMessage ? 190 : 150);
+    messageLayout.y - (isMyMessage ? 150 : 110);
   const optionModalTopPositionForIOS =
-    messageLayout.y - (isMyMessage ? 140 : 100);
+    messageLayout.y - (isMyMessage ? 90 : 50);
   const optionModalTopPosition =
     Platform.OS === "ios"
       ? optionModalTopPositionForIOS
@@ -74,6 +72,7 @@ const MessageOptionsModal = ({
             right: isMyMessage ? 8 : undefined,
             maxWidth: "85%",
           }}
+          className={isMyMessage ? "pr-2" : "pl-2"}
           onStartShouldSetResponder={() => true}
         >
           <View
@@ -140,15 +139,6 @@ const MessageOptionsModal = ({
           }}
           onStartShouldSetResponder={() => true}
         >
-          <Pressable
-            onPress={handleReply}
-            className="px-5 py-3 border-b border-light-background-secondary dark:border-dark-background-secondary active:bg-light-background-secondary dark:active:bg-dark-background-secondary"
-          >
-            <Text className="text-light-text-primary dark:text-dark-text-primary text-base">
-              Reply
-            </Text>
-          </Pressable>
-
           <Pressable
             onPress={handleCopy}
             className="px-5 py-3 border-b border-light-background-secondary dark:border-dark-background-secondary active:bg-light-background-secondary dark:active:bg-dark-background-secondary"

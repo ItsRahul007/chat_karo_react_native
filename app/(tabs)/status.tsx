@@ -1,11 +1,17 @@
+import SwipeToReply from "@/components/chat/SwipeToReply";
 import React from "react";
-import { Text, View } from "react-native";
+import { Text } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const status = () => {
   return (
-    <View>
-      <Text>status</Text>
-    </View>
+    <SafeAreaProvider>
+      <SafeAreaView>
+        <SwipeToReply onReply={() => {}}>
+          <Text className="text-2xl text-black">Swipe to reply</Text>
+        </SwipeToReply>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 

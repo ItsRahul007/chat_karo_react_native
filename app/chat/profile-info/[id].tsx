@@ -10,7 +10,7 @@ import {
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
   FlatList,
@@ -108,21 +108,30 @@ const ProfileInfo = () => {
                   <CustomIconSwitch value={true} onValueChange={() => {}} />
                 }
               />
-              <Options
-                icon={<Feather name="file" size={24} color="white" />}
-                title="Files"
-                subTitle={
-                  mediaFiles && mediaFiles?.length > 0
-                    ? `Total ${mediaFiles?.length} Files`
-                    : "No Files"
-                }
-                color={ColorTheme.gradientSecond}
-                actionButton={
-                  <Pressable>
-                    <Entypo name="chevron-right" size={24} color={iconColor} />
-                  </Pressable>
-                }
-              />
+              <Link
+                href={`/chat/profile-info/files/${id}?isCommunity=${isCommunity}`}
+                asChild
+              >
+                <Pressable>
+                  <Options
+                    icon={<Feather name="file" size={24} color="white" />}
+                    title="Files"
+                    subTitle={
+                      mediaFiles && mediaFiles?.length > 0
+                        ? `Total ${mediaFiles?.length} Files`
+                        : "No Files"
+                    }
+                    color={ColorTheme.gradientSecond}
+                    actionButton={
+                      <Entypo
+                        name="chevron-right"
+                        size={24}
+                        color={iconColor}
+                      />
+                    }
+                  />
+                </Pressable>
+              </Link>
 
               {first10MediaFiles && first10MediaFiles?.length > 0 ? (
                 <View className="w-full mt-3">
