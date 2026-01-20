@@ -1,7 +1,7 @@
 import { I_Messages } from "@/util/types/chat.types";
 import * as Clipboard from "expo-clipboard";
 import React, { useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Animated, Image, Pressable, Text, View } from "react-native";
 import MediaGrid from "./MediaGrid";
 import MessageOptionsModal from "./MessageOptionsModal";
 import SwipeToReply from "./SwipeToReply";
@@ -9,6 +9,8 @@ import SwipeToReply from "./SwipeToReply";
 interface ChatMessageProps extends I_Messages {
   isCommunity?: boolean;
   onReply?: (message: I_Messages) => void;
+  onReplyPress?: (messageId: string) => void;
+  highlighted?: boolean;
 }
 
 const ChatMessage = (msgData: ChatMessageProps) => {
@@ -21,7 +23,30 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     senderName,
     isCommunity,
     onReply,
+    replyTo,
+    onReplyPress,
+    highlighted,
   } = msgData;
+
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (highlighted) {
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.delay(1000),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [highlighted]);
 
   const isMyMessage = sender === "me";
   const formatedTimestamp = new Date(timestamp).toLocaleTimeString([], {
@@ -88,6 +113,49 @@ const ChatMessage = (msgData: ChatMessageProps) => {
               opacity: modalVisible ? 0 : 1,
             }}
           >
+            <Animated.View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(255, 165, 0, 0.3)",
+                opacity: fadeAnim,
+                zIndex: 10,
+                pointerEvents: "none",
+              }}
+            />
+            {replyTo && (
+              <Pressable
+                onPress={() => onReplyPress?.(replyTo.id)}
+                className={`m-1 p-2 rounded-lg border-l-4 border-l-orange-500 ${
+                  isMyMessage ? "bg-black/20" : "bg-black/5 dark:bg-white/10"
+                }`}
+              >
+                <Text
+                  className={`font-bold text-xs text-ellipsis ${
+                    isMyMessage ? "text-white/90" : "text-orange-500"
+                  }`}
+                  numberOfLines={1}
+                >
+                  {replyTo.sender === "me"
+                    ? "You"
+                    : replyTo.senderName || "User"}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  className={`text-xs text-ellipsis ${
+                    isMyMessage
+                      ? "text-white/80"
+                      : "text-light-text-secondaryLight dark:text-dark-text-secondaryLight"
+                  }`}
+                >
+                  {replyTo.message || "Media"}
+                </Text>
+              </Pressable>
+            )}
+
             {isCommunity && !isMyMessage && (
               <Text
                 className={

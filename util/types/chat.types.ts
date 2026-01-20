@@ -9,6 +9,7 @@ interface I_Messages {
   media?: I_Media[];
   avatar?: string;
   senderName?: string;
+  replyTo?: I_Messages;
 }
 
 interface I_Media {

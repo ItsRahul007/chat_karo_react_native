@@ -20,6 +20,10 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Chat = () => {
@@ -46,6 +50,15 @@ const Chat = () => {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [value, onChangeText] = useState<string>("");
   const [replyingTo, setReplyingTo] = useState<I_Messages | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const flatListRef = React.useRef<FlatList>(null);
+
+  const replyAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      height: withTiming(replyingTo ? 50 : 0, { duration: 300 }),
+      opacity: withTiming(replyingTo ? 1 : 0, { duration: 300 }),
+    };
+  }, [replyingTo]);
 
   useEffect(() => {
     const showListener = Keyboard.addListener(
@@ -65,6 +78,23 @@ const Chat = () => {
 
   const handleReply = (message: I_Messages) => {
     setReplyingTo(message);
+  };
+
+  const messages = [...(chat?.messages ?? [])].reverse();
+
+  const handleReplyPress = (messageId: string) => {
+    const index = messages.findIndex((m) => m.id === messageId);
+    if (index !== -1) {
+      flatListRef.current?.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5,
+      });
+      setHighlightedId(messageId);
+      setTimeout(() => {
+        setHighlightedId(null);
+      }, 2000);
+    }
   };
 
   return (
@@ -144,12 +174,16 @@ const Chat = () => {
         {/* chat messages */}
         <View className="flex-1 py-1">
           <FlatList
-            data={[...(chat?.messages ?? [])].reverse()}
+            ref={flatListRef}
+            data={messages}
+            extraData={highlightedId}
             renderItem={({ item }) => (
               <ChatMessage
                 {...item}
                 isCommunity={isCommunity === "true"}
                 onReply={handleReply}
+                onReplyPress={handleReplyPress}
+                highlighted={item.id === highlightedId}
               />
             )}
             ItemSeparatorComponent={({ leadingItem }) => {
@@ -168,6 +202,12 @@ const Chat = () => {
             contentContainerStyle={{ paddingVertical: 10, flexGrow: 1 }}
             showsVerticalScrollIndicator={false}
             inverted
+            onScrollToIndexFailed={(info) => {
+              flatListRef.current?.scrollToOffset({
+                offset: info.averageItemLength * info.index,
+                animated: true,
+              });
+            }}
             ListEmptyComponent={
               <View className="flex-1 items-center justify-center">
                 <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-sm">
@@ -185,20 +225,27 @@ const Chat = () => {
           }`}
         >
           <View
-            className={`bg-light-background-secondary dark:bg-dark-background-secondary w-[95%] mx-auto my-auto ${replyingTo ? "max-h-40" : "max-h-28"} items-center px-2 py-2 h-auto rounded-3xl`}
+            className={`bg-light-background-secondary dark:bg-dark-background-secondary w-[95%] mx-auto my-auto items-center px-2 py-2 h-auto rounded-3xl overflow-hidden`}
           >
-            <ReplyMessage
-              message={replyingTo}
-              onPress={() => setReplyingTo(null)}
-              iconColor={iconColor}
-              sender={
-                replyingTo?.sender === myId
-                  ? "You"
-                  : (isCommunity === "true"
-                      ? replyingTo?.senderName
-                      : chat?.name) || "Unknown"
-              }
-            />
+            <Animated.View style={replyAnimatedStyle}>
+              {replyingTo ? (
+                <ReplyMessage
+                  message={replyingTo}
+                  onClose={() => {
+                    setReplyingTo(null);
+                  }}
+                  onPress={handleReplyPress}
+                  iconColor={iconColor}
+                  sender={
+                    replyingTo?.sender === myId
+                      ? "You"
+                      : (isCommunity === "true"
+                          ? replyingTo?.senderName
+                          : chat?.name) || "Unknown"
+                  }
+                />
+              ) : null}
+            </Animated.View>
 
             <View className="flex-row items-center">
               <Pressable className="h-10 w-10 rounded-full overflow-hidden items-center justify-center">
@@ -241,22 +288,27 @@ const Chat = () => {
 export default Chat;
 
 interface ReplyMessageProps {
-  message?: I_Messages | null;
-  onPress: () => void;
+  message: I_Messages;
+  onClose: () => void;
+  onPress: (messageId: string) => void;
   iconColor: string;
   sender: string;
 }
 
 const ReplyMessage = ({
   message,
+  onClose,
   onPress,
   iconColor,
   sender,
 }: ReplyMessageProps) => {
-  if (!message) return null;
+  const mediaLength = message.media?.length || 0;
 
   return (
-    <View className="flex-row items-center w-full px-2 pt-1 pb-2 justify-between">
+    <Pressable
+      className="flex-row items-center w-full px-2 pt-1 pb-2 justify-between max-h-12"
+      onPress={() => onPress(message.id)}
+    >
       <View className="flex-1">
         <Text
           className="text-orange-500 font-normal text-base text-ellipsis"
@@ -268,12 +320,16 @@ const ReplyMessage = ({
           className="text-light-text-primary dark:text-dark-text-primary font-normal text-base text-ellipsis"
           numberOfLines={1}
         >
-          {message.message}
+          {message.message
+            ? message.message
+            : mediaLength > 1
+              ? "Media"
+              : message.media?.[0].mediaType}
         </Text>
       </View>
-      <Pressable onPress={onPress}>
+      <Pressable onPress={onClose}>
         <Entypo name="cross" size={24} color={iconColor} />
       </Pressable>
-    </View>
+    </Pressable>
   );
 };

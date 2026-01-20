@@ -418,7 +418,7 @@ export const chatList: PersonCardProps[] = [
       },
       {
         id: "m23",
-        message: "I'll send you the highlights!",
+        message: "",
         sender: "1",
         timestamp: "2026-01-11T09:34:00",
         isRead: true,
@@ -502,6 +502,13 @@ export const chatList: PersonCardProps[] = [
         sender: "1",
         timestamp: "2026-01-11T10:31:00",
         isRead: false,
+        replyTo: {
+          id: "m13",
+          message: "How about 12:30?",
+          sender: "me",
+          timestamp: "2026-01-11T09:21:00",
+          isRead: true,
+        },
       },
     ],
   },
@@ -546,6 +553,20 @@ export const chatList: PersonCardProps[] = [
             mediaUrl:
               "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
             mediaType: "file",
+          },
+        ],
+      },
+      {
+        id: "m2-4",
+        message: "Here is a sample audio file for you to check out.",
+        sender: "2",
+        timestamp: "2026-01-11T09:20:00",
+        isRead: true,
+        media: [
+          {
+            mediaUrl:
+              "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            mediaType: "audio",
           },
         ],
       },
