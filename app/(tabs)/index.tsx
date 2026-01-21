@@ -1,14 +1,15 @@
+import BackgroundGredientIconButton from "@/components/BackgroundGredientIconButton";
 import CommonTopBar from "@/components/CommonTopBar";
 import CommunityCard from "@/components/home/CommunityCard";
 import PersonCard from "@/components/home/PersonCard";
 import { ColorTheme } from "@/constants/colors";
+import { SearchParams } from "@/util/enum";
 import { chatList, sampleCommunityData } from "@/util/sample.data";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import React from "react";
-import { FlatList, Pressable, Text, useColorScheme, View } from "react-native";
+import { FlatList, Text, useColorScheme, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const index = () => {
@@ -29,7 +30,7 @@ const index = () => {
         <View className="h-14">
           <CommonTopBar
             name="Rahul"
-            onPress={() => console.log("Button pressed")}
+            searchParams={SearchParams.person}
             image="https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg"
           />
         </View>
@@ -69,30 +70,19 @@ const index = () => {
           />
         </View>
 
-        <Pressable
-          className="absolute right-2 bottom-24"
-          onPress={() => console.log("add chat")}
-        >
-          <View className="rounded-full h-20 w-20 overflow-hidden items-center justify-center">
-            <LinearGradient
-              colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{
-                width: 80,
-                height: 80,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
+        <View className="absolute right-2 bottom-28">
+          <BackgroundGredientIconButton
+            icon={
               <MaterialCommunityIcons
                 name="chat-plus"
-                size={30}
+                size={25}
                 color="white"
               />
-            </LinearGradient>
-          </View>
-        </Pressable>
+            }
+            onPress={() => console.log("add chat")}
+            size={80}
+          />
+        </View>
       </SafeAreaView>
     </SafeAreaProvider>
   );

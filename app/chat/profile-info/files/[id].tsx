@@ -28,29 +28,28 @@ const AlFiles = () => {
           showSearch={false}
         />
         <View className="flex-1 px-4 pt-4">
-          {mediaFiles.length > 0 ? (
-            <FlatList
-              data={mediaFiles}
-              renderItem={({ item }) => (
-                <View className="flex-1 m-1 aspect-square max-w-[32%]">
-                  <MediaItem
-                    {...item}
-                    containerClassName="w-full h-full rounded-xl bg-gray-200 dark:bg-gray-800 items-center justify-center"
-                  />
-                </View>
-              )}
-              keyExtractor={(item, index) => index.toString()}
-              numColumns={3}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
-            />
-          ) : (
-            <View className="flex-1 items-center justify-center">
-              <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-lg">
-                No files shared yet
-              </Text>
-            </View>
-          )}
+          <FlatList
+            data={mediaFiles}
+            renderItem={({ item }) => (
+              <View className="flex-1 m-1 aspect-square w-36 h-36">
+                <MediaItem
+                  {...item}
+                  containerClassName="w-full h-full rounded-xl items-center justify-center"
+                />
+              </View>
+            )}
+            keyExtractor={(item, index) => item.mediaUrl || index.toString()}
+            numColumns={3}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            ListEmptyComponent={
+              <View className="flex-1 items-center justify-center">
+                <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-lg">
+                  No files shared yet
+                </Text>
+              </View>
+            }
+          />
         </View>
       </SafeAreaView>
     </SafeAreaProvider>

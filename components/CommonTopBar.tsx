@@ -1,13 +1,15 @@
 import { ColorTheme } from "@/constants/colors";
+import { SearchParams } from "@/util/enum";
 import { Entypo } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { LinearGradient } from "expo-linear-gradient";
+import { Link } from "expo-router";
 import React from "react";
 import { Image, Pressable, Text, useColorScheme, View } from "react-native";
 
 interface CommonTopBarProps {
   name: string;
-  onPress?: () => void;
+  searchParams?: SearchParams;
   image?: string;
   showBackButton?: boolean;
   showSearch?: boolean;
@@ -16,7 +18,7 @@ interface CommonTopBarProps {
 
 const CommonTopBar = ({
   name,
-  onPress,
+  searchParams,
   image,
   showBackButton = false,
   showSearch = true,
@@ -53,9 +55,11 @@ const CommonTopBar = ({
         </Text>
       </View>
       {showSearch ? (
-        <Pressable onPress={onPress}>
-          <FontAwesome name="search" size={26} color={iconColor} />
-        </Pressable>
+        <Link href={`/search?for=${searchParams}`} asChild>
+          <Pressable>
+            <FontAwesome name="search" size={26} color={iconColor} />
+          </Pressable>
+        </Link>
       ) : null}
     </View>
   );

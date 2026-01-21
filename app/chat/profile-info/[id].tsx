@@ -1,7 +1,10 @@
+import BackgroundGredientIconButton from "@/components/BackgroundGredientIconButton";
 import MediaItem from "@/components/chat/MediaItem";
+import Options from "@/components/chat/profile-info/Options";
 import CustomIconSwitch from "@/components/CustomIconSwitch";
 import { ColorTheme } from "@/constants/colors";
 import { getChatHistoryById } from "@/controller/chat.controller";
+import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { I_Media } from "@/util/types/chat.types";
 import {
   Entypo,
@@ -9,34 +12,66 @@ import {
   Fontisto,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import * as ImagePicker from "expo-image-picker";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   FlatList,
   Image,
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   useColorScheme,
   View,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const ProfileInfo = () => {
-  const { id, isCommunity } = useLocalSearchParams();
+  const { id, isCommunity: community } = useLocalSearchParams();
+  const isCommunity = community === "true";
   const theme = useColorScheme();
   const router = useRouter();
+  const isUserAdmin = true;
 
   const iconColor =
     theme === "light"
       ? ColorTheme.light.text.primary
       : ColorTheme.dark.text.primary;
 
-  const chat = getChatHistoryById(id as string, isCommunity === "true");
+  const chat = getChatHistoryById(id as string, isCommunity);
   const mediaFiles: I_Media[] =
     chat?.messages?.flatMap((msg) => msg.media || []) || [];
   const first10MediaFiles = mediaFiles?.reverse()?.slice(0, 10);
+
+  const [name, setName] = useState(chat?.name);
+  const [about, setAbout] = useState("Hello, I'm a chatbot");
+  const [avatar, setAvatar] = useState(chat?.avatar);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingAbout, setIsEditingAbout] = useState(false);
+
+  useEffect(() => {
+    if (chat?.name) setName(chat.name);
+    if (chat?.avatar) setAvatar(chat.avatar);
+  }, [chat]);
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setAvatar(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick image");
+    }
+  };
 
   return (
     <SafeAreaProvider>
@@ -49,7 +84,7 @@ const ProfileInfo = () => {
             <View className="h-auto w-full pb-4 overflow-hidden rounded-[3.5rem] rounded-t-none bg-light-background-secondary dark:bg-dark-background-secondary">
               <View className="h-96 w-full items-start justify-center relative">
                 <Image
-                  source={{ uri: chat?.avatar }}
+                  source={{ uri: avatar }}
                   className="h-full w-full"
                   resizeMode="contain"
                 />
@@ -59,47 +94,101 @@ const ProfileInfo = () => {
                 >
                   <Entypo name="chevron-left" size={30} color={iconColor} />
                 </Pressable>
-                <Pressable
-                  className="absolute right-8 -bottom-10"
-                  onPress={() => console.log("add chat")}
-                >
-                  <View className="rounded-full h-16 w-16 overflow-hidden items-center justify-center">
-                    <LinearGradient
-                      colors={[
-                        ColorTheme.gradientFirst,
-                        ColorTheme.gradientSecond,
-                      ]}
-                      start={{ x: 0.5, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={{
-                        width: 80,
-                        height: 80,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
+
+                {isUserAdmin && isCommunity ? (
+                  <Pressable
+                    onPress={pickImage}
+                    className="absolute bottom-5 right-5 h-12 w-12 bg-black/50 items-center justify-center rounded-full"
+                  >
+                    <Feather name="camera" size={24} color="white" />
+                  </Pressable>
+                ) : null}
+
+                <View className="absolute right-8 -bottom-10">
+                  <BackgroundGredientIconButton
+                    icon={
                       <MaterialCommunityIcons
                         name="chat"
                         size={25}
                         color="white"
                       />
-                    </LinearGradient>
-                  </View>
-                </Pressable>
+                    }
+                    onPress={() => console.log("add chat")}
+                    size={80}
+                  />
+                </View>
               </View>
-              <View className="flex-1 px-6 py-10 gap-y-8 h-72">
+              <View className="flex-1 px-6 py-10 gap-y-8 max-h-72">
                 <View>
-                  <Text className="font-bold text-3xl text-light-text-primary dark:text-dark-text-primary">
-                    {chat?.name}
-                  </Text>
+                  <View className="flex-row items-center gap-x-3 mb-1">
+                    {isEditingName ? (
+                      <TextInput
+                        value={name}
+                        onChangeText={setName}
+                        className="font-bold text-3xl text-light-text-primary dark:text-dark-text-primary border-b border-light-text-primary dark:border-dark-text-primary flex-1 p-0"
+                        autoFocus
+                      />
+                    ) : (
+                      <Text className="font-bold text-3xl text-light-text-primary dark:text-dark-text-primary">
+                        {name}
+                      </Text>
+                    )}
+                    {isUserAdmin && isCommunity ? (
+                      <Pressable
+                        onPress={() => setIsEditingName(!isEditingName)}
+                      >
+                        <Feather
+                          name={isEditingName ? "check" : "edit-2"}
+                          size={20}
+                          color={iconColor}
+                        />
+                      </Pressable>
+                    ) : null}
+                  </View>
                   <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-sm">
-                    {chat?.lastMessageTime}
+                    {isCommunity ? "Community name" : chat?.lastMessageTime}
                   </Text>
                 </View>
-                <InfoBox title="About" value="Hello, I'm a chatbot" />
-                <InfoBox title="Email" value="me@rahul-ghosh.in" />
+
+                <View className="flex-col gap-y-1">
+                  <View className="flex-row items-center justify-between">
+                    {isEditingAbout ? (
+                      <TextInput
+                        value={about}
+                        onChangeText={setAbout}
+                        className="text-light-text-primary dark:text-dark-text-primary font-bold text-xl border-b border-light-text-primary dark:border-dark-text-primary flex-1 p-0"
+                        multiline
+                        autoFocus
+                      />
+                    ) : (
+                      <Text className="text-light-text-primary dark:text-dark-text-primary font-bold text-xl">
+                        {about}
+                      </Text>
+                    )}
+                    {isUserAdmin && isCommunity ? (
+                      <Pressable
+                        onPress={() => setIsEditingAbout(!isEditingAbout)}
+                        className="ml-2"
+                      >
+                        <Feather
+                          name={isEditingAbout ? "check" : "edit-2"}
+                          size={18}
+                          color={iconColor}
+                        />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  <Text className=" text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-sm">
+                    About
+                  </Text>
+                </View>
+                {isCommunity ? null : (
+                  <InfoBox title="Email" value="me@rahul-ghosh.in" />
+                )}
               </View>
             </View>
+
+            {/* bottom options */}
             <View className="py-3 gap-y-2">
               <Options
                 icon={<Fontisto name="bell" size={24} color="white" />}
@@ -149,36 +238,50 @@ const ProfileInfo = () => {
                 </View>
               ) : null}
 
-              {isCommunity === "true" && (chat as any)?.users ? (
+              {isCommunity && (chat as any)?.users ? (
                 <View className="mt-6 px-6 gap-y-4 pb-10">
                   <View className="items-center justify-between flex-row">
                     <Text className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
                       Members
                     </Text>
-                    <Pressable className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                      <Entypo name="plus" size={28} color={iconColor} />
-                    </Pressable>
+                    <Link asChild href={`/search?for=members`}>
+                      <Pressable className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                        <Entypo name="plus" size={28} color={iconColor} />
+                      </Pressable>
+                    </Link>
                   </View>
-                  {(chat as any).users.map((user: any, index: number) => {
-                    const name =
-                      (chat as any).messages?.find(
-                        (m: any) => m.sender === user.id
-                      )?.senderName || `Member ${index + 1}`;
-                    return (
-                      <View
-                        key={user.id || index}
-                        className="flex-row items-center gap-x-4 mb-0.5"
-                      >
-                        <Image
-                          source={{ uri: user.uri }}
-                          className="w-12 h-12 rounded-full"
-                        />
-                        <Text className="text-lg text-light-text-primary dark:text-dark-text-primary font-medium">
-                          {name}
-                        </Text>
-                      </View>
-                    );
-                  })}
+                  {(chat as any).users.map(
+                    (user: SingleUser, index: number) => {
+                      const { name, avatar, id, isAdmin, isOwner } = user;
+                      return (
+                        <View
+                          key={id || index}
+                          className="flex-row items-center gap-x-4 mb-0.5"
+                        >
+                          <Image
+                            source={{ uri: avatar }}
+                            className="w-12 h-12 rounded-full"
+                          />
+                          <View>
+                            <Text
+                              className="text-lg text-light-text-primary dark:text-dark-text-primary font-medium text-ellipsis"
+                              numberOfLines={1}
+                            >
+                              {name}
+                            </Text>
+                            {isAdmin || isOwner ? (
+                              <Text
+                                className="text-sm text-light-text-secondaryDark dark:text-dark-text-secondaryDark font-medium text-ellipsis"
+                                numberOfLines={1}
+                              >
+                                {isAdmin ? "Admin" : "Owner"}
+                              </Text>
+                            ) : null}
+                          </View>
+                        </View>
+                      );
+                    },
+                  )}
                 </View>
               ) : null}
             </View>
@@ -198,48 +301,6 @@ const InfoBox = ({ title, value }: { title: string; value: string }) => {
       <Text className=" text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-sm">
         {title}
       </Text>
-    </View>
-  );
-};
-
-interface OptionsProps {
-  actionButton: React.ReactNode;
-  title: string;
-  icon: React.ReactNode;
-  color?: string;
-  subTitle?: string;
-}
-
-const Options = ({
-  actionButton,
-  title,
-  icon,
-  color,
-  subTitle,
-}: OptionsProps) => {
-  return (
-    <View className="w-full h-14 items-center justify-between flex-row px-6 mt-3">
-      <View className="flex-row items-center gap-x-4">
-        <View
-          className={`h-14 w-14 rounded-full items-center justify-center overflow-hidden`}
-          style={{
-            backgroundColor: color ?? "#fb8c3e",
-          }}
-        >
-          {icon}
-        </View>
-        <View>
-          <Text className="text-lg text-light-text-primary dark:text-dark-text-primary font-bold">
-            {title}
-          </Text>
-          {subTitle ? (
-            <Text className="text-sm text-light-text-secondaryLight dark:text-dark-text-secondaryLight font-normal">
-              {subTitle}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-      {actionButton}
     </View>
   );
 };

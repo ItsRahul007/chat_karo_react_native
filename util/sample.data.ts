@@ -17,19 +17,29 @@ export const sampleCommunityData: CommunityCardProps[] = [
     users: [
       {
         id: "u1",
-        uri: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60",
+        name: "Jordan",
+        avatar:
+          "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60",
+        isOwner: true,
       },
       {
         id: "u2",
-        uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60",
+        name: "Alex",
+        avatar:
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60",
       },
       {
         id: "u3",
-        uri: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&auto=format&fit=crop&q=60",
+        name: "Sam",
+        isAdmin: true,
+        avatar:
+          "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&auto=format&fit=crop&q=60",
       },
       {
         id: "u4",
-        uri: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&auto=format&fit=crop&q=60",
+        name: "Taylor",
+        avatar:
+          "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&auto=format&fit=crop&q=60",
       },
     ],
     messages: [
@@ -96,15 +106,22 @@ export const sampleCommunityData: CommunityCardProps[] = [
     users: [
       {
         id: "u5",
-        uri: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=60",
+        name: "Mike",
+        avatar:
+          "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=60",
+        isAdmin: true,
       },
       {
         id: "u6",
-        uri: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60",
+        name: "Chris",
+        avatar:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60",
       },
       {
         id: "u7",
-        uri: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60",
+        name: "Tom",
+        avatar:
+          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60",
       },
     ],
     messages: [
@@ -179,27 +196,40 @@ export const sampleCommunityData: CommunityCardProps[] = [
     users: [
       {
         id: "u8",
-        uri: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60",
+        name: "Sarah",
+        avatar:
+          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60",
+        isAdmin: true,
       },
       {
         id: "u9",
-        uri: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&auto=format&fit=crop&q=60",
+        name: "David",
+        avatar:
+          "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&auto=format&fit=crop&q=60",
       },
       {
         id: "u10",
-        uri: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=60",
+        name: "Emma",
+        avatar:
+          "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=60",
       },
       {
         id: "u11",
-        uri: "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=100&auto=format&fit=crop&q=60",
+        name: "James",
+        avatar:
+          "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=100&auto=format&fit=crop&q=60",
       },
       {
         id: "u12",
-        uri: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=60",
+        name: "Olivia",
+        avatar:
+          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=60",
       },
       {
         id: "u13",
-        uri: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=60",
+        name: "Daniel",
+        avatar:
+          "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=60",
       },
     ],
     messages: [
@@ -481,6 +511,13 @@ export const chatList: PersonCardProps[] = [
         sender: "me",
         timestamp: "2026-01-11T09:43:00",
         isRead: true,
+        media: [
+          {
+            mediaUrl:
+              "https://images.unsplash.com/photo-1768542142195-283c2bfeaac7?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            mediaType: "image",
+          },
+        ],
       },
       {
         id: "m29",

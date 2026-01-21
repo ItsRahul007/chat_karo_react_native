@@ -13,8 +13,8 @@ interface I_Messages {
 }
 
 interface I_Media {
-  mediaUrl?: string;
-  mediaType?: keyof typeof FileTypes;
+  mediaUrl: string;
+  mediaType: keyof typeof FileTypes;
 }
 
 export { I_Media, I_Messages };

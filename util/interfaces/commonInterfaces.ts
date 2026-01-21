@@ -1,7 +1,15 @@
 import { I_Messages } from "../types/chat.types";
 
+interface SingleUser {
+  id: string;
+  name: string;
+  avatar: string;
+  isAdmin?: boolean;
+  isOwner?: boolean;
+}
+
 interface AvatarGroupProps {
-  users: { id: string; uri: string }[];
+  users: SingleUser[];
   limit?: number;
 }
 
@@ -29,4 +37,9 @@ interface PersonCardProps {
   messages?: I_Messages[];
 }
 
-export type { AvatarGroupProps, CommunityCardProps, PersonCardProps };
+export type {
+  AvatarGroupProps,
+  CommunityCardProps,
+  PersonCardProps,
+  SingleUser,
+};

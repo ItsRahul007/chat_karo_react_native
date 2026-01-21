@@ -4,8 +4,6 @@ import useFetch from "@/custom-hooks/useFetch";
 import { generateThumbnail } from "@/util/common.functions";
 import { I_Media } from "@/util/types/chat.types";
 import { AntDesign, Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
-import Slider from "@react-native-community/slider";
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useState } from "react";
 import {
@@ -19,22 +17,19 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import AudioMessage from "./AudioMessage";
 
 interface MediaItemProps extends I_Media {
   containerClassName?: string;
+  isForChat?: boolean;
 }
-
-const formatTime = (seconds: number) => {
-  if (!seconds) return "0:00";
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s < 10 ? "0" : ""}${s}`;
-};
 
 const MediaItem = ({
   mediaType,
   mediaUrl,
   containerClassName,
+  isForChat = false,
 }: MediaItemProps) => {
   const theme = useColorScheme();
   const [showPreview, setShowPreview] = useState(false);
@@ -49,7 +44,12 @@ const MediaItem = ({
   });
 
   const handlePress = async () => {
-    if (mediaType === "audio") return;
+    if (mediaType === "audio") {
+      if (!isForChat) {
+        setShowPreview(true);
+      }
+      return;
+    }
 
     if (mediaType === "image" || mediaType === "video") {
       setShowPreview(true);
@@ -89,6 +89,7 @@ const MediaItem = ({
           mediaUrl={mediaUrl!}
           containerClassName={containerClassName}
           iconColor={iconColor}
+          isForChat={isForChat}
         />
       </Pressable>
 
@@ -98,40 +99,48 @@ const MediaItem = ({
         animationType="fade"
         onRequestClose={closePreview}
       >
-        <View className="flex-1 bg-black/60 justify-center items-center relative">
-          <Pressable
-            onPress={closePreview}
-            className="p-2 absolute top-6 left-6 z-[500]"
-          >
-            <Ionicons name="close" size={30} color="white" />
-          </Pressable>
+        <SafeAreaView className="flex-1" edges={["top"]}>
+          <View className="flex-1 bg-black/60 justify-center items-center relative">
+            <Pressable
+              onPress={closePreview}
+              className="p-2 absolute top-6 left-6 z-[500]"
+            >
+              <Ionicons name="close" size={30} color="white" />
+            </Pressable>
 
-          <Pressable
-            onPress={handleSave}
-            className="p-2 absolute top-6 right-6 z-[500]"
-          >
-            <AntDesign name="download" size={30} color="white" />
-          </Pressable>
+            <Pressable
+              onPress={handleSave}
+              className="p-2 absolute top-6 right-6 z-[500]"
+            >
+              <AntDesign name="download" size={30} color="white" />
+            </Pressable>
 
-          {mediaType === "image" && (
-            <Image
-              source={{ uri: mediaUrl }}
-              className="w-full h-full"
-              resizeMode="contain"
-            />
-          )}
+            {mediaType === "image" && (
+              <Image
+                source={{ uri: mediaUrl }}
+                className="w-full h-full"
+                resizeMode="contain"
+              />
+            )}
 
-          {mediaType === "video" && (
-            <VideoView
-              style={{ width: "100%", height: "100%" }}
-              player={player}
-              fullscreenOptions={{
-                enable: true,
-              }}
-              nativeControls
-            />
-          )}
-        </View>
+            {mediaType === "video" && (
+              <VideoView
+                style={{ width: "100%", height: "100%" }}
+                player={player}
+                fullscreenOptions={{
+                  enable: true,
+                }}
+                nativeControls
+              />
+            )}
+
+            {mediaType === "audio" && (
+              <View className="bg-white dark:bg-black p-4 rounded-2xl">
+                <AudioMessage mediaUrl={mediaUrl!} />
+              </View>
+            )}
+          </View>
+        </SafeAreaView>
       </Modal>
     </>
   );
@@ -144,11 +153,13 @@ const RenderContent = ({
   mediaUrl,
   containerClassName,
   iconColor,
+  isForChat,
 }: {
   mediaType: string;
   mediaUrl: string;
   containerClassName?: string;
   iconColor: string;
+  isForChat: boolean;
 }) => {
   const containerStyle =
     containerClassName || "h-24 w-24 items-center justify-center";
@@ -195,6 +206,16 @@ const RenderContent = ({
   }
 
   if (mediaType === "audio") {
+    if (!isForChat) {
+      return (
+        <CommonFileBox
+          mediaUrl={mediaUrl!}
+          iconColor={iconColor}
+          isAudio={true}
+          containerStyle={containerStyle}
+        />
+      );
+    }
     return <AudioMessage mediaUrl={mediaUrl!} />;
   }
 
@@ -202,6 +223,18 @@ const RenderContent = ({
   if (mediaUrl?.split(".").pop() === "pdf") {
     const fileName = mediaUrl?.split("/").pop();
     const formatedName = fileName!.charAt(0).toUpperCase() + fileName!.slice(1);
+
+    if (!isForChat) {
+      return (
+        <CommonFileBox
+          mediaUrl={mediaUrl!}
+          iconColor={iconColor}
+          isPdf={true}
+          containerStyle={containerStyle}
+        />
+      );
+    }
+
     return (
       <View
         className={`min-w-24 bg-light-background-secondary/10 dark:bg-dark-background-secondary/10 rounded-xl flex-row w-full h-auto p-5 items-center justify-start`}
@@ -220,13 +253,23 @@ const RenderContent = ({
   const fileName = mediaUrl?.split("/").pop();
   const formatedName = fileName!.charAt(0).toUpperCase() + fileName!.slice(1);
 
+  if (!isForChat) {
+    return (
+      <CommonFileBox
+        mediaUrl={mediaUrl!}
+        iconColor={iconColor}
+        containerStyle={containerStyle}
+      />
+    );
+  }
+
   return (
     <View
       className={`min-w-24 bg-light-background-secondary/10 dark:bg-dark-background-secondary/10 rounded-xl flex-row w-full h-auto p-5 items-center justify-start`}
     >
       <Feather name="file" size={24} color={iconColor} />
       <Text
-        className="ml-2 text-light-text-primary dark:text-dark-text-primary"
+        className="ml-2 text-light-text-primary dark:text-dark-text-primary text-ellipsis"
         numberOfLines={2}
       >
         {formatedName}
@@ -235,58 +278,39 @@ const RenderContent = ({
   );
 };
 
-const AudioMessage = ({ mediaUrl }: { mediaUrl: string }) => {
-  const player = useAudioPlayer(mediaUrl);
-  const status = useAudioPlayerStatus(player);
-  const theme = useColorScheme();
-  const secondaryText =
-    theme === "light"
-      ? ColorTheme.light.text.secondaryDark
-      : ColorTheme.dark.text.secondaryDark;
-
-  const togglePlayback = () => {
-    if (status.playing) {
-      player.pause();
-    } else {
-      player.play();
-    }
-  };
+const CommonFileBox = ({
+  mediaUrl,
+  iconColor,
+  isPdf = false,
+  isAudio = false,
+  containerStyle,
+}: {
+  mediaUrl: string;
+  iconColor: string;
+  isPdf?: boolean;
+  isAudio?: boolean;
+  containerStyle?: string;
+}) => {
+  const fileName = mediaUrl?.split("/").pop();
+  const formatedName = fileName!.charAt(0).toUpperCase() + fileName!.slice(1);
 
   return (
-    <View className="flex-row items-center w-64 p-3 gap-2 bg-light-background-secondary/10 dark:bg-dark-background-secondary/10 rounded-xl">
-      <View className="items-center justify-center h-10 w-10 bg-gradientSecond rounded-full">
-        {status.isBuffering || !status.isLoaded ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
-          <Pressable onPress={togglePlayback}>
-            <Ionicons
-              name={status.playing ? "pause" : "play"}
-              size={20}
-              color="#fff"
-            />
-          </Pressable>
-        )}
-      </View>
-
-      <View className="flex-1 gap-y-0.5">
-        <Slider
-          style={{ width: "100%", height: 30 }}
-          minimumValue={0}
-          maximumValue={status.duration}
-          value={status.currentTime}
-          onSlidingComplete={(val) => player.seekTo(val)}
-          minimumTrackTintColor={ColorTheme.gradientSecond}
-          maximumTrackTintColor={secondaryText}
-          thumbTintColor={ColorTheme.gradientSecond}
-        />
-        <View className="flex-row justify-start px-2">
-          <Text className="text-sm text-light-text-secondaryDark dark:text-dark-text-secondaryDark">
-            {status.playing
-              ? formatTime(status.currentTime)
-              : formatTime(status.duration)}
-          </Text>
-        </View>
-      </View>
+    <View
+      className={`${containerStyle ?? ""} bg-white dark:bg-black rounded-xl items-center justify-start gap-y-2 p-1`}
+    >
+      {isPdf ? (
+        <FontAwesome6 name="file-pdf" size={24} color={iconColor} />
+      ) : isAudio ? (
+        <Ionicons name="musical-note" size={24} color={iconColor} />
+      ) : (
+        <Feather name="file" size={24} color={iconColor} />
+      )}
+      <Text
+        className="ml-2 text-sm text-light-text-primary dark:text-dark-text-primary text-ellipsis"
+        numberOfLines={2}
+      >
+        {formatedName}
+      </Text>
     </View>
   );
 };

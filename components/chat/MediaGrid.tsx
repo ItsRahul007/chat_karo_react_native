@@ -10,6 +10,7 @@ const MediaGrid = ({ media }: { media: I_Media[] | undefined }) => {
       <MediaItem
         {...media[0]}
         containerClassName="w-64 h-64 bg-black/10 items-center justify-center"
+        isForChat
       />
     );
   }
@@ -22,6 +23,7 @@ const MediaGrid = ({ media }: { media: I_Media[] | undefined }) => {
             key={index}
             {...item}
             containerClassName="w-32 h-32 bg-black/10 items-center justify-center border-white/20 border-[0.5px]"
+            isForChat
           />
         ))}
       </View>
@@ -31,15 +33,18 @@ const MediaGrid = ({ media }: { media: I_Media[] | undefined }) => {
   return (
     <View className="flex-row flex-wrap w-72 h-64 overflow-hidden gap-1">
       <MediaItem
+        isForChat
         {...media[0]}
         containerClassName="w-32 h-32 bg-black/10 items-center justify-center border-white/20 border-[0.5px]"
       />
       <MediaItem
+        isForChat
         {...media[1]}
         containerClassName="w-32 h-32 bg-black/10 items-center justify-center border-white/20 border-[0.5px]"
       />
       <View className="relative w-64 h-32">
         <MediaItem
+          isForChat
           {...media[2]}
           containerClassName="w-full h-full bg-black/10 items-center justify-center border-white/20 border-[0.5px]"
         />

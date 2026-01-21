@@ -5,4 +5,9 @@ enum FileTypes {
   file = "FILE",
 }
 
-export { FileTypes };
+enum SearchParams {
+  person = "person",
+  community = "community",
+}
+
+export { FileTypes, SearchParams };

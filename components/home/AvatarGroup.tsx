@@ -1,23 +1,24 @@
-import { AvatarGroupProps } from '@/util/interfaces/commonInterfaces';
-import React from 'react';
-import { View, Text, Image } from 'react-native';
+import { AvatarGroupProps } from "@/util/interfaces/commonInterfaces";
+import React from "react";
+import { Image, Text, View } from "react-native";
 
 const AvatarGroup = ({ users, limit = 4 }: AvatarGroupProps) => {
   // 1. Logic to slice data
   const usersToShow = users.slice(0, limit);
   const excessCount = users.length - limit;
 
-  const avatarClass = "w-12 h-12 rounded-full border-[3px] border-light-comunityCard-background dark:border-dark-comunityCard-background";
+  const avatarClass =
+    "w-12 h-12 rounded-full border-[3px] border-light-comunityCard-background dark:border-dark-comunityCard-background";
 
   return (
     <View className="flex-row items-center">
       {usersToShow.map((user, index) => (
         <Image
           key={user.id}
-          source={{ uri: user.uri }}
+          source={{ uri: user.avatar }}
           className={`
             ${avatarClass}
-            ${index !== 0 ? `-ml-3` : ''} 
+            ${index !== 0 ? `-ml-3` : ""} 
           `}
           style={{ zIndex: limit - index }}
         />
@@ -31,9 +32,7 @@ const AvatarGroup = ({ users, limit = 4 }: AvatarGroupProps) => {
             bg-indigo-900 justify-center items-center
           `}
         >
-          <Text className="text-white font-bold text-lg">
-            +{excessCount}
-          </Text>
+          <Text className="text-white font-bold text-lg">+{excessCount}</Text>
         </View>
       )}
     </View>

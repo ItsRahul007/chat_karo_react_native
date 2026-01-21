@@ -1,5 +1,6 @@
 import CommonTopBar from "@/components/CommonTopBar";
 import CommunityCard from "@/components/home/CommunityCard";
+import { SearchParams } from "@/util/enum";
 import { sampleCommunityData } from "@/util/sample.data";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -15,7 +16,7 @@ const index = () => {
         <SafeAreaView className="flex-1">
           <CommonTopBar
             name="Rahul"
-            onPress={() => console.log("Button pressed")}
+            searchParams={SearchParams.community}
             image="https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg"
             showBackButton={true}
             onBackPress={router.back}
