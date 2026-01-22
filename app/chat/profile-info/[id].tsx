@@ -1,5 +1,6 @@
 import BackgroundGredientIconButton from "@/components/BackgroundGredientIconButton";
 import MediaItem from "@/components/chat/MediaItem";
+import InfoBox from "@/components/chat/profile-info/InfoBox";
 import Options from "@/components/chat/profile-info/Options";
 import CustomIconSwitch from "@/components/CustomIconSwitch";
 import { ColorTheme } from "@/constants/colors";
@@ -289,19 +290,6 @@ const ProfileInfo = () => {
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
-  );
-};
-
-const InfoBox = ({ title, value }: { title: string; value: string }) => {
-  return (
-    <View className="flex-col gap-y-1">
-      <Text className="text-light-text-primary dark:text-dark-text-primary font-bold text-xl">
-        {value}
-      </Text>
-      <Text className=" text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-sm">
-        {title}
-      </Text>
-    </View>
   );
 };
 
