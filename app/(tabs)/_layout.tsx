@@ -1,4 +1,4 @@
-import GredientIcon from "@/components/GredientIcon";
+import GredientIcon from "@/components/common/GredientIcon";
 import { ColorTheme } from "@/constants/colors";
 import { navBarIconSize } from "@/util/constants";
 import FontAwesome from "@expo/vector-icons/FontAwesome";

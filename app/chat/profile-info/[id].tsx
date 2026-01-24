@@ -1,10 +1,12 @@
-import BackgroundGredientIconButton from "@/components/BackgroundGredientIconButton";
 import MediaItem from "@/components/chat/MediaItem";
 import InfoBox from "@/components/chat/profile-info/InfoBox";
 import Options from "@/components/chat/profile-info/Options";
-import CustomIconSwitch from "@/components/CustomIconSwitch";
+import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
+import CommonBackButton from "@/components/common/CommonBackButton";
+import CustomIconSwitch from "@/components/common/CustomIconSwitch";
 import { ColorTheme } from "@/constants/colors";
 import { getChatHistoryById } from "@/controller/chat.controller";
+import { getIconColor } from "@/util/common.functions";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { I_Media } from "@/util/types/chat.types";
 import {
@@ -36,10 +38,7 @@ const ProfileInfo = () => {
   const router = useRouter();
   const isUserAdmin = true;
 
-  const iconColor =
-    theme === "light"
-      ? ColorTheme.light.text.primary
-      : ColorTheme.dark.text.primary;
+  const iconColor = getIconColor();
 
   const chat = getChatHistoryById(id as string, isCommunity);
   const mediaFiles: I_Media[] =
@@ -89,12 +88,7 @@ const ProfileInfo = () => {
                   className="h-full w-full"
                   resizeMode="contain"
                 />
-                <Pressable
-                  onPress={router.back}
-                  className="top-5 left-5 absolute h-10 w-10"
-                >
-                  <Entypo name="chevron-left" size={30} color={iconColor} />
-                </Pressable>
+                <CommonBackButton className="top-5 left-5 absolute h-10 w-10" />
 
                 {isUserAdmin && isCommunity ? (
                   <Pressable

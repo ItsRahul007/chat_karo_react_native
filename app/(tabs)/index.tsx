@@ -1,8 +1,9 @@
-import BackgroundGredientIconButton from "@/components/BackgroundGredientIconButton";
-import CommonTopBar from "@/components/CommonTopBar";
+import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
+import CommonTopBar from "@/components/common/CommonTopBar";
 import CommunityCard from "@/components/home/CommunityCard";
 import PersonCard from "@/components/home/PersonCard";
 import { ColorTheme } from "@/constants/colors";
+import { getIconColor } from "@/util/common.functions";
 import { SearchParams } from "@/util/enum";
 import { chatList, sampleCommunityData } from "@/util/sample.data";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -14,10 +15,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const index = () => {
   const theme = useColorScheme();
-  const iconColor =
-    theme === "light"
-      ? ColorTheme.light.text.primary
-      : ColorTheme.dark.text.primary;
+  const iconColor = getIconColor();
 
   return (
     <SafeAreaProvider>

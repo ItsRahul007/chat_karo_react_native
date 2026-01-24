@@ -8,6 +8,8 @@ enum FileTypes {
 enum SearchParams {
   person = "person",
   community = "community",
+  files = "files",
+  addCommunityMember = "add-community-member",
 }
 
 export { FileTypes, SearchParams };

@@ -1,7 +1,6 @@
-import { ColorTheme } from "@/constants/colors";
 import { saveMediaIntoDevice } from "@/controller/chat.controller";
 import useFetch from "@/custom-hooks/useFetch";
-import { generateThumbnail } from "@/util/common.functions";
+import { generateThumbnail, getIconColor } from "@/util/common.functions";
 import { I_Media } from "@/util/types/chat.types";
 import { AntDesign, Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
@@ -14,7 +13,6 @@ import {
   Modal,
   Pressable,
   Text,
-  useColorScheme,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -31,13 +29,9 @@ const MediaItem = ({
   containerClassName,
   isForChat = false,
 }: MediaItemProps) => {
-  const theme = useColorScheme();
   const [showPreview, setShowPreview] = useState(false);
 
-  const iconColor =
-    theme === "light"
-      ? ColorTheme.light.text.primary
-      : ColorTheme.dark.text.primary;
+  const iconColor = getIconColor();
 
   const player = useVideoPlayer(mediaUrl!, (player) => {
     player.loop = false;

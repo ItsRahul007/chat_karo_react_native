@@ -1,7 +1,9 @@
 import ChatMessage from "@/components/chat/ChatMessage";
-import GredientIcon from "@/components/GredientIcon";
+import CommonBackButton from "@/components/common/CommonBackButton";
+import GredientIcon from "@/components/common/GredientIcon";
 import { ColorTheme } from "@/constants/colors";
 import { getChatHistoryById } from "@/controller/chat.controller";
+import { getIconColor } from "@/util/common.functions";
 import { chatTopBarIconSize, gradientColors } from "@/util/constants";
 import { I_Messages } from "@/util/types/chat.types";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
@@ -37,10 +39,7 @@ const Chat = () => {
   let lastSender: string | undefined;
   const myId = "me";
 
-  const iconColor =
-    theme === "light"
-      ? ColorTheme.light.text.primary
-      : ColorTheme.dark.text.primary;
+  const iconColor = getIconColor();
 
   const placeholderColor =
     theme === "light"
@@ -113,9 +112,7 @@ const Chat = () => {
         {/* header component */}
         <View className="bg-light-background-primary dark:bg-dark-background-primary h-24 w-full">
           <View className="h-full w-full bg-light-background-secondary dark:bg-dark-background-secondary rounded-b-[2.5rem] flex-row items-center justify-center px-6">
-            <Pressable onPress={router.back}>
-              <Entypo name="chevron-left" size={30} color={iconColor} />
-            </Pressable>
+            <CommonBackButton />
 
             <Link
               href={`/chat/profile-info/${chat?.id}?isCommunity=${

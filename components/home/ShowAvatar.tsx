@@ -9,8 +9,8 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import CommonRoundedIconButton from "../CommonRoundedIconButton";
-import CustomIconSwitch from "../CustomIconSwitch";
+import CommonRoundedIconButton from "../common/CommonRoundedIconButton";
+import CustomIconSwitch from "../common/CustomIconSwitch";
 import UnreadMessageCount from "./UnreadMessageCount";
 
 interface ShowAvatarProps {
