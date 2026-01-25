@@ -28,8 +28,8 @@ const CommunityCard = ({
   return (
     <Link asChild href={`/chat/${id}?isCommunity=true`}>
       <Pressable
-        className={`bg-light-comunityCard-background dark:bg-dark-comunityCard-background h-48 ${
-          isExpanded ? "w-[26rem]" : "w-72"
+        className={`bg-light-comunityCard-background dark:bg-dark-comunityCard-background ${
+          isExpanded ? "w-[26rem] h-44" : "w-72 h-48"
         } flex flex-col rounded-3xl px-4 py-2 justify-evenly`}
       >
         <ShowAvatar
@@ -58,6 +58,12 @@ const CommunityCard = ({
               >
                 {name}
               </Text>
+              {isExpanded ? (
+                <MessageBox
+                  messagedPersonName={messagedPersonName}
+                  lastMessage={lastMessage}
+                />
+              ) : null}
             </View>
             {unreadMessageCount ? (
               <UnreadMessageCount count={unreadMessageCount} />
@@ -65,19 +71,12 @@ const CommunityCard = ({
           </View>
         </View>
 
-        <View className="flex-row gap-x-1 items-center">
-          <Text className="text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary font-bold text-base">
-            {messagedPersonName}
-          </Text>
-          <View className="flex-1">
-            <Text
-              className="overflow-ellipsis text-light-comunityCard-textSecondary dark:text-light-comunityCard-textSecondary font-semibold text-base"
-              numberOfLines={1}
-            >
-              {lastMessage}
-            </Text>
-          </View>
-        </View>
+        {!isExpanded ? (
+          <MessageBox
+            messagedPersonName={messagedPersonName}
+            lastMessage={lastMessage}
+          />
+        ) : null}
 
         <View className="flex-row items-center justify-start">
           <AvatarGroup users={users} limit={limit} />
@@ -88,3 +87,27 @@ const CommunityCard = ({
 };
 
 export default CommunityCard;
+
+const MessageBox = ({
+  messagedPersonName,
+  lastMessage,
+}: {
+  messagedPersonName: string;
+  lastMessage: string;
+}) => {
+  return (
+    <View className="flex-row gap-x-1 items-center">
+      <Text className="text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary font-bold text-base">
+        {messagedPersonName}
+      </Text>
+      <View className="flex-1">
+        <Text
+          className="overflow-ellipsis text-light-comunityCard-textSecondary dark:text-light-comunityCard-textSecondary font-semibold text-base"
+          numberOfLines={1}
+        >
+          {lastMessage}
+        </Text>
+      </View>
+    </View>
+  );
+};

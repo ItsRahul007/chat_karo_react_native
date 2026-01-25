@@ -29,6 +29,8 @@ interface PersonCardProps {
   id: string;
   avatar: string;
   name: string;
+  userName: string;
+  email: string;
   lastMessage: string;
   unreadMessageCount?: number;
   lastMessageTime: string;

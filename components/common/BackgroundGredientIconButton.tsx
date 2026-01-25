@@ -7,13 +7,15 @@ const BackgroundGredientIconButton = ({
   icon,
   onPress,
   size,
+  className,
 }: {
   icon: React.ReactNode;
   onPress: () => void;
   size: number;
+  className?: string;
 }) => {
   return (
-    <Pressable onPress={onPress}>
+    <Pressable onPress={onPress} className={className}>
       <View className="rounded-full h-16 w-16 overflow-hidden items-center justify-center">
         <LinearGradient
           colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}

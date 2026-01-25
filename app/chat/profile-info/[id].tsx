@@ -6,7 +6,7 @@ import CommonBackButton from "@/components/common/CommonBackButton";
 import CustomIconSwitch from "@/components/common/CustomIconSwitch";
 import { ColorTheme } from "@/constants/colors";
 import { getChatHistoryById } from "@/controller/chat.controller";
-import { getIconColor } from "@/util/common.functions";
+import { useIconColor } from "@/util/common.functions";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { I_Media } from "@/util/types/chat.types";
 import {
@@ -16,7 +16,7 @@ import {
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { Link, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -35,10 +35,9 @@ const ProfileInfo = () => {
   const { id, isCommunity: community } = useLocalSearchParams();
   const isCommunity = community === "true";
   const theme = useColorScheme();
-  const router = useRouter();
   const isUserAdmin = true;
 
-  const iconColor = getIconColor();
+  const iconColor = useIconColor();
 
   const chat = getChatHistoryById(id as string, isCommunity);
   const mediaFiles: I_Media[] =
@@ -239,7 +238,11 @@ const ProfileInfo = () => {
                     <Text className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
                       Members
                     </Text>
-                    <Link asChild href={`/search?for=members`}>
+                    <Link
+                      asChild
+                      // href={`/search?for=${SearchParams.addCommunityMember}&conversationId=${id}`}
+                      href={`/community/members/${id}`}
+                    >
                       <Pressable className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary">
                         <Entypo name="plus" size={28} color={iconColor} />
                       </Pressable>

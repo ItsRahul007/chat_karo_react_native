@@ -3,7 +3,11 @@ import CommonTopBar from "@/components/common/CommonTopBar";
 import CommunityCard from "@/components/home/CommunityCard";
 import PersonCard from "@/components/home/PersonCard";
 import { ColorTheme } from "@/constants/colors";
-import { getIconColor } from "@/util/common.functions";
+import { useIconColor } from "@/util/common.functions";
+import {
+  gradientIconButtonIconSize,
+  gradientIconButtonSize,
+} from "@/util/constants";
 import { SearchParams } from "@/util/enum";
 import { chatList, sampleCommunityData } from "@/util/sample.data";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -15,7 +19,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const index = () => {
   const theme = useColorScheme();
-  const iconColor = getIconColor();
+  const iconColor = useIconColor();
 
   return (
     <SafeAreaProvider>
@@ -73,12 +77,12 @@ const index = () => {
             icon={
               <MaterialCommunityIcons
                 name="chat-plus"
-                size={25}
+                size={gradientIconButtonIconSize}
                 color="white"
               />
             }
             onPress={() => console.log("add chat")}
-            size={80}
+            size={gradientIconButtonSize}
           />
         </View>
       </SafeAreaView>

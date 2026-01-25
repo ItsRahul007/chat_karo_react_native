@@ -3,7 +3,7 @@ import CommonBackButton from "@/components/common/CommonBackButton";
 import GredientIcon from "@/components/common/GredientIcon";
 import { ColorTheme } from "@/constants/colors";
 import { getChatHistoryById } from "@/controller/chat.controller";
-import { getIconColor } from "@/util/common.functions";
+import { useIconColor } from "@/util/common.functions";
 import { chatTopBarIconSize, gradientColors } from "@/util/constants";
 import { I_Messages } from "@/util/types/chat.types";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
@@ -39,7 +39,7 @@ const Chat = () => {
   let lastSender: string | undefined;
   const myId = "me";
 
-  const iconColor = getIconColor();
+  const iconColor = useIconColor();
 
   const placeholderColor =
     theme === "light"

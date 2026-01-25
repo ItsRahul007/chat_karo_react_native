@@ -1,6 +1,6 @@
 import { saveMediaIntoDevice } from "@/controller/chat.controller";
 import useFetch from "@/custom-hooks/useFetch";
-import { generateThumbnail, getIconColor } from "@/util/common.functions";
+import { generateThumbnail, useIconColor } from "@/util/common.functions";
 import { I_Media } from "@/util/types/chat.types";
 import { AntDesign, Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
@@ -31,7 +31,7 @@ const MediaItem = ({
 }: MediaItemProps) => {
   const [showPreview, setShowPreview] = useState(false);
 
-  const iconColor = getIconColor();
+  const iconColor = useIconColor();
 
   const player = useVideoPlayer(mediaUrl!, (player) => {
     player.loop = false;

@@ -16,7 +16,7 @@ export const generateThumbnail = async (
   }
 };
 
-export const getIconColor = () => {
+export const useIconColor = () => {
   const theme = useColorScheme();
 
   if (theme === "light") {

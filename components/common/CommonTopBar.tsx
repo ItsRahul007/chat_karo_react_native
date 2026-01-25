@@ -1,37 +1,47 @@
 import { ColorTheme } from "@/constants/colors";
-import { getIconColor } from "@/util/common.functions";
+import { useIconColor } from "@/util/common.functions";
 import { SearchParams } from "@/util/enum";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import CommonBackButton from "./CommonBackButton";
 
-interface CommonTopBarProps {
+type BaseProps = {
   name?: string;
-  searchParams?: SearchParams;
   image?: string;
   showBackButton?: boolean;
-  showSearch?: boolean;
   onBackPress?: () => void;
-}
+};
 
-const CommonTopBar = ({
-  name,
-  searchParams,
-  image,
-  showBackButton = false,
-  showSearch = true,
-  onBackPress,
-}: CommonTopBarProps) => {
-  const router = useRouter();
-  const iconColor = getIconColor();
+type WithSearchProps = BaseProps & {
+  showSearch?: true;
+  searchParams: SearchParams;
+};
+
+type WithoutSearchProps = BaseProps & {
+  showSearch: false;
+  searchParams?: never;
+};
+
+type CommonTopBarProps = WithSearchProps | WithoutSearchProps;
+
+const CommonTopBar = (props: CommonTopBarProps) => {
+  const {
+    name,
+    image,
+    showBackButton = false,
+    onBackPress,
+    searchParams,
+    showSearch = true,
+  } = props;
+  const iconColor = useIconColor();
 
   return (
     <View className="flex-row items-center justify-between px-6 h-10 w-full">
       <View className="flex-row gap-x-4 items-center">
-        {showBackButton ? <CommonBackButton /> : null}
+        {showBackButton ? <CommonBackButton onBackPress={onBackPress} /> : null}
         {image ? (
           <View className="rounded-full h-14 w-14 overflow-hidden">
             <LinearGradient
