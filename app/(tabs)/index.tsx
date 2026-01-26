@@ -1,5 +1,7 @@
 import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
 import CommonTopBar from "@/components/common/CommonTopBar";
+import GredientIcon from "@/components/common/GredientIcon";
+import MyBlurView from "@/components/common/MyBlurView";
 import CommunityCard from "@/components/home/CommunityCard";
 import PersonCard from "@/components/home/PersonCard";
 import { ColorTheme } from "@/constants/colors";
@@ -13,8 +15,14 @@ import { chatList, sampleCommunityData } from "@/util/sample.data";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Link } from "expo-router";
-import React from "react";
-import { FlatList, Text, useColorScheme, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { FlatList, Pressable, Text, useColorScheme, View } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const index = () => {
@@ -72,19 +80,7 @@ const index = () => {
           />
         </View>
 
-        <View className="absolute right-2 bottom-28">
-          <BackgroundGredientIconButton
-            icon={
-              <MaterialCommunityIcons
-                name="chat-plus"
-                size={gradientIconButtonIconSize}
-                color="white"
-              />
-            }
-            onPress={() => console.log("add chat")}
-            size={gradientIconButtonSize}
-          />
-        </View>
+        <FloatingButton />
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -123,5 +119,101 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => (
     <View className="h-7 w-full bg-light-background-secondary dark:bg-dark-background-secondary rounded-t-[50px] absolute -bottom-9" />
   </View>
 );
+
+const FloatingButton = () => {
+  const [showOptions, setShowOptions] = useState(false);
+  const height = useSharedValue(0);
+  const right = useSharedValue(40);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      height: height.value,
+      width: height.value,
+      right: right.value,
+      bottom: right.value,
+    };
+  });
+
+  useEffect(() => {
+    height.value = withTiming(showOptions ? 224 : 0, {
+      duration: 250,
+      easing: Easing.inOut(Easing.ease),
+    });
+    right.value = withTiming(showOptions ? 12 : 40, {
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
+    });
+  }, [showOptions]);
+
+  return (
+    <View className="absolute right-2 bottom-24">
+      <View className="relative">
+        <BackgroundGredientIconButton
+          icon={
+            <MaterialCommunityIcons
+              name="chat-plus"
+              size={gradientIconButtonIconSize}
+              color="white"
+            />
+          }
+          onPress={() => setShowOptions(!showOptions)}
+          size={gradientIconButtonSize}
+          className={`z-50 rounded-full border-[20px] ${showOptions ? "border-white" : "border-transparent"}`}
+        />
+
+        <Animated.View
+          style={[animatedStyle]}
+          className={`absolute overflow-hidden rounded-xl rounded-tl-[12rem] z-10`}
+        >
+          <View className="h-56 w-56">
+            <MyBlurView className="flex-1 items-center relative">
+              <GredientIconButtonWithLabel
+                position="right-5 top-10"
+                label="New Chat"
+                icon={
+                  <MaterialCommunityIcons
+                    name="chat"
+                    size={gradientIconButtonIconSize}
+                  />
+                }
+              />
+              <GredientIconButtonWithLabel
+                position="left-5 bottom-5"
+                label="New Community"
+                icon={
+                  <MaterialIcons
+                    name="group"
+                    size={gradientIconButtonIconSize}
+                  />
+                }
+              />
+            </MyBlurView>
+          </View>
+        </Animated.View>
+      </View>
+    </View>
+  );
+};
+
+const GredientIconButtonWithLabel = ({
+  position,
+  label,
+  icon,
+}: {
+  position: string;
+  label: string;
+  icon: React.ReactElement;
+}) => {
+  return (
+    <Pressable
+      className={`flex-col items-center justify-center absolute ${position}`}
+    >
+      <View className="bg-white rounded-full p-4 items-center justify-center">
+        <GredientIcon icon={icon} size={gradientIconButtonIconSize} />
+      </View>
+      <Text className="text-white text-sm font-medium">{label}</Text>
+    </Pressable>
+  );
+};
 
 export default index;

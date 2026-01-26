@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import CommonRoundedIconButton from "../common/CommonRoundedIconButton";
 import CustomIconSwitch from "../common/CustomIconSwitch";
+import MyBlurView from "../common/MyBlurView";
 import UnreadMessageCount from "./UnreadMessageCount";
 
 interface ShowAvatarProps {
@@ -57,57 +58,59 @@ const ShowAvatar = ({
       onRequestClose={onClose}
       style={{ flex: 1 }}
     >
-      <Pressable
-        onPress={onClose}
-        className="flex-1 bg-black/70 items-center justify-center"
-      >
-        <TouchableWithoutFeedback>
-          <View className="w-[22rem] h-auto items-center justify-center mx-auto gap-y-2">
-            <View className="rounded-[2.5rem] overflow-hidden h-[27rem] w-full relative">
-              {unreadMessageCount ? (
-                <View className="absolute top-7 right-10 z-50">
-                  <UnreadMessageCount count={unreadMessageCount} />
-                </View>
-              ) : null}
+      <MyBlurView>
+        <Pressable
+          onPress={onClose}
+          className="flex-1 items-center justify-center bg-black/50"
+        >
+          <TouchableWithoutFeedback>
+            <View className="w-[22rem] h-auto items-center justify-center mx-auto gap-y-2">
+              <View className="rounded-[2.5rem] overflow-hidden h-[27rem] w-full relative">
+                {unreadMessageCount ? (
+                  <View className="absolute top-7 right-10 z-50">
+                    <UnreadMessageCount count={unreadMessageCount} />
+                  </View>
+                ) : null}
 
-              <View className="w-full h-auto max-h-[83%]">
-                <Image
-                  source={{ uri: image }}
-                  className="w-full h-full"
-                  resizeMode="contain"
-                />
-              </View>
-              <View className="w-full flex-1 px-6 items-start justify-center bg-light-background-secondary dark:bg-dark-comunityCard-background">
-                <Text className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                  {name}
-                </Text>
-              </View>
-            </View>
-
-            <View className="flex-row items-center justify-between w-full">
-              <CustomIconSwitch
-                value={isEnabled}
-                onValueChange={toggleSwitch}
-              />
-              <View className="flex-row gap-x-2 items-center justify-end">
-                {actionIcons.map((icon, index) => (
-                  <CommonRoundedIconButton
-                    key={"CommonRoundedIconButtonKey-" + ++index}
-                    onPress={() => {}}
-                    icon={
-                      <Ionicons
-                        name={icon}
-                        size={profileInfoIconSize}
-                        color="black"
-                      />
-                    }
+                <View className="w-full h-auto max-h-[83%]">
+                  <Image
+                    source={{ uri: image }}
+                    className="w-full h-full"
+                    resizeMode="contain"
                   />
-                ))}
+                </View>
+                <View className="w-full flex-1 px-6 items-start justify-center bg-light-background-secondary dark:bg-dark-comunityCard-background">
+                  <Text className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
+                    {name}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-center justify-between w-full">
+                <CustomIconSwitch
+                  value={isEnabled}
+                  onValueChange={toggleSwitch}
+                />
+                <View className="flex-row gap-x-2 items-center justify-end">
+                  {actionIcons.map((icon, index) => (
+                    <CommonRoundedIconButton
+                      key={"CommonRoundedIconButtonKey-" + ++index}
+                      onPress={() => {}}
+                      icon={
+                        <Ionicons
+                          name={icon}
+                          size={profileInfoIconSize}
+                          color="black"
+                        />
+                      }
+                    />
+                  ))}
+                </View>
               </View>
             </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Pressable>
+          </TouchableWithoutFeedback>
+        </Pressable>
+      </MyBlurView>
     </Modal>
   );
 };

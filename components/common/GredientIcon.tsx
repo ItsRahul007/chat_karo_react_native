@@ -1,4 +1,5 @@
 import { ColorTheme } from "@/constants/colors";
+import { chatTopBarIconSize } from "@/util/constants";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
@@ -10,7 +11,11 @@ interface GredientIconProps {
   size?: number;
 }
 
-const GredientIcon = ({ icon, onPress, size = 24 }: GredientIconProps) => {
+const GredientIcon = ({
+  icon,
+  onPress,
+  size = chatTopBarIconSize,
+}: GredientIconProps) => {
   return (
     <Pressable onPress={onPress}>
       <MaskedView maskElement={icon}>

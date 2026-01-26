@@ -14,7 +14,11 @@ import BackgroundGredientIconButton from "../common/BackgroundGredientIconButton
 import PersonCardSkeleton from "../skeletons/PersonCardSkeleton";
 import SearchHeader from "./SearchHeader";
 
-const AddCommunityMemberSearchBody = () => {
+const AddCommunityMemberSearchBody = ({
+  communityId,
+}: {
+  communityId: string;
+}) => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [data, setData] = useState<PersonCardProps[]>([]);

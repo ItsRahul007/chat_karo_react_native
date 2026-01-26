@@ -5,11 +5,8 @@ import { SearchParams } from "@/util/enum";
 import { useLocalSearchParams } from "expo-router";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-//TODO: implement search and make sure it is dynamic
-
 const Search = () => {
   const { for: searchFor, conversationId } = useLocalSearchParams();
-  //TODO: compare the searchFor value with SearchParams values and based on that implement the search
 
   return (
     <SafeAreaProvider>
@@ -17,7 +14,9 @@ const Search = () => {
         {searchFor === SearchParams.person && <PersonSearchBody />}
         {searchFor === SearchParams.community && <CommunitySearchBody />}
         {searchFor === SearchParams.addCommunityMember && (
-          <AddCommunityMemberSearchBody />
+          <AddCommunityMemberSearchBody
+            communityId={conversationId as string}
+          />
         )}
       </SafeAreaView>
     </SafeAreaProvider>

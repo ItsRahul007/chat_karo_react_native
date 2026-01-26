@@ -7,6 +7,11 @@ import CustomIconSwitch from "@/components/common/CustomIconSwitch";
 import { ColorTheme } from "@/constants/colors";
 import { getChatHistoryById } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
+import {
+  chatTopBarIconSize,
+  gradientIconButtonIconSize,
+  profileInfoIconSize,
+} from "@/util/constants";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { I_Media } from "@/util/types/chat.types";
 import {
@@ -94,7 +99,11 @@ const ProfileInfo = () => {
                     onPress={pickImage}
                     className="absolute bottom-5 right-5 h-12 w-12 bg-black/50 items-center justify-center rounded-full"
                   >
-                    <Feather name="camera" size={24} color="white" />
+                    <Feather
+                      name="camera"
+                      size={chatTopBarIconSize}
+                      color="white"
+                    />
                   </Pressable>
                 ) : null}
 
@@ -103,7 +112,7 @@ const ProfileInfo = () => {
                     icon={
                       <MaterialCommunityIcons
                         name="chat"
-                        size={25}
+                        size={gradientIconButtonIconSize}
                         color="white"
                       />
                     }
@@ -133,7 +142,7 @@ const ProfileInfo = () => {
                       >
                         <Feather
                           name={isEditingName ? "check" : "edit-2"}
-                          size={20}
+                          size={profileInfoIconSize}
                           color={iconColor}
                         />
                       </Pressable>
@@ -166,7 +175,7 @@ const ProfileInfo = () => {
                       >
                         <Feather
                           name={isEditingAbout ? "check" : "edit-2"}
-                          size={18}
+                          size={profileInfoIconSize}
                           color={iconColor}
                         />
                       </Pressable>
@@ -185,7 +194,13 @@ const ProfileInfo = () => {
             {/* bottom options */}
             <View className="py-3 gap-y-2">
               <Options
-                icon={<Fontisto name="bell" size={24} color="white" />}
+                icon={
+                  <Fontisto
+                    name="bell"
+                    size={chatTopBarIconSize}
+                    color="white"
+                  />
+                }
                 title="Notification"
                 actionButton={
                   <CustomIconSwitch value={true} onValueChange={() => {}} />
@@ -197,7 +212,13 @@ const ProfileInfo = () => {
               >
                 <Pressable>
                   <Options
-                    icon={<Feather name="file" size={24} color="white" />}
+                    icon={
+                      <Feather
+                        name="file"
+                        size={chatTopBarIconSize}
+                        color="white"
+                      />
+                    }
                     title="Files"
                     subTitle={
                       mediaFiles && mediaFiles?.length > 0
@@ -208,7 +229,7 @@ const ProfileInfo = () => {
                     actionButton={
                       <Entypo
                         name="chevron-right"
-                        size={24}
+                        size={chatTopBarIconSize}
                         color={iconColor}
                       />
                     }
@@ -238,13 +259,13 @@ const ProfileInfo = () => {
                     <Text className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
                       Members
                     </Text>
-                    <Link
-                      asChild
-                      // href={`/search?for=${SearchParams.addCommunityMember}&conversationId=${id}`}
-                      href={`/community/members/${id}`}
-                    >
+                    <Link asChild href={`/community/members/${id}`}>
                       <Pressable className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                        <Entypo name="plus" size={28} color={iconColor} />
+                        <Entypo
+                          name="chevron-right"
+                          size={chatTopBarIconSize}
+                          color={iconColor}
+                        />
                       </Pressable>
                     </Link>
                   </View>
