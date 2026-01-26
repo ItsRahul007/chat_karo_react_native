@@ -30,7 +30,7 @@ const PersonCard = ({
       <Pressable className="relative" onPress={() => setIsProfileClicked(true)}>
         <Image source={{ uri: avatar }} className="w-16 h-16 rounded-full" />
         {isPined ? (
-          <View className="h-7 w-7 rounded-full bg-[#867fb4] absolute -top-1 left-0 border-light-background-secondary dark:border-dark-background-secondary border-2 justify-center items-center">
+          <View className="h-7 w-7 rounded-full bg-crossIconBg absolute -top-1 left-0 border-light-background-secondary dark:border-dark-background-secondary border-2 justify-center items-center">
             <AntDesign name="pushpin" size={10} color="white" />
           </View>
         ) : null}

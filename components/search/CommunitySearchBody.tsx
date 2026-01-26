@@ -1,8 +1,7 @@
 import { searchCommunity } from "@/controller/search.controller";
 import { CommunityCardProps } from "@/util/interfaces/commonInterfaces";
 import React, { useEffect, useState } from "react";
-import { Text, View } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
+import { FlatList, Text, View } from "react-native";
 import CommunityCard from "../home/CommunityCard";
 import CommunityCardSkeleton from "../skeletons/CommunityCardSkeleton";
 import SearchHeader from "./SearchHeader";

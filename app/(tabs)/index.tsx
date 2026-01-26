@@ -14,7 +14,7 @@ import { SearchParams } from "@/util/enum";
 import { chatList, sampleCommunityData } from "@/util/sample.data";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { FlatList, Pressable, Text, useColorScheme, View } from "react-native";
 import Animated, {
@@ -41,6 +41,7 @@ const index = () => {
           <CommonTopBar
             name="Rahul"
             searchParams={SearchParams.person}
+            showSearch
             image="https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg"
           />
         </View>
@@ -121,6 +122,7 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => (
 );
 
 const FloatingButton = () => {
+  const router = useRouter();
   const [showOptions, setShowOptions] = useState(false);
   const height = useSharedValue(0);
   const right = useSharedValue(40);
@@ -146,52 +148,70 @@ const FloatingButton = () => {
   }, [showOptions]);
 
   return (
-    <View className="absolute right-2 bottom-24">
-      <View className="relative">
-        <BackgroundGredientIconButton
-          icon={
-            <MaterialCommunityIcons
-              name="chat-plus"
-              size={gradientIconButtonIconSize}
-              color="white"
-            />
-          }
-          onPress={() => setShowOptions(!showOptions)}
-          size={gradientIconButtonSize}
-          className={`z-50 rounded-full border-[20px] ${showOptions ? "border-white" : "border-transparent"}`}
+    <>
+      {showOptions && (
+        <Pressable
+          className="absolute top-0 bottom-0 left-0 right-0 z-40"
+          onPress={() => setShowOptions(false)}
         />
+      )}
+      <View className="absolute right-2 bottom-24 z-50">
+        <View className="relative">
+          <BackgroundGredientIconButton
+            icon={
+              <MaterialCommunityIcons
+                name="chat-plus"
+                size={gradientIconButtonIconSize}
+                color="white"
+              />
+            }
+            onPress={() => setShowOptions(!showOptions)}
+            size={gradientIconButtonSize}
+            className={`z-50 rounded-full border-[20px] ${showOptions ? "border-white" : "border-transparent"}`}
+          />
 
-        <Animated.View
-          style={[animatedStyle]}
-          className={`absolute overflow-hidden rounded-xl rounded-tl-[12rem] z-10`}
-        >
-          <View className="h-56 w-56">
-            <MyBlurView className="flex-1 items-center relative">
-              <GredientIconButtonWithLabel
-                position="right-5 top-10"
-                label="New Chat"
-                icon={
-                  <MaterialCommunityIcons
-                    name="chat"
-                    size={gradientIconButtonIconSize}
+          <Animated.View
+            style={[animatedStyle]}
+            className={`absolute overflow-hidden rounded-xl rounded-tl-[12rem] z-10`}
+          >
+            <View className={`h-56 w-56 ${showOptions ? "" : "bg-black/20"}`}>
+              {showOptions ? (
+                <MyBlurView className="flex-1 items-center relative">
+                  <GredientIconButtonWithLabel
+                    position="right-5 top-10"
+                    label="New Chat"
+                    icon={
+                      <MaterialCommunityIcons
+                        name="chat"
+                        size={gradientIconButtonIconSize}
+                      />
+                    }
+                    onPress={() => {
+                      setShowOptions(false);
+                      router.push(`/search?for=${SearchParams.person}`);
+                    }}
                   />
-                }
-              />
-              <GredientIconButtonWithLabel
-                position="left-5 bottom-5"
-                label="New Community"
-                icon={
-                  <MaterialIcons
-                    name="group"
-                    size={gradientIconButtonIconSize}
+                  <GredientIconButtonWithLabel
+                    position="left-5 bottom-5"
+                    label="New Community"
+                    icon={
+                      <MaterialIcons
+                        name="group"
+                        size={gradientIconButtonIconSize}
+                      />
+                    }
+                    onPress={() => {
+                      setShowOptions(false);
+                      router.push("/community/add-new");
+                    }}
                   />
-                }
-              />
-            </MyBlurView>
-          </View>
-        </Animated.View>
+                </MyBlurView>
+              ) : null}
+            </View>
+          </Animated.View>
+        </View>
       </View>
-    </View>
+    </>
   );
 };
 
@@ -199,17 +219,24 @@ const GredientIconButtonWithLabel = ({
   position,
   label,
   icon,
+  onPress,
 }: {
   position: string;
   label: string;
   icon: React.ReactElement;
+  onPress?: () => void;
 }) => {
   return (
     <Pressable
+      onPress={onPress}
       className={`flex-col items-center justify-center absolute ${position}`}
     >
       <View className="bg-white rounded-full p-4 items-center justify-center">
-        <GredientIcon icon={icon} size={gradientIconButtonIconSize} />
+        <GredientIcon
+          icon={icon}
+          size={gradientIconButtonIconSize}
+          onPress={onPress}
+        />
       </View>
       <Text className="text-white text-sm font-medium">{label}</Text>
     </Pressable>

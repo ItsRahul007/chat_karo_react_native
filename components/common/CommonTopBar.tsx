@@ -18,11 +18,13 @@ type BaseProps = {
 type WithSearchProps = BaseProps & {
   showSearch?: true;
   searchParams: SearchParams;
+  communityId?: string;
 };
 
 type WithoutSearchProps = BaseProps & {
   showSearch: false;
   searchParams?: never;
+  communityId?: never;
 };
 
 type CommonTopBarProps = WithSearchProps | WithoutSearchProps;
@@ -35,6 +37,7 @@ const CommonTopBar = (props: CommonTopBarProps) => {
     onBackPress,
     searchParams,
     showSearch = true,
+    communityId,
   } = props;
   const iconColor = useIconColor();
 
@@ -61,7 +64,10 @@ const CommonTopBar = (props: CommonTopBarProps) => {
         ) : null}
       </View>
       {showSearch ? (
-        <Link href={`/search?for=${searchParams}`} asChild>
+        <Link
+          href={`/search?for=${searchParams}${communityId ? `&communityId=${communityId}` : ""}`}
+          asChild
+        >
           <Pressable>
             <FontAwesome name="search" size={26} color={iconColor} />
           </Pressable>

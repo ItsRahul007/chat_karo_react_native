@@ -1,8 +1,7 @@
 import { searchPerson } from "@/controller/search.controller";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import React, { useEffect, useState } from "react";
-import { Text, View } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
+import { FlatList, Text, View } from "react-native";
 import PersonCard from "../home/PersonCard";
 import PersonCardSkeleton from "../skeletons/PersonCardSkeleton";
 import SearchHeader from "./SearchHeader";

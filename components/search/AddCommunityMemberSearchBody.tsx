@@ -1,15 +1,14 @@
 import { searchPerson } from "@/controller/search.controller";
-import { useIconColor } from "@/util/common.functions";
 import {
   gradientIconButtonIconSize,
   gradientIconButtonSize,
 } from "@/util/constants";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
-import { Entypo, FontAwesome } from "@expo/vector-icons";
+import { Entypo } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
+import { FlatList, Text, View } from "react-native";
+import AddMemberCard from "../common/AddMemberCard";
 import BackgroundGredientIconButton from "../common/BackgroundGredientIconButton";
 import PersonCardSkeleton from "../skeletons/PersonCardSkeleton";
 import SearchHeader from "./SearchHeader";
@@ -89,15 +88,11 @@ const AddCommunityMemberSearchBody = ({
           <FlatList
             data={data}
             renderItem={({ item }) => (
-              <View className="px-6">
-                <View className="bg-light-background-secondary dark:bg-dark-background-secondary rounded-3xl p-4">
-                  <AddMemberCard
-                    user={item}
-                    onSelectChange={handleSelectChange}
-                    isSelected={isUserSelected(item.id)}
-                  />
-                </View>
-              </View>
+              <AddMemberCard
+                user={item}
+                onSelectChange={handleSelectChange}
+                isSelected={isUserSelected(item.id)}
+              />
             )}
             keyExtractor={(item) => item.id}
             ListEmptyComponent={
@@ -128,59 +123,10 @@ const AddCommunityMemberSearchBody = ({
             console.log("add member");
           }}
           size={gradientIconButtonSize}
-          className="absolute bottom-8 right-8"
+          className="absolute bottom-0 right-2"
         />
       ) : null}
     </View>
-  );
-};
-
-interface AddMemberCardProps {
-  isSelected: boolean;
-  onSelectChange: (user: PersonCardProps) => void;
-  user: PersonCardProps;
-}
-
-const AddMemberCard = ({
-  isSelected,
-  onSelectChange,
-  user,
-}: AddMemberCardProps) => {
-  const iconColor = useIconColor();
-  const { id, avatar, name, userName } = user;
-
-  return (
-    <Pressable
-      className="w-full flex-row items-center justify-start gap-x-4"
-      onPress={() => onSelectChange(user)}
-    >
-      <View className="relative">
-        <Image source={{ uri: avatar }} className="w-16 h-16 rounded-full" />
-      </View>
-      <View className="flex-1 flex-row items-center justify-between">
-        <View className="flex-1">
-          <Text
-            className="text-light-text-primary dark:text-dark-text-primary font-bold overflow-ellipsis text-lg"
-            numberOfLines={1}
-          >
-            {name}
-          </Text>
-          <Text
-            className="overflow-ellipsis text-light-text-secondaryLight dark:text-dark-text-secondaryLight"
-            numberOfLines={1}
-          >
-            @{userName}
-          </Text>
-        </View>
-        <View className="items-end gap-y-1">
-          {isSelected ? (
-            <FontAwesome name="check-circle" size={24} color={iconColor} />
-          ) : (
-            <FontAwesome name="circle-o" size={24} color={iconColor} />
-          )}
-        </View>
-      </View>
-    </Pressable>
   );
 };
 

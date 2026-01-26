@@ -3,6 +3,7 @@ const ColorTheme = {
   gradientSecond: "#635ef7",
   messageCountBackground: "#f93887",
   typingText: "#7b76f7",
+  crossIconBg: "#867fb4",
   light: {
     bottomNav: {
       iconUnfocused: "#afaad2",
@@ -21,7 +22,7 @@ const ColorTheme = {
       textPrimary: "#1a1067",
       textSecondary: "#615a96",
     },
-    viewProfileButtonBg: "#ffffff"
+    viewProfileButtonBg: "#ffffff",
   },
   dark: {
     bottomNav: {
@@ -41,7 +42,7 @@ const ColorTheme = {
       textPrimary: "#e5e3fb",
       textSecondary: "#9891cc",
     },
-    viewProfileButtonBg: "#220c61"
+    viewProfileButtonBg: "#220c61",
   },
 };
 
