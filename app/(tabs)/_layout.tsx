@@ -69,10 +69,10 @@ const _layout = () => {
         }}
       />
       <Tabs.Screen
-        name="status"
+        name="story"
         options={{
           headerShown: false,
-          title: "Status",
+          title: "Story",
           tabBarIcon: ({ focused }) =>
             tabs({
               focused,

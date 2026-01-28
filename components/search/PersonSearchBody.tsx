@@ -6,7 +6,7 @@ import PersonCard from "../home/PersonCard";
 import PersonCardSkeleton from "../skeletons/PersonCardSkeleton";
 import SearchHeader from "./SearchHeader";
 
-const PersonSearchBody = () => {
+const PersonSearchBody = ({ newChat = false }: { newChat?: boolean }) => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [data, setData] = useState<PersonCardProps[]>([]);
   const [loading, setLoading] = useState<boolean>(false);

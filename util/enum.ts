@@ -9,6 +9,8 @@ enum SearchParams {
   person = "person",
   community = "community",
   addCommunityMember = "add-community-member",
+  newChat = "new-chat",
+  story = "story",
 }
 
 export { FileTypes, SearchParams };

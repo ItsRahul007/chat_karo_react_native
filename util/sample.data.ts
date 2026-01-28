@@ -2,6 +2,7 @@ import {
   CommunityCardProps,
   PersonCardProps,
 } from "./interfaces/commonInterfaces";
+import { I_Story } from "./types/story.types";
 
 export const sampleCommunityData: CommunityCardProps[] = [
   {
@@ -803,5 +804,124 @@ export const chatList: PersonCardProps[] = [
     lastMessage: "No worries, take your time.",
     lastMessageTime: "Mon",
     isTyping: false,
+  },
+];
+
+export const myStory: I_Story = {
+  id: "1",
+  name: "You",
+  avatar: "https://i.pravatar.cc/150?u=me",
+  media: [
+    {
+      mediaUrl:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60",
+      mediaType: "image",
+      timestamp: "2026-01-14T14:32:00",
+    },
+    {
+      mediaUrl:
+        "https://t3.ftcdn.net/jpg/06/16/34/92/360_F_616349295_hw3oZYyNeRrz2s1h2n6x5fBLwHUA4Gpw.jpg",
+      mediaType: "image",
+      timestamp: "2026-01-14T14:32:00",
+    },
+
+    {
+      mediaUrl:
+        "https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?w=500&auto=format&fit=crop&q=60",
+      mediaType: "image",
+      timestamp: "2026-01-28T15:00:00",
+    },
+  ],
+  isSeen: true,
+  isHidden: false,
+};
+
+export const otherUsersStory: I_Story[] = [
+  {
+    id: "2",
+    name: "John Doe",
+    avatar: "https://i.pravatar.cc/150?u=2",
+    media: [
+      {
+        mediaUrl:
+          "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&auto=format&fit=crop&q=60",
+        mediaType: "image",
+        timestamp: "2026-01-28T09:00:00",
+      },
+    ],
+    isSeen: false,
+    isHidden: false,
+  },
+  {
+    id: "3",
+    name: "Jane Smith",
+    avatar: "https://i.pravatar.cc/150?u=3",
+    media: [
+      {
+        mediaUrl:
+          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=60",
+        mediaType: "image",
+        timestamp: "2026-01-28T10:30:00",
+      },
+      {
+        mediaUrl:
+          "https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?w=500&auto=format&fit=crop&q=60",
+        mediaType: "image",
+        timestamp: "2026-01-28T10:35:00",
+      },
+    ],
+    isSeen: false,
+    isHidden: false,
+  },
+  {
+    id: "4",
+    name: "Mike Ross",
+    avatar: "https://i.pravatar.cc/150?u=4",
+    media: [
+      {
+        mediaUrl:
+          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60",
+        mediaType: "image",
+        timestamp: "2026-01-28T11:00:00",
+      },
+    ],
+    isSeen: true,
+    isHidden: false,
+  },
+  {
+    id: "5",
+    name: "Rachel Zane",
+    avatar: "https://i.pravatar.cc/150?u=5",
+    media: [
+      {
+        mediaUrl:
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=60",
+        mediaType: "image",
+        timestamp: "2026-01-28T12:00:00",
+      },
+    ],
+    isSeen: false,
+    isHidden: false,
+  },
+  {
+    id: "6",
+    name: "Harvey Specter",
+    avatar: "https://i.pravatar.cc/150?u=6",
+    media: [
+      {
+        mediaUrl:
+          "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&auto=format&fit=crop&q=60",
+        mediaType: "image",
+        timestamp: "2026-01-28T14:00:00",
+      },
+      {
+        mediaUrl:
+          "https://images.unsplash.com/photo-1522075469751-3a3694c60e9e?w=500&auto=format&fit=crop&q=60",
+        mediaType: "image",
+        timestamp: "2026-01-28T14:10:00",
+      },
+    ],
+    isSeen: true,
+    isHidden: false,
   },
 ];

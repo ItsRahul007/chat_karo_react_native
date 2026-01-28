@@ -167,16 +167,18 @@ const FloatingButton = () => {
             }
             onPress={() => setShowOptions(!showOptions)}
             size={gradientIconButtonSize}
-            className={`z-50 rounded-full border-[20px] ${showOptions ? "border-white" : "border-transparent"}`}
+            className={`z-50 rounded-full border-[20px] ${showOptions ? "border-light-background-secondary dark:border-dark-background-secondary" : "border-transparent"}`}
           />
 
           <Animated.View
             style={[animatedStyle]}
             className={`absolute overflow-hidden rounded-xl rounded-tl-[12rem] z-10`}
           >
-            <View className={`h-56 w-56 ${showOptions ? "" : "bg-black/20"}`}>
+            <View
+              className={`h-56 w-56 ${showOptions ? "" : "bg-black/20 dark:bg-white/20"}`}
+            >
               {showOptions ? (
-                <MyBlurView className="flex-1 items-center relative">
+                <MyBlurView className="flex-1 items-center relative" themeTint>
                   <GredientIconButtonWithLabel
                     position="right-5 top-10"
                     label="New Chat"
@@ -188,7 +190,9 @@ const FloatingButton = () => {
                     }
                     onPress={() => {
                       setShowOptions(false);
-                      router.push(`/search?for=${SearchParams.person}`);
+                      router.push(
+                        `/search?for=${SearchParams.person}&conversationId=${SearchParams.newChat}`,
+                      );
                     }}
                   />
                   <GredientIconButtonWithLabel
@@ -231,14 +235,16 @@ const GredientIconButtonWithLabel = ({
       onPress={onPress}
       className={`flex-col items-center justify-center absolute ${position}`}
     >
-      <View className="bg-white rounded-full p-4 items-center justify-center">
+      <View className="bg-light-background-secondary dark:bg-dark-background-secondary rounded-full p-4 items-center justify-center">
         <GredientIcon
           icon={icon}
           size={gradientIconButtonIconSize}
           onPress={onPress}
         />
       </View>
-      <Text className="text-white text-sm font-medium">{label}</Text>
+      <Text className="text-light-background-secondary  text-sm font-medium">
+        {label}
+      </Text>
     </Pressable>
   );
 };

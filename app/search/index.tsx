@@ -25,7 +25,11 @@ const Search = () => {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}
         >
-          {searchFor === SearchParams.person && <PersonSearchBody />}
+          {searchFor === SearchParams.person && (
+            <PersonSearchBody
+              newChat={conversationId === SearchParams.newChat}
+            />
+          )}
           {searchFor === SearchParams.community && <CommunitySearchBody />}
           {searchFor === SearchParams.addCommunityMember && (
             <AddCommunityMemberSearchBody
