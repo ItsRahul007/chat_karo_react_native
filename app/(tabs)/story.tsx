@@ -1,12 +1,10 @@
 import CommonTopBar from "@/components/common/CommonTopBar";
-import MyStoryCard from "@/components/story/MyStoryCard";
-import { ColorTheme } from "@/constants/colors";
+import MyStorySection from "@/components/story/MyStorySection";
+import OtherUsersStoryCard from "@/components/story/OtherUsersStoryCard";
 import { SearchParams } from "@/util/enum";
-import { myStory } from "@/util/sample.data";
-import { Entypo } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { otherUsersStory } from "@/util/sample.data";
 import React from "react";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const story = () => {
@@ -14,45 +12,27 @@ const story = () => {
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-light-background-primary dark:bg-dark-background-primary">
         <CommonTopBar name="Story" searchParams={SearchParams.story} />
-        {/* my story section */}
-        <View className="py-6 gap-y-4 max-h-64">
-          <Text className="text-light-text-primary dark:text-dark-text-primary font-bold text-xl px-6">
-            My Story
-          </Text>
+
+        <View className="flex-1 bg-light-background-secondary dark:bg-dark-background-secondary">
           <FlatList
-            data={myStory.media}
-            ListHeaderComponent={
-              <View className="rounded-3xl overflow-hidden">
-                <LinearGradient
-                  colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
-                  start={{ x: 0.5, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    width: 60,
-                    height: 140,
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Entypo name="plus" size={20} color="white" />
-                </LinearGradient>
-              </View>
-            }
+            data={otherUsersStory}
             renderItem={({ item }) => (
-              <MyStoryCard story={item} onPress={() => {}} />
+              <OtherUsersStoryCard story={item} onPress={() => {}} />
             )}
-            keyExtractor={(item) => item.mediaUrl}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              gap: 10,
-              paddingHorizontal: 50,
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            columnWrapperStyle={{
+              gap: 15,
+              paddingHorizontal: 15,
             }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              gap: 15,
+              paddingBottom: 100,
+            }}
+            ListHeaderComponent={<MyStorySection />}
           />
         </View>
-
-        {/* other users story section */}
-        <View></View>
       </SafeAreaView>
     </SafeAreaProvider>
   );
