@@ -4,7 +4,7 @@ import { useColorScheme } from "react-native";
 
 const MyBlurView = ({
   children,
-  className,
+  className = "flex-1",
   themeTint = false,
 }: {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ const MyBlurView = ({
       blurReductionFactor={20}
       experimentalBlurMethod="dimezisBlurView"
       tint={!themeTint ? "dark" : theme === "light" ? "dark" : "light"}
-      className={className ?? "flex-1"}
+      className={className}
     >
       {children}
     </BlurView>

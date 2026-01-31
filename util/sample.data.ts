@@ -814,7 +814,7 @@ export const myStory: I_Story = {
   media: [
     {
       mediaUrl:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format",
       mediaType: "image",
       timestamp: "2026-01-14T14:32:00",
     },
@@ -916,7 +916,7 @@ export const otherUsersStory: I_Story[] = [
       },
       {
         mediaUrl:
-          "https://images.unsplash.com/photo-1522075469751-3a3694c60e9e?w=500&auto=format&fit=crop&q=60",
+          "https://hips.hearstapps.com/hmg-prod/images/close-up-of-blossoming-rose-flower-royalty-free-image-1580853844.jpg?crop=0.668xw:1.00xh;0.248xw,0",
         mediaType: "image",
         timestamp: "2026-01-28T14:10:00",
       },

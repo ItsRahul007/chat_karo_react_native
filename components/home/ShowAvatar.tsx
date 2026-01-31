@@ -56,7 +56,8 @@ const ShowAvatar = ({
       transparent
       visible={visible}
       onRequestClose={onClose}
-      style={{ flex: 1 }}
+      statusBarTranslucent
+      presentationStyle="overFullScreen"
     >
       <MyBlurView>
         <Pressable

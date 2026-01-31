@@ -8,15 +8,19 @@ import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
 const MyStoryCard = ({
   story,
   onPress,
+  onRemove,
 }: {
   story: StoryMedia;
-  onPress: (story: StoryMedia) => void;
+  onPress: () => void;
+  onRemove?: (story: StoryMedia) => void;
 }) => {
   return (
     <View className="relative w-40 h-40 p-1">
-      <MyStoryCardRenderer story={story} />
+      <Pressable onPress={onPress} className="flex-1">
+        <MyStoryCardRenderer story={story} />
+      </Pressable>
       <Pressable
-        onPress={() => onPress(story)}
+        onPress={() => onRemove?.(story)}
         className="absolute right-0 top-0 bg-crossIconBg rounded-full p-1 items-center justify-center border-2 border-light-background-primary dark:border-dark-background-primary"
       >
         <Entypo name="cross" size={15} color="white" />

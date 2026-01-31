@@ -12,8 +12,8 @@ const OtherUsersStoryCard = ({
   onPress: () => void;
 }) => {
   const { name, media, avatar } = story;
-  const firstMedia = media[0];
-  const timestamp = new Date(firstMedia.timestamp).toLocaleTimeString([], {
+  const lastMedia = media[media.length - 1];
+  const timestamp = new Date(lastMedia.timestamp).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -21,8 +21,8 @@ const OtherUsersStoryCard = ({
   return (
     <Pressable onPress={onPress} className="flex-1 gap-y-4 max-w-56">
       <View className="bg-light-background-primary dark:bg-dark-background-primary flex-1 h-60  rounded-3xl overflow-hidden relative">
-        <StoryRenderer media={firstMedia} />
-        <Text className="absolute bottom-2 left-2 text-light-text-primary dark:text-dark-text-primary font-normal text-sm">
+        <StoryRenderer media={lastMedia} />
+        <Text className="absolute bottom-2 left-2 text-dark-text-primary font-normal text-sm bg-black/50 px-2 py-1 rounded-full">
           {timestamp}
         </Text>
       </View>
@@ -60,9 +60,7 @@ const StoryRenderer = ({ media }: { media: StoryMedia }) => {
   if (error) {
     return (
       <View className="w-full h-full items-center justify-center">
-        <Text className="text-light-text-primary dark:text-dark-text-primary">
-          Error
-        </Text>
+        <Text className="text-dark-text-primary">Error</Text>
       </View>
     );
   }
