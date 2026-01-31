@@ -848,6 +848,12 @@ export const otherUsersStory: I_Story[] = [
         mediaType: "image",
         timestamp: "2026-01-28T09:00:00",
       },
+      // {
+      //   mediaUrl:
+      //     "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+      //   mediaType: "video",
+      //   timestamp: "2026-01-28T09:00:00",
+      // },
     ],
     isSeen: false,
     isHidden: false,
@@ -898,6 +904,12 @@ export const otherUsersStory: I_Story[] = [
           "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=60",
         mediaType: "image",
         timestamp: "2026-01-28T12:00:00",
+      },
+      {
+        mediaUrl:
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+        mediaType: "video",
+        timestamp: "2026-01-28T09:00:00",
       },
     ],
     isSeen: false,

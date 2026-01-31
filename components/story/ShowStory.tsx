@@ -1,14 +1,30 @@
 import { profileInfoIconSize } from "@/util/constants";
 import { I_Story } from "@/util/types/story.types";
 import { Entypo, Feather } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import { Image, Modal, Text, View, useWindowDimensions } from "react-native";
+import { useVideoPlayer, VideoView } from "expo-video";
+import { useEffect, useRef, useState } from "react";
 import {
-  Directions,
+  FlatList,
+  Image,
+  Modal,
+  Text,
+  useWindowDimensions,
+  View,
+  ViewToken,
+} from "react-native";
+import {
   Gesture,
   GestureDetector,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  SharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CommonRoundedIconButton from "../common/CommonRoundedIconButton";
 import MyBlurView from "../common/MyBlurView";
@@ -28,29 +44,55 @@ const ShowStory = ({
   initialStoryIndex?: number;
   isMyStory?: boolean;
 }) => {
-  const [storyIndex, setStoryIndex] = useState<number>(initialStoryIndex);
-  const [mediaIndex, setMediaIndex] = useState<number>(initialMediaIndex);
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(initialStoryIndex);
+  const flatListRef = useRef<FlatList>(null);
+  const { width } = useWindowDimensions();
+  const scrollX = useSharedValue(0);
 
   useEffect(() => {
-    setStoryIndex(initialStoryIndex);
-    setMediaIndex(initialMediaIndex);
-  }, [initialStoryIndex, initialMediaIndex]);
-
-  const onSwipeRight = () => {
-    if (storyIndex < stories.length - 1) {
-      setStoryIndex(storyIndex + 1);
-      setMediaIndex(0);
+    if (showStory) {
+      setCurrentStoryIndex(initialStoryIndex);
+      scrollX.value = initialStoryIndex * width;
+      setTimeout(() => {
+        flatListRef.current?.scrollToIndex({
+          index: initialStoryIndex,
+          animated: false,
+        });
+      }, 0);
     }
-    console.log("swaipping right");
+  }, [showStory, initialStoryIndex, width]);
+
+  const onNextStory = () => {
+    if (currentStoryIndex < stories.length - 1) {
+      flatListRef.current?.scrollToIndex({
+        index: currentStoryIndex + 1,
+        animated: true,
+      });
+    } else {
+      onClose();
+    }
   };
 
-  const onSwipeLeft = () => {
-    if (storyIndex > 0) {
-      setStoryIndex(storyIndex - 1);
-      setMediaIndex(0);
+  const onPrevStory = () => {
+    if (currentStoryIndex > 0) {
+      flatListRef.current?.scrollToIndex({
+        index: currentStoryIndex - 1,
+        animated: true,
+      });
     }
-    console.log("swaipping left");
   };
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length > 0 && viewableItems[0].index != null) {
+        setCurrentStoryIndex(viewableItems[0].index);
+      }
+    },
+  ).current;
+
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollX.value = event.contentOffset.x;
+  });
 
   return (
     <Modal
@@ -64,13 +106,39 @@ const ShowStory = ({
       <GestureHandlerRootView style={{ flex: 1 }}>
         <MyBlurView>
           <SafeAreaView className="flex-1 relative">
-            <StoryCard
-              key={storyIndex}
-              story={stories[storyIndex]}
-              initialMediaIndex={mediaIndex}
-              onClose={onClose}
-              onSwipeLeft={onSwipeLeft}
-              onSwipeRight={onSwipeRight}
+            <Animated.FlatList
+              ref={flatListRef}
+              data={stories}
+              horizontal
+              pagingEnabled
+              onScroll={onScroll}
+              scrollEventThrottle={16}
+              keyExtractor={(_, index) => index.toString()}
+              getItemLayout={(_, index) => ({
+                length: width,
+                offset: width * index,
+                index,
+              })}
+              initialScrollIndex={initialStoryIndex}
+              viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+              onViewableItemsChanged={onViewableItemsChanged}
+              showsHorizontalScrollIndicator={false}
+              renderItem={({ item, index }) => (
+                <View style={{ width, paddingHorizontal: 4 }}>
+                  <StoryCard
+                    story={item}
+                    index={index}
+                    scrollX={scrollX}
+                    isActive={index === currentStoryIndex}
+                    initialMediaIndex={
+                      index === initialStoryIndex ? initialMediaIndex : 0
+                    }
+                    onClose={onClose}
+                    onSwipeRight={onNextStory}
+                    onSwipeLeft={onPrevStory}
+                  />
+                </View>
+              )}
             />
           </SafeAreaView>
         </MyBlurView>
@@ -81,12 +149,18 @@ const ShowStory = ({
 
 const StoryCard = ({
   story,
+  index,
+  scrollX,
+  isActive,
   initialMediaIndex,
   onClose,
   onSwipeLeft,
   onSwipeRight,
 }: {
   story: I_Story;
+  index: number;
+  scrollX: SharedValue<number>;
+  isActive: boolean;
   initialMediaIndex: number;
   onClose: () => void;
   onSwipeLeft: () => void;
@@ -94,49 +168,69 @@ const StoryCard = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialMediaIndex);
   const currentStory = story.media[currentIndex];
+  // Guard against undefined currentStory if index is out of sync momentarily
+  if (!currentStory) return null;
+
   const timestamp = new Date(currentStory.timestamp).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-  const swipeRightGuesture = Gesture.Fling()
-    .direction(Directions.RIGHT)
-    .onEnd(onSwipeLeft);
-
-  const swipeLeftGuesture = Gesture.Fling()
-    .direction(Directions.LEFT)
-    .onEnd(onSwipeRight);
-
   const { width } = useWindowDimensions();
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const inputRange = [
+      (index - 1) * width,
+      index * width,
+      (index + 1) * width,
+    ];
+
+    const rotateY = interpolate(
+      scrollX.value,
+      inputRange,
+      [20, 0, -20],
+      Extrapolation.CLAMP,
+    );
+
+    const scale = interpolate(
+      scrollX.value,
+      inputRange,
+      [0.9, 1, 0.9],
+      Extrapolation.CLAMP,
+    );
+
+    return {
+      transform: [
+        { perspective: 1000 },
+        { rotateY: `${rotateY}deg` },
+        { scale },
+      ],
+    };
+  });
+
   const tapGesture = Gesture.Tap()
     .onEnd((event) => {
       const x = event.x;
+      // Because of padding, width is slightly larger than card width, but center is roughly same
+      // Adjusting width check if needed, but width/2 is safe enough
       if (x > width / 2) {
         if (currentIndex < story.media.length - 1) {
           setCurrentIndex(currentIndex + 1);
         } else {
           onSwipeRight();
         }
-        console.log("tap right");
       } else {
         if (currentIndex > 0) {
           setCurrentIndex(currentIndex - 1);
         } else {
           onSwipeLeft();
         }
-        console.log("tap left");
       }
     })
     .runOnJS(true);
 
-  const combineGesture = Gesture.Simultaneous(
-    swipeRightGuesture,
-    swipeLeftGuesture,
-    tapGesture,
-  );
-
   return (
-    <View className="flex-1 relative">
+    <Animated.View className="flex-1 relative" style={animatedStyle}>
       {/* top section */}
       <View className="w-full h-16 flex-row items-start gap-x-1 px-4">
         {story.media.map((_, index) => (
@@ -151,12 +245,18 @@ const StoryCard = ({
 
       {/* story section */}
       <View className="flex-1 max-h-[80%] overflow-hidden" collapsable={false}>
-        <GestureDetector gesture={combineGesture}>
-          <Image
-            source={{ uri: currentStory.mediaUrl }}
-            className="w-full h-full"
-            resizeMode="contain"
-          />
+        <GestureDetector gesture={tapGesture}>
+          <View className="w-full h-full">
+            {currentStory.mediaType === "video" ? (
+              <StoryVideo uri={currentStory.mediaUrl} isActive={isActive} />
+            ) : (
+              <Image
+                source={{ uri: currentStory.mediaUrl }}
+                className="w-full h-full"
+                resizeMode="contain"
+              />
+            )}
+          </View>
         </GestureDetector>
       </View>
 
@@ -183,7 +283,34 @@ const StoryCard = ({
           />
         </View>
       </View>
-    </View>
+    </Animated.View>
+  );
+};
+
+const StoryVideo = ({ uri, isActive }: { uri: string; isActive: boolean }) => {
+  const player = useVideoPlayer(uri, (player) => {
+    player.loop = false;
+    if (isActive) {
+      player.play();
+    }
+  });
+
+  useEffect(() => {
+    if (isActive) {
+      player.currentTime = 0;
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isActive]);
+
+  return (
+    <VideoView
+      player={player}
+      style={{ width: "100%", height: "100%" }}
+      contentFit="contain"
+      nativeControls={false}
+    />
   );
 };
 
