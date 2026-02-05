@@ -185,26 +185,15 @@ const StoryCard = ({
       (index + 1) * width,
     ];
 
-    const rotateY = interpolate(
-      scrollX.value,
-      inputRange,
-      [20, 0, -20],
-      Extrapolation.CLAMP,
-    );
-
     const scale = interpolate(
       scrollX.value,
       inputRange,
-      [0.9, 1, 0.9],
+      [0.8, 1, 0.8],
       Extrapolation.CLAMP,
     );
 
     return {
-      transform: [
-        { perspective: 1000 },
-        { rotateY: `${rotateY}deg` },
-        { scale },
-      ],
+      transform: [{ perspective: 1000 }, { scale }],
     };
   });
 

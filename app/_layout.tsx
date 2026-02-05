@@ -1,8 +1,5 @@
 import { ColorTheme } from "@/constants/colors";
-import { usePushNotification } from "@/custom-hooks/usePushNotification";
-import * as Device from "expo-device";
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "./global.css";
@@ -15,16 +12,18 @@ export default function RootLayout() {
       ? ColorTheme.light.background.primary
       : ColorTheme.dark.background.primary;
 
-  if (Device.isDevice) {
-    usePushNotification();
-  }
-
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor }}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack>
+        <Stack.Screen
+          name="(protected)"
+          options={{ headerShown: false, animation: "none" }}
+        />
+        <Stack.Screen
+          name="login"
+          options={{ headerShown: false, animation: "none" }}
+        />
       </Stack>
-      <StatusBar style="auto" />
     </GestureHandlerRootView>
   );
 }
