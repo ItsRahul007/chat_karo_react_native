@@ -46,16 +46,18 @@ const CommonTopBar = (props: CommonTopBarProps) => {
       <View className="flex-row gap-x-4 items-center">
         {showBackButton ? <CommonBackButton onBackPress={onBackPress} /> : null}
         {image ? (
-          <View className="rounded-full h-14 w-14 overflow-hidden">
-            <LinearGradient
-              colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ height: 56, width: 56 }}
-            >
-              <Image source={{ uri: image }} className="w-full h-full" />
-            </LinearGradient>
-          </View>
+          <Link asChild href="/profile">
+            <Pressable className="rounded-full h-14 w-14 overflow-hidden">
+              <LinearGradient
+                colors={[ColorTheme.gradientFirst, ColorTheme.gradientSecond]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ height: 56, width: 56 }}
+              >
+                <Image source={{ uri: image }} className="w-full h-full" />
+              </LinearGradient>
+            </Pressable>
+          </Link>
         ) : null}
         {name ? (
           <Text className="text-light-text-primary dark:text-dark-text-primary text-2xl font-bold">

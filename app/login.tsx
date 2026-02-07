@@ -20,7 +20,7 @@ const Login = () => {
       <View className="flex-1 items-center justify-center px-6">
         {/* Header Section */}
         <View className="items-center justify-center mb-10 w-full">
-          <View className="shadow-xl shadow-indigo-500/20 bg-white/10 p-2 rounded-full mb-6">
+          <View className="shadow-xl shadow-indigo-500/20 bg-black/10 dark:bg-white/10 p-2 rounded-full mb-6">
             <Image
               source={splashImage}
               resizeMode="contain"

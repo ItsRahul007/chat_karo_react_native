@@ -117,7 +117,7 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => (
     </View>
 
     {/* Visual Transition to Chat List (Rounded Top) */}
-    <View className="h-7 w-full bg-light-background-secondary dark:bg-dark-background-secondary rounded-t-[50px] absolute -bottom-9" />
+    <View className="h-5 w-full bg-light-background-secondary dark:bg-dark-background-secondary rounded-t-[5rem] absolute -bottom-10" />
   </View>
 );
 
