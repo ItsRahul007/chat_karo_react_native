@@ -1,5 +1,6 @@
+import { AuthContext } from "@/context/AuthContext";
 import { AntDesign } from "@expo/vector-icons";
-import React from "react";
+import React, { useContext } from "react";
 import {
   Image,
   Text,
@@ -14,6 +15,7 @@ import splashImage from "../assets/images/splash-icon.png";
 const Login = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const authState = useContext(AuthContext);
 
   return (
     <SafeAreaView className="flex-1 bg-light-background-primary dark:bg-dark-background-primary">
@@ -41,6 +43,7 @@ const Login = () => {
           {/* Google Login Button */}
           <TouchableOpacity
             activeOpacity={0.8}
+            onPress={authState.login}
             className="w-full flex-row items-center justify-center bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 p-4 rounded-2xl shadow-sm"
           >
             <Image
@@ -57,6 +60,7 @@ const Login = () => {
           <TouchableOpacity
             activeOpacity={0.8}
             className="w-full flex-row items-center justify-center bg-black dark:bg-white p-4 rounded-2xl shadow-lg shadow-black/30"
+            // onPress={() => showToast("Login Successful", "alert")}
           >
             <AntDesign
               name="apple"

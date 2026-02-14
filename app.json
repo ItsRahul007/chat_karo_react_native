@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "chatkaroreactnative",
+    "scheme": "chatkaro",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.rahulghosh.chat-karo"
+      "bundleIdentifier": "com.rahulghosh.chatkaro",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "edgeToEdgeEnabled": true,
@@ -27,7 +28,8 @@
         "android.permission.ACCESS_MEDIA_LOCATION",
         "android.permission.READ_MEDIA_IMAGES"
       ],
-      "package": "com.rahulghosh.chat_karo"
+      "package": "com.rahulghosh.chatkaro",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -69,7 +71,8 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true,
