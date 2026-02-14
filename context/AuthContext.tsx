@@ -33,7 +33,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         return;
       }
 
-      const { error } = await supabase.auth.signInWithIdToken({
+      const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: response.data.idToken,
       });
@@ -43,7 +43,18 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         return;
       }
 
-      showToast("Login Successful", "success");
+      //! if it is a new user, move him to profile?id=new route
+      const isUserExists = await supabase
+        .from("users")
+        .select("email")
+        .eq("email", data.user.email)
+        .single();
+
+      if (isUserExists.data == null) {
+        setIsLoggedIn(true);
+        router.replace("/profile/new");
+        return;
+      }
 
       setIsLoggedIn(true);
       router.replace("/");
@@ -82,12 +93,27 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     });
 
     const checkSession = async () => {
-      await new Promise((resolve) => setTimeout(() => resolve(null), 3000));
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setIsLoggedIn(true);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          const isUserExists = await supabase
+            .from("users")
+            .select("email")
+            .eq("email", data.session.user.email)
+            .single();
+
+          if (isUserExists.data == null) {
+            setIsLoggedIn(true);
+            router.replace("/profile/new");
+            return;
+          }
+          setIsLoggedIn(true);
+        }
+      } catch (error) {
+        console.error("Session check failed", error);
+      } finally {
+        setIsReady(true);
       }
-      setIsReady(true);
     };
     checkSession();
   }, []);

@@ -1,7 +1,8 @@
 import { ColorTheme } from "@/constants/colors";
+import { AuthContext } from "@/context/AuthContext";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Link } from "expo-router";
-import React from "react";
+import React, { useContext } from "react";
 import {
   Image,
   Pressable,
@@ -27,6 +28,8 @@ const user = {
 };
 
 const ProfileScreen = () => {
+  const authState = useContext(AuthContext);
+
   return (
     <SafeAreaView className="flex-1 bg-light-background-primary dark:bg-dark-background-primary">
       {/* Header */}
@@ -89,7 +92,12 @@ const ProfileScreen = () => {
           <MenuButton icon="gear" label="Settings" />
           <MenuButton icon="bell" label="Notifications" />
           <MenuButton icon="question-circle" label="Help & Support" />
-          <MenuButton icon="sign-out" label="Log Out" isDestructive />
+          <MenuButton
+            icon="sign-out"
+            label="Log Out"
+            isDestructive
+            onPress={authState.logout}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -100,16 +108,21 @@ const MenuButton = ({
   icon,
   label,
   isDestructive = false,
+  onPress,
 }: {
   icon: keyof typeof FontAwesome.glyphMap;
   label: string;
   isDestructive?: boolean;
+  onPress?: () => void;
 }) => {
   const theme = useColorScheme();
   const isDark = theme === "dark";
 
   return (
-    <Pressable className="flex-row items-center p-4 bg-light-background-secondary dark:bg-dark-background-secondary rounded-2xl active:opacity-70">
+    <Pressable
+      className="flex-row items-center p-4 bg-light-background-secondary dark:bg-dark-background-secondary rounded-2xl active:opacity-70"
+      onPress={onPress}
+    >
       <View
         className={`w-10 h-10 rounded-full items-center justify-center ${
           isDestructive

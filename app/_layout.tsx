@@ -2,13 +2,10 @@ import { ColorTheme } from "@/constants/colors";
 import AuthProvider, { AuthContext } from "@/context/AuthContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useCallback, useContext, useEffect } from "react";
+import { useContext } from "react";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "./global.css";
-
-SplashScreen.preventAutoHideAsync();
 
 const RootLayoutNav = () => {
   const colorScheme = useColorScheme();
@@ -19,25 +16,8 @@ const RootLayoutNav = () => {
       ? ColorTheme.light.background.primary
       : ColorTheme.dark.background.primary;
 
-  useEffect(() => {
-    SplashScreen.preventAutoHideAsync();
-  }, []);
-
-  const onLayoutRootView = useCallback(async () => {
-    if (authState.isReady) {
-      // await SplashScreen.hideAsync();
-    }
-  }, [authState.isReady]);
-
-  if (!authState.isReady) {
-    return null;
-  }
-
   return (
-    <GestureHandlerRootView
-      style={{ flex: 1, backgroundColor }}
-      onLayout={onLayoutRootView}
-    >
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor }}>
       <Stack>
         <Stack.Protected guard={authState.isLoggedIn}>
           <Stack.Screen

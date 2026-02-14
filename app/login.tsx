@@ -1,6 +1,6 @@
 import { AuthContext } from "@/context/AuthContext";
 import { AntDesign } from "@expo/vector-icons";
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import {
   Image,
   Text,
@@ -8,6 +8,14 @@ import {
   View,
   useColorScheme,
 } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import googleIcon from "../assets/images/google-icon.png";
 import splashImage from "../assets/images/splash-icon.png";
@@ -16,6 +24,10 @@ const Login = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const authState = useContext(AuthContext);
+
+  if (!authState.isReady) {
+    return <LoadingScreen />;
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-light-background-primary dark:bg-dark-background-primary">
@@ -78,6 +90,56 @@ const Login = () => {
         </Text>
       </View>
     </SafeAreaView>
+  );
+};
+
+const LoadingScreen = () => {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(0.5);
+
+  useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.2, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      true,
+    );
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1000 }),
+        withTiming(0.5, { duration: 1000 }),
+      ),
+      -1,
+      true,
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const textStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  return (
+    <View className="flex-1 items-center justify-center bg-light-background-primary dark:bg-dark-background-primary">
+      <Animated.View style={animatedStyle} className="mb-8">
+        <Image
+          source={splashImage}
+          className="w-32 h-32"
+          resizeMode="contain"
+        />
+      </Animated.View>
+      <Animated.Text
+        style={textStyle}
+        className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary tracking-widest"
+      >
+        CHAT KARO
+      </Animated.Text>
+    </View>
   );
 };
 
