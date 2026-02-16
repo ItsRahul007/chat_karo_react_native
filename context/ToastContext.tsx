@@ -3,9 +3,11 @@ import React, {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useState,
 } from "react";
-import { Toast, ToastType } from "../components/Toast";
+import { ToastComponent, ToastType } from "../components/ToastComponent";
+import { Toast as ToastService } from "../util/toast";
 
 interface ToastContextProps {
   showToast: (message: string, type: ToastType) => void;
@@ -34,11 +36,19 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
     setToast((prev) => ({ ...prev, visible: false }));
   }, []);
 
+  useEffect(() => {
+    ToastService.setRef(showToast, hideToast);
+  }, [showToast, hideToast]);
+
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
       {toast.visible && (
-        <Toast message={toast.message} type={toast.type} onHide={hideToast} />
+        <ToastComponent
+          message={toast.message}
+          type={toast.type}
+          onHide={hideToast}
+        />
       )}
     </ToastContext.Provider>
   );

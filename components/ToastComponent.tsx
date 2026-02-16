@@ -1,8 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
-import { Animated, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Animated,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-export type ToastType = "success" | "error" | "alert";
+export type ToastType = "success" | "error" | "alert" | "loading";
 
 interface ToastProps {
   message: string;
@@ -10,30 +16,42 @@ interface ToastProps {
   onHide: () => void;
 }
 
-export const Toast: React.FC<ToastProps> = ({ message, type, onHide }) => {
+export const ToastComponent: React.FC<ToastProps> = ({
+  message,
+  type,
+  onHide,
+}) => {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Reset opacity to 0 before starting animation
     opacity.setValue(0);
 
-    const animation = Animated.sequence([
+    const sequence = [
       Animated.timing(opacity, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }),
-      Animated.delay(3000),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]);
+    ];
+
+    if (type !== "loading") {
+      sequence.push(Animated.delay(3000));
+      sequence.push(
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      );
+    }
+
+    const animation = Animated.sequence(sequence);
 
     animation.start((result) => {
       // Only call onHide if the animation finished normally (wasn't stopped)
-      if (result.finished) {
+      // and it's not a loading toast (which stays visible)
+      if (result.finished && type !== "loading") {
         onHide();
       }
     });
@@ -41,7 +59,7 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onHide }) => {
     return () => {
       animation.stop();
     };
-  }, [message]); // Re-run animation when message changes
+  }, [message, type]); // Re-run animation when message or type changes
 
   const getBackgroundColor = () => {
     switch (type) {
@@ -51,6 +69,8 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onHide }) => {
         return "bg-red-500";
       case "alert":
         return "bg-yellow-500";
+      case "loading":
+        return "bg-gray-800";
       default:
         return "bg-blue-500";
     }
@@ -83,7 +103,11 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onHide }) => {
       <View
         className={`${getBackgroundColor()} flex-row items-center p-4 rounded-lg shadow-lg`}
       >
-        <Ionicons name={getIconName()} size={24} color="white" />
+        {type === "loading" ? (
+          <ActivityIndicator size="small" color="white" />
+        ) : (
+          <Ionicons name={getIconName()} size={24} color="white" />
+        )}
         <Text className="text-white font-medium ml-3 flex-1">{message}</Text>
         <TouchableOpacity onPress={onHide}>
           <Ionicons name="close" size={20} color="white" />

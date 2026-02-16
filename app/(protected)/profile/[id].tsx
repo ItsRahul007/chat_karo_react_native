@@ -1,8 +1,9 @@
 import CommonBackButton from "@/components/common/CommonBackButton";
 import { ColorTheme } from "@/constants/colors";
-import { useToast } from "@/context/ToastContext";
-import { createUser } from "@/controller/auth.controller";
+import { createUser, updateUser } from "@/controller/profile.controller";
+import { handleUploadFile } from "@/util/common.functions";
 import { supabase } from "@/util/supabase";
+import { Toast } from "@/util/toast";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
@@ -20,7 +21,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const EditProfileScreen = () => {
-  const { showToast } = useToast();
   const router = useRouter();
   const { id } = useLocalSearchParams(); // Access ID if needed in future
 
@@ -30,6 +30,8 @@ const EditProfileScreen = () => {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("Hey bro! Chat karo 😜");
   const [image, setImage] = useState("");
+  const [imageFile, setImageFile] =
+    useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const isUsernameValid = username.trim().length > 0 && !/[\s.]/.test(username);
 
@@ -43,19 +45,33 @@ const EditProfileScreen = () => {
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 1,
+      quality: 0.3,
     });
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
+      setImageFile(result.assets[0]);
     }
   };
 
   const handleSave = async () => {
     if (!isFormValid) return;
+
+    if (imageFile) {
+      const { success, data } = await handleUploadFile(
+        imageFile,
+        "profile-pictures",
+      );
+      if (!success || !data) {
+        Toast.error("Failed to upload image");
+        return;
+      }
+
+      setImage(data);
+    }
 
     if (id === "new") {
       const { success } = await createUser({
@@ -64,13 +80,22 @@ const EditProfileScreen = () => {
         userName: username,
         bio,
         image,
-        showToast,
       });
       if (success) {
         router.replace("/");
       }
     } else {
-      router.back();
+      const { success } = await updateUser({
+        firstName,
+        lastName,
+        userName: username,
+        bio,
+        image,
+      });
+
+      if (success) {
+        router.back();
+      }
     }
   };
 
@@ -79,7 +104,7 @@ const EditProfileScreen = () => {
 
     if (error) {
       console.error("Error getting user:", error);
-      showToast("Something went wrong", "error");
+      Toast.error("Something went wrong");
       return;
     }
 
@@ -101,7 +126,7 @@ const EditProfileScreen = () => {
 
     if (profileError) {
       console.error("Error getting profile:", profileError);
-      showToast("Something went wrong", "error");
+      Toast.error("Something went wrong");
       return;
     }
 
@@ -149,7 +174,7 @@ const EditProfileScreen = () => {
             >
               {image ? (
                 <Image
-                  source={{ uri: image }}
+                  source={imageFile ? { uri: imageFile.uri } : { uri: image }}
                   className="w-32 h-32 rounded-full border-4 border-light-background-secondary dark:border-dark-background-secondary"
                 />
               ) : (
