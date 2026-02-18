@@ -1,11 +1,14 @@
 import { ColorTheme } from "@/constants/colors";
 import AuthProvider, { AuthContext } from "@/context/AuthContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useContext } from "react";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "./global.css";
+
+const queryClient = new QueryClient();
 
 const RootLayoutNav = () => {
   const colorScheme = useColorScheme();
@@ -38,10 +41,12 @@ const RootLayoutNav = () => {
 
 export default function RootLayout() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <RootLayoutNav />
-      </AuthProvider>
-    </ToastProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   );
 }

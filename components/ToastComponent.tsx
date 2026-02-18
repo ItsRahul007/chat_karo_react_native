@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Animated,
+  PanResponder,
   Text,
   TouchableOpacity,
   View,
@@ -22,10 +23,35 @@ export const ToastComponent: React.FC<ToastProps> = ({
   onHide,
 }) => {
   const opacity = useRef(new Animated.Value(0)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        translateX.setValue(gestureState.dx);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (Math.abs(gestureState.dx) > 100) {
+          Animated.timing(translateX, {
+            toValue: gestureState.dx > 0 ? 500 : -500,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => onHide());
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    }),
+  ).current;
 
   useEffect(() => {
-    // Reset opacity to 0 before starting animation
+    // Reset opacity and translateX before starting animation
     opacity.setValue(0);
+    translateX.setValue(0);
 
     const sequence = [
       Animated.timing(opacity, {
@@ -93,12 +119,14 @@ export const ToastComponent: React.FC<ToastProps> = ({
     <Animated.View
       style={{
         opacity,
+        transform: [{ translateX }],
         position: "absolute",
         top: 60,
         left: 20,
         right: 20,
         zIndex: 100,
       }}
+      {...panResponder.panHandlers}
     >
       <View
         className={`${getBackgroundColor()} flex-row items-center p-4 rounded-lg shadow-lg`}

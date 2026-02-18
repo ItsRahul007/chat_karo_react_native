@@ -4,6 +4,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Link } from "expo-router";
 import React, { useContext } from "react";
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
@@ -14,21 +15,23 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Dummy User Data (Replace with real data later)
-const user = {
-  id: "me",
-  name: "Rahul",
-  avatar: "https://i.pravatar.cc/150?u=me",
-  username: "@itsrahul007",
-  about: "React Native Developer | Tech Enthusiast | Coffee Lover",
-  stats: [
-    { label: "Communities", value: 12 },
-    { label: "Connections", value: 345 },
-    { label: "Stories", value: 5 },
-  ],
-};
+const stats = [
+  { label: "Communities", value: 12 },
+  { label: "Connections", value: 345 },
+  { label: "Stories", value: 5 },
+];
 
 const ProfileScreen = () => {
   const authState = useContext(AuthContext);
+  const user = authState.user;
+
+  if (!user) {
+    return (
+      <SafeAreaView className="flex-1 bg-light-background-primary dark:bg-dark-background-primary justify-center items-center">
+        <ActivityIndicator size="large" color={ColorTheme.gradientFirst} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-light-background-primary dark:bg-dark-background-primary">
@@ -60,10 +63,10 @@ const ProfileScreen = () => {
 
         {/* Name & Handle */}
         <Text className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary mb-1">
-          {user.name}
+          {user.firstName + " " + user.lastName}
         </Text>
         <Text className="text-lg text-light-text-secondaryLight dark:text-dark-text-secondaryLight mb-6">
-          {user.username}
+          @{user.userName}
         </Text>
 
         {/* About */}
@@ -75,7 +78,7 @@ const ProfileScreen = () => {
 
         {/* Stats */}
         <View className="flex-row justify-between w-full px-12 mb-10">
-          {user.stats.map((stat, index) => (
+          {stats.map((stat, index) => (
             <View key={index} className="items-center">
               <Text className="text-xl font-bold text-light-text-primary dark:text-dark-text-primary">
                 {stat.value}

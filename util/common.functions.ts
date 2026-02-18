@@ -79,7 +79,6 @@ const handleUploadFile = async (
       .from(bucket)
       .getPublicUrl(data.path);
 
-    console.log("File uploaded successfully:", publicUrlData.publicUrl);
     return { success: true, data: publicUrlData.publicUrl };
   } catch (error) {
     console.error("Error uploading file:", error);

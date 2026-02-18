@@ -1,5 +1,8 @@
+import { UserProfile } from "@/util/interfaces/types";
 import { supabase } from "@/util/supabase";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { Session } from "@supabase/supabase-js";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import { useToast } from "./ToastContext";
@@ -9,6 +12,9 @@ type AuthContextType = {
   isReady: boolean;
   login: () => void;
   logout: () => void;
+  updateUser: (data: Partial<UserProfile>) => void;
+  user: UserProfile | null;
+  isLoading: boolean;
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -16,74 +22,34 @@ export const AuthContext = createContext<AuthContextType>({
   isReady: false,
   login: () => {},
   logout: () => {},
+  updateUser: () => {},
+  user: null,
+  isLoading: false,
 });
 
 const AuthProvider = ({ children }: PropsWithChildren) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [isReady, setIsReady] = useState<boolean>(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const { showToast } = useToast();
   const router = useRouter();
-
-  const login = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      if (!response.data || !response.data.idToken) {
-        showToast("Login Failed", "error");
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signInWithIdToken({
-        provider: "google",
-        token: response.data.idToken,
-      });
-
-      if (error) {
-        showToast(error.message, "error");
-        return;
-      }
-
-      //! if it is a new user, move him to profile?id=new route
-      const isUserExists = await supabase
-        .from("users")
-        .select("email")
-        .eq("email", data.user.email)
-        .single();
-
-      if (isUserExists.data == null) {
-        setIsLoggedIn(true);
-        router.replace("/profile/new");
-        return;
-      }
-
-      setIsLoggedIn(true);
-      router.replace("/");
-    } catch (error) {
-      if (error instanceof Error) {
-        showToast(error.message, "error");
-      } else {
-        showToast("An unexpected error occurred.", "error");
-      }
-
-      setIsLoggedIn(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await supabase.auth.signOut();
-      setIsLoggedIn(false);
-      router.replace("/login");
-    } catch (error) {
-      if (error instanceof Error) {
-        showToast(error.message, "error");
-      } else {
-        showToast("An unexpected error occurred.", "error");
-      }
-    }
-  };
+  const queryClient = useQueryClient();
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsAuthChecked(true);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (_event === "SIGNED_OUT") {
+        queryClient.clear();
+        router.replace("/login");
+      }
+    });
+
     GoogleSignin.configure({
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
       scopes: [
@@ -92,34 +58,92 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
       ],
     });
 
-    const checkSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          const isUserExists = await supabase
-            .from("users")
-            .select("email")
-            .eq("email", data.session.user.email)
-            .single();
+    return () => subscription.unsubscribe();
+  }, [queryClient, router]);
 
-          if (isUserExists.data == null) {
-            setIsLoggedIn(true);
-            router.replace("/profile/new");
-            return;
-          }
-          setIsLoggedIn(true);
-        }
-      } catch (error) {
-        console.error("Session check failed", error);
-      } finally {
-        setIsReady(true);
+  const { data: userProfile, isLoading: isProfileLoading } = useQuery({
+    queryKey: ["userProfile", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.email) return null;
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", session.user.email)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        throw error;
       }
-    };
-    checkSession();
-  }, []);
+      return data as UserProfile;
+    },
+    enabled: !!session?.user?.email,
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (!response.data || !response.data.idToken) {
+        throw new Error("Login Failed");
+      }
+
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: "google",
+        token: response.data.idToken,
+      });
+
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      router.replace("/");
+    },
+    onError: (error: Error) => {
+      showToast(error.message, "error");
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    },
+    onError: (error: Error) => {
+      showToast(error.message, "error");
+    },
+  });
+
+  const updateUser = (data: Partial<UserProfile>) => {
+    queryClient.setQueryData(
+      ["userProfile", session?.user?.id],
+      (oldData: UserProfile | undefined) => {
+        if (!oldData) return data as UserProfile;
+        return { ...oldData, ...data };
+      },
+    );
+  };
+
+  useEffect(() => {
+    if (isAuthChecked && session && !isProfileLoading && userProfile === null) {
+      router.replace("/profile/new");
+    }
+  }, [session, isProfileLoading, userProfile, isAuthChecked, router]);
+
+  const isReady = isAuthChecked && (!session || !isProfileLoading);
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout, isReady }}>
+    <AuthContext.Provider
+      value={{
+        isLoggedIn: !!session,
+        isReady,
+        login: loginMutation.mutate,
+        logout: logoutMutation.mutate,
+        updateUser,
+        user: userProfile || null,
+        isLoading: loginMutation.isPending || logoutMutation.isPending,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

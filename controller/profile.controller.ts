@@ -1,3 +1,4 @@
+import { UserProfile } from "@/util/interfaces/types";
 import { supabase } from "@/util/supabase";
 import { Toast } from "@/util/toast";
 
@@ -7,12 +8,14 @@ const createUser = async ({
   userName,
   bio,
   image,
+  updateLocalUser,
 }: {
   firstName: string;
   lastName: string;
   userName: string;
   bio: string;
   image: string;
+  updateLocalUser?: (data: Partial<UserProfile>) => void;
 }): Promise<{ success: boolean; message: string }> => {
   Toast.loading("Creating user...");
   try {
@@ -38,7 +41,7 @@ const createUser = async ({
       return { success: false, message: "User already exists" };
     }
 
-    const { error: insertedError } = await supabase
+    const { data: insertedData, error: insertedError } = await supabase
       .from("users")
       .insert({
         email: data.user.email,
@@ -48,13 +51,17 @@ const createUser = async ({
         lastName,
         about: bio,
       })
-      .select("email")
+      .select("*")
       .single();
 
     if (insertedError) {
       Toast.error(insertedError.message);
       console.error("Error creating user:", insertedError);
       return { success: false, message: insertedError.message };
+    }
+
+    if (updateLocalUser) {
+      updateLocalUser(insertedData as UserProfile);
     }
 
     Toast.success("User created successfully");
@@ -72,12 +79,14 @@ const updateUser = async ({
   userName,
   bio,
   image,
+  updateLocalUser,
 }: {
   firstName: string;
   lastName: string;
   userName: string;
   bio: string;
   image: string;
+  updateLocalUser?: (data: Partial<UserProfile>) => void;
 }): Promise<{ success: boolean; message: string }> => {
   Toast.loading("Updating user...");
   try {
@@ -88,7 +97,7 @@ const updateUser = async ({
       return { success: false, message: error.message };
     }
 
-    const { error: updatedError } = await supabase
+    const { data: updatedData, error: updatedError } = await supabase
       .from("users")
       .update({
         avatar: image,
@@ -98,13 +107,17 @@ const updateUser = async ({
         about: bio,
       })
       .eq("email", data.user.email)
-      .select("email")
+      .select("*")
       .single();
 
     if (updatedError) {
       Toast.error(updatedError.message);
       console.error("Error updating user:", updatedError);
       return { success: false, message: updatedError.message };
+    }
+
+    if (updateLocalUser) {
+      updateLocalUser(updatedData as UserProfile);
     }
 
     Toast.success("User updated successfully");

@@ -1,6 +1,10 @@
 import CommonBackButton from "@/components/common/CommonBackButton";
 import { ColorTheme } from "@/constants/colors";
-import { createUser, updateUser } from "@/controller/profile.controller";
+import { AuthContext } from "@/context/AuthContext";
+import {
+  createUser,
+  updateUser as updateUserProfile,
+} from "@/controller/profile.controller";
 import { handleUploadFile } from "@/util/common.functions";
 import { supabase } from "@/util/supabase";
 import { Toast } from "@/util/toast";
@@ -8,7 +12,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -22,7 +26,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const EditProfileScreen = () => {
   const router = useRouter();
-  const { id } = useLocalSearchParams(); // Access ID if needed in future
+  const { id } = useLocalSearchParams();
+  const { user, updateUser } = useContext(AuthContext);
 
   // Initial state set to empty to simulate first-time user
   const [firstName, setFirstName] = useState("");
@@ -80,17 +85,19 @@ const EditProfileScreen = () => {
         userName: username,
         bio,
         image,
+        updateLocalUser: updateUser,
       });
       if (success) {
         router.replace("/");
       }
     } else {
-      const { success } = await updateUser({
+      const { success } = await updateUserProfile({
         firstName,
         lastName,
         userName: username,
         bio,
         image,
+        updateLocalUser: updateUser,
       });
 
       if (success) {
@@ -100,15 +107,15 @@ const EditProfileScreen = () => {
   };
 
   const fetchProfile = async () => {
-    const { data, error } = await supabase.auth.getUser();
-
-    if (error) {
-      console.error("Error getting user:", error);
-      Toast.error("Something went wrong");
-      return;
-    }
-
     if (id === "new") {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error) {
+        console.error("Error getting user:", error);
+        Toast.error("Something went wrong");
+        return;
+      }
+
       const name = data.user.user_metadata.name.split(" ");
 
       setFirstName(name[0]);
@@ -118,23 +125,11 @@ const EditProfileScreen = () => {
       return;
     }
 
-    const { data: profileData, error: profileError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", data.user.email)
-      .single();
-
-    if (profileError) {
-      console.error("Error getting profile:", profileError);
-      Toast.error("Something went wrong");
-      return;
-    }
-
-    setFirstName(profileData.firstName);
-    setLastName(profileData.lastName);
-    setUsername(profileData.userName);
-    setBio(profileData.about);
-    setImage(profileData.avatar);
+    setFirstName(user!.firstName);
+    setLastName(user!.lastName);
+    setUsername(user!.userName);
+    setBio(user!.about);
+    setImage(user!.avatar);
   };
 
   useEffect(() => {
