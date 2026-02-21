@@ -13,4 +13,8 @@ enum SearchParams {
   story = "story",
 }
 
-export { FileTypes, SearchParams };
+enum QueryKeys {
+  userProfile = "userProfile",
+}
+
+export { FileTypes, QueryKeys, SearchParams };

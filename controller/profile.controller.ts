@@ -88,7 +88,6 @@ const updateUser = async ({
   image: string;
   updateLocalUser?: (data: Partial<UserProfile>) => void;
 }): Promise<{ success: boolean; message: string }> => {
-  Toast.loading("Updating user...");
   try {
     const { data, error } = await supabase.auth.getUser();
     if (error) {
@@ -120,7 +119,6 @@ const updateUser = async ({
       updateLocalUser(updatedData as UserProfile);
     }
 
-    Toast.success("User updated successfully");
     return { success: true, message: "User updated successfully" };
   } catch (error) {
     console.error("Error updating user:", error);

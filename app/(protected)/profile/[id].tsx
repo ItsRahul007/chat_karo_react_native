@@ -65,6 +65,10 @@ const EditProfileScreen = () => {
   const handleSave = async () => {
     if (!isFormValid) return;
 
+    Toast.loading("Updating user...");
+
+    let imageUrl = image;
+
     if (imageFile) {
       const { success, data } = await handleUploadFile(
         imageFile,
@@ -75,7 +79,7 @@ const EditProfileScreen = () => {
         return;
       }
 
-      setImage(data);
+      imageUrl = data;
     }
 
     if (id === "new") {
@@ -96,11 +100,12 @@ const EditProfileScreen = () => {
         lastName,
         userName: username,
         bio,
-        image,
+        image: imageUrl,
         updateLocalUser: updateUser,
       });
 
       if (success) {
+        Toast.success("User updated successfully");
         router.back();
       }
     }

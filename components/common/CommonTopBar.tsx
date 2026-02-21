@@ -1,16 +1,18 @@
 import { ColorTheme } from "@/constants/colors";
+import { AuthContext } from "@/context/AuthContext";
 import { useIconColor } from "@/util/common.functions";
 import { SearchParams } from "@/util/enum";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
-import React from "react";
+import React, { useContext } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import CommonBackButton from "./CommonBackButton";
 
 type BaseProps = {
   name?: string;
   image?: string;
+  showImage?: boolean;
   showBackButton?: boolean;
   onBackPress?: () => void;
 };
@@ -33,6 +35,7 @@ const CommonTopBar = (props: CommonTopBarProps) => {
   const {
     name,
     image,
+    showImage = true,
     showBackButton = false,
     onBackPress,
     searchParams,
@@ -40,12 +43,13 @@ const CommonTopBar = (props: CommonTopBarProps) => {
     communityId,
   } = props;
   const iconColor = useIconColor();
+  const { user } = useContext(AuthContext);
 
   return (
     <View className="flex-row items-center justify-between px-6 h-10 w-full">
       <View className="flex-row gap-x-4 items-center">
         {showBackButton ? <CommonBackButton onBackPress={onBackPress} /> : null}
-        {image ? (
+        {showImage ? (
           <Link asChild href="/profile">
             <Pressable className="rounded-full h-14 w-14 overflow-hidden">
               <LinearGradient
@@ -54,7 +58,10 @@ const CommonTopBar = (props: CommonTopBarProps) => {
                 end={{ x: 1, y: 1 }}
                 style={{ height: 56, width: 56 }}
               >
-                <Image source={{ uri: image }} className="w-full h-full" />
+                <Image
+                  source={{ uri: image ?? user?.avatar }}
+                  className="w-full h-full"
+                />
               </LinearGradient>
             </Pressable>
           </Link>

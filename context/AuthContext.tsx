@@ -1,3 +1,4 @@
+import { QueryKeys } from "@/util/enum";
 import { UserProfile } from "@/util/interfaces/types";
 import { supabase } from "@/util/supabase";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
@@ -116,7 +117,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const updateUser = (data: Partial<UserProfile>) => {
     queryClient.setQueryData(
-      ["userProfile", session?.user?.id],
+      [QueryKeys.userProfile, session?.user?.id],
       (oldData: UserProfile | undefined) => {
         if (!oldData) return data as UserProfile;
         return { ...oldData, ...data };

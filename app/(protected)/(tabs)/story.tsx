@@ -15,7 +15,11 @@ const story = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-light-background-primary dark:bg-dark-background-primary relative">
-        <CommonTopBar name="Story" searchParams={SearchParams.story} />
+        <CommonTopBar
+          name="Story"
+          searchParams={SearchParams.story}
+          showImage={false}
+        />
 
         <View className="flex-1 bg-light-background-secondary dark:bg-dark-background-secondary">
           <FlatList
