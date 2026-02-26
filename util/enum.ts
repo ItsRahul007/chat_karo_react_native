@@ -15,6 +15,18 @@ enum SearchParams {
 
 enum QueryKeys {
   userProfile = "userProfile",
+  privateChats = "privateChats",
+  communityChats = "communityChats",
+  messages = "messages",
+  chatProfile = "chatProfile",
 }
 
-export { FileTypes, QueryKeys, SearchParams };
+enum TableNames {
+  users = "users",
+  conversations = "conversations",
+  messages = "messages",
+  participants = "participants",
+  inbox = "inbox",
+}
+
+export { FileTypes, QueryKeys, SearchParams, TableNames };

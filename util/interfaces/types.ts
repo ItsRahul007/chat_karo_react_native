@@ -53,6 +53,49 @@ interface Message {
   isDeleted: boolean;
   isEdited: boolean;
   mentionMessageId: bigint | number | null;
+  mentionMessage: Message | null;
+  senderName?: string; //! it will be there only for list data and community chats
+  senderAvatar?: string; //! it will be there only for community chats
 }
 
-export type { Conversation, ConversationParticipant, Message, UserProfile };
+type SingleChat = {
+  myId: bigint;
+  chatWithId: bigint | null;
+  conversationId: bigint;
+  firstName: string;
+  lastName: string;
+  avatar: string;
+  lastSeen: string;
+  lastMessage: Message;
+  unreadMessageCount: number;
+  isPinned: boolean;
+  isMuted: boolean;
+  isBlocked: boolean;
+  isRemoved: boolean;
+};
+
+type SingleCommunityChat = {
+  myId: bigint;
+  conversationId: bigint;
+  firstName: string; // it will be group name
+  avatar: string; // it will be group image
+  groupAvatars: string[]; // list of member's avatar link
+  lastMessage: Message;
+  unreadMessageCount: number;
+  isPinned: boolean;
+  isMuted: boolean;
+  isBlocked: boolean;
+  isOwner: boolean;
+  isAdmin: boolean;
+  isRemoved: boolean;
+};
+
+export type {
+  Conversation,
+  ConversationParticipant,
+  MediaAttachment,
+  Message,
+  SingleChat,
+  SingleCommunityChat,
+  UserProfile,
+};

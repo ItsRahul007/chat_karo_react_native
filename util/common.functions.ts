@@ -86,4 +86,12 @@ const handleUploadFile = async (
   }
 };
 
-export { generateThumbnail, handleUploadFile, useIconColor };
+const useFormatedTime = (date: string) => {
+  const formatedDate = new Date(date).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return formatedDate;
+};
+
+export { generateThumbnail, handleUploadFile, useFormatedTime, useIconColor };

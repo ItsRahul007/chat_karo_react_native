@@ -1,4 +1,4 @@
-import { QueryKeys } from "@/util/enum";
+import { QueryKeys, TableNames } from "@/util/enum";
 import { UserProfile } from "@/util/interfaces/types";
 import { supabase } from "@/util/supabase";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
@@ -67,7 +67,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     queryFn: async () => {
       if (!session?.user?.email) return null;
       const { data, error } = await supabase
-        .from("users")
+        .from(TableNames.users)
         .select("*")
         .eq("email", session.user.email)
         .single();

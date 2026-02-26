@@ -2,14 +2,17 @@ import ChatMessage from "@/components/chat/ChatMessage";
 import CommonBackButton from "@/components/common/CommonBackButton";
 import GredientIcon from "@/components/common/GredientIcon";
 import { ColorTheme } from "@/constants/colors";
-import { getChatHistoryById } from "@/controller/chat.controller";
+import { AuthContext } from "@/context/AuthContext";
+import { getChatById, getChatProfileById } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
 import { chatTopBarIconSize, gradientColors } from "@/util/constants";
-import { I_Messages } from "@/util/types/chat.types";
+import { QueryKeys } from "@/util/enum";
+import { Message } from "@/util/interfaces/types";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -29,15 +32,23 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Chat = () => {
-  const data = useLocalSearchParams();
-  const { id, isCommunity } = data;
+  const {
+    id: conversationId,
+    isCommunity,
+    chatWithId,
+  } = useLocalSearchParams();
+
+  const profileToFetchId: string =
+    isCommunity !== "true"
+      ? (chatWithId as string)
+      : (conversationId as string);
 
   const theme = useColorScheme();
   const router = useRouter();
   const insects = useSafeAreaInsets();
-  const chat = getChatHistoryById(id as string, isCommunity === "true");
   let lastSender: string | undefined;
-  const myId = "me";
+  const { user } = useContext(AuthContext);
+  const myId = user?.id;
 
   const iconColor = useIconColor();
 
@@ -48,9 +59,22 @@ const Chat = () => {
 
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [value, onChangeText] = useState<string>("");
-  const [replyingTo, setReplyingTo] = useState<I_Messages | null>(null);
-  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [highlightedId, setHighlightedId] = useState<bigint | number | null>(
+    null,
+  );
   const flatListRef = React.useRef<FlatList>(null);
+
+  const { data: chat, isLoading: isChatProfileLoading } = useQuery({
+    queryKey: [QueryKeys.chatProfile, QueryKeys.chatProfile + profileToFetchId],
+    queryFn: () =>
+      getChatProfileById(profileToFetchId as string, isCommunity === "true"),
+  });
+
+  const { data: messages, isLoading: isMessagesLoading } = useQuery({
+    queryKey: [QueryKeys.messages, conversationId],
+    queryFn: () => getChatById(conversationId as string),
+  });
 
   const replyAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -75,14 +99,12 @@ const Chat = () => {
     };
   }, []);
 
-  const handleReply = (message: I_Messages) => {
+  const handleReply = (message: Message) => {
     setReplyingTo(message);
   };
 
-  const messages = [...(chat?.messages ?? [])].reverse();
-
-  const handleReplyPress = (messageId: string) => {
-    const index = messages.findIndex((m) => m.id === messageId);
+  const handleReplyPress = (messageId: bigint | number) => {
+    const index = messages?.findIndex((m) => m.id === messageId) ?? 0;
     if (index !== -1) {
       flatListRef.current?.scrollToIndex({
         index,
@@ -234,7 +256,7 @@ const Chat = () => {
                   onPress={handleReplyPress}
                   iconColor={iconColor}
                   sender={
-                    replyingTo?.sender === myId
+                    myId && replyingTo?.senderId === myId
                       ? "You"
                       : (isCommunity === "true"
                           ? replyingTo?.senderName
@@ -285,9 +307,9 @@ const Chat = () => {
 export default Chat;
 
 interface ReplyMessageProps {
-  message: I_Messages;
+  message: Message;
   onClose: () => void;
-  onPress: (messageId: string) => void;
+  onPress: (messageId: bigint | number) => void;
   iconColor: string;
   sender: string;
 }
@@ -321,7 +343,7 @@ const ReplyMessage = ({
             ? message.message
             : mediaLength > 1
               ? "Media"
-              : message.media?.[0].mediaType}
+              : message.media?.[0].type}
         </Text>
       </View>
       <Pressable onPress={onClose}>

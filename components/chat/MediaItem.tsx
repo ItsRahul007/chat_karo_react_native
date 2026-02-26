@@ -1,7 +1,7 @@
 import { saveMediaIntoDevice } from "@/controller/chat.controller";
 import useFetch from "@/custom-hooks/useFetch";
 import { generateThumbnail, useIconColor } from "@/util/common.functions";
-import { I_Media } from "@/util/types/chat.types";
+import { MediaAttachment } from "@/util/interfaces/types";
 import { AntDesign, Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useState } from "react";
@@ -18,14 +18,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AudioMessage from "./AudioMessage";
 
-interface MediaItemProps extends I_Media {
+interface MediaItemProps extends MediaAttachment {
   containerClassName?: string;
   isForChat?: boolean;
 }
 
 const MediaItem = ({
-  mediaType,
-  mediaUrl,
+  type,
+  url,
   containerClassName,
   isForChat = false,
 }: MediaItemProps) => {
@@ -33,25 +33,25 @@ const MediaItem = ({
 
   const iconColor = useIconColor();
 
-  const player = useVideoPlayer(mediaUrl!, (player) => {
+  const player = useVideoPlayer(url!, (player) => {
     player.loop = false;
   });
 
   const handlePress = async () => {
-    if (mediaType === "audio") {
+    if (type === "audio") {
       if (!isForChat) {
         setShowPreview(true);
       }
       return;
     }
 
-    if (mediaType === "image" || mediaType === "video") {
+    if (type === "image" || type === "video") {
       setShowPreview(true);
-      if (mediaType === "video") {
+      if (type === "video") {
         player.play();
       }
-    } else if (mediaUrl?.split(".").pop() === "pdf") {
-      const googleDriveUrl = `https://docs.google.com/viewer?url=${mediaUrl}`;
+    } else if (url?.split(".").pop() === "pdf") {
+      const googleDriveUrl = `https://docs.google.com/viewer?url=${url}`;
       const supported = await Linking.canOpenURL(googleDriveUrl);
 
       if (supported) {
@@ -65,22 +65,22 @@ const MediaItem = ({
   };
 
   const closePreview = () => {
-    if (mediaType === "video") {
+    if (type === "video") {
       player.pause();
     }
     setShowPreview(false);
   };
 
   const handleSave = async () => {
-    await saveMediaIntoDevice({ mediaType, mediaUrl });
+    await saveMediaIntoDevice({ type, url });
   };
 
   return (
     <>
       <Pressable onPress={handlePress}>
         <RenderContent
-          mediaType={mediaType!}
-          mediaUrl={mediaUrl!}
+          mediaType={type!}
+          mediaUrl={url!}
           containerClassName={containerClassName}
           iconColor={iconColor}
           isForChat={isForChat}
@@ -109,15 +109,15 @@ const MediaItem = ({
               <AntDesign name="download" size={30} color="white" />
             </Pressable>
 
-            {mediaType === "image" && (
+            {type === "image" && (
               <Image
-                source={{ uri: mediaUrl }}
+                source={{ uri: url }}
                 className="w-full h-full"
                 resizeMode="contain"
               />
             )}
 
-            {mediaType === "video" && (
+            {type === "video" && (
               <VideoView
                 style={{ width: "100%", height: "100%" }}
                 player={player}
@@ -128,9 +128,9 @@ const MediaItem = ({
               />
             )}
 
-            {mediaType === "audio" && (
+            {type === "audio" && (
               <View className="bg-white dark:bg-black p-4 rounded-2xl">
-                <AudioMessage mediaUrl={mediaUrl!} />
+                <AudioMessage mediaUrl={url!} />
               </View>
             )}
           </View>

@@ -1,4 +1,4 @@
-import { CommunityCardProps } from "@/util/interfaces/commonInterfaces";
+import { SingleCommunityChat } from "@/util/interfaces/types";
 import { Link } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -12,21 +12,23 @@ import AvatarGroup from "./AvatarGroup";
 import ShowAvatar from "./ShowAvatar";
 import UnreadMessageCount from "./UnreadMessageCount";
 
+interface CommunityCardProps extends SingleCommunityChat {
+  isExpanded?: boolean;
+}
+
 const CommunityCard = ({
   lastMessage,
-  name,
+  firstName,
   unreadMessageCount,
-  users,
-  limit = 4,
   avatar,
-  messagedPersonName,
   isExpanded = false,
-  id,
+  conversationId,
+  groupAvatars,
 }: CommunityCardProps) => {
   const [isProfileClicked, setIsProfileClicked] = useState<boolean>(false);
 
   return (
-    <Link asChild href={`/chat/${id}?isCommunity=true`}>
+    <Link asChild href={`/chat/${conversationId}?isCommunity=true`}>
       <Pressable
         className={`bg-light-comunityCard-background dark:bg-dark-comunityCard-background ${
           isExpanded ? "w-[26rem] h-44" : "w-72 h-48"
@@ -36,7 +38,7 @@ const CommunityCard = ({
           visible={isProfileClicked}
           onClose={() => setIsProfileClicked(false)}
           image={avatar}
-          name={name}
+          name={firstName}
           unreadMessageCount={unreadMessageCount}
           isCommunity
         />
@@ -56,12 +58,12 @@ const CommunityCard = ({
                 className="font-semibold text-lg text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary overflow-ellipsis"
                 numberOfLines={1}
               >
-                {name}
+                {firstName}
               </Text>
               {isExpanded ? (
                 <MessageBox
-                  messagedPersonName={messagedPersonName}
-                  lastMessage={lastMessage}
+                  messagedPersonName={lastMessage.senderName!}
+                  lastMessage={lastMessage.message}
                 />
               ) : null}
             </View>
@@ -73,13 +75,13 @@ const CommunityCard = ({
 
         {!isExpanded ? (
           <MessageBox
-            messagedPersonName={messagedPersonName}
-            lastMessage={lastMessage}
+            messagedPersonName={lastMessage.senderName!}
+            lastMessage={lastMessage.message}
           />
         ) : null}
 
         <View className="flex-row items-center justify-start">
-          <AvatarGroup users={users} limit={limit} />
+          <AvatarGroup users={groupAvatars} />
         </View>
       </Pressable>
     </Link>

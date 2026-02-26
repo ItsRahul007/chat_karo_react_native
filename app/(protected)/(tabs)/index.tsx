@@ -2,21 +2,29 @@ import BackgroundGredientIconButton from "@/components/common/BackgroundGredient
 import CommonTopBar from "@/components/common/CommonTopBar";
 import GredientIcon from "@/components/common/GredientIcon";
 import MyBlurView from "@/components/common/MyBlurView";
-import CommunityCard from "@/components/home/CommunityCard";
+import CommunityList from "@/components/home/CommunityList";
 import PersonCard from "@/components/home/PersonCard";
 import { ColorTheme } from "@/constants/colors";
+import { getPrivateChats } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
 import {
   gradientIconButtonIconSize,
   gradientIconButtonSize,
 } from "@/util/constants";
-import { SearchParams } from "@/util/enum";
-import { chatList, sampleCommunityData } from "@/util/sample.data";
+import { QueryKeys, SearchParams } from "@/util/enum";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Link, useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, Pressable, Text, useColorScheme, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  Text,
+  useColorScheme,
+  View,
+} from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -28,6 +36,11 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 const index = () => {
   const theme = useColorScheme();
   const iconColor = useIconColor();
+
+  const { data: privateChats, isLoading: isPrivateChatsLoading } = useQuery({
+    queryKey: [QueryKeys.privateChats],
+    queryFn: getPrivateChats,
+  });
 
   return (
     <SafeAreaProvider>
@@ -47,7 +60,7 @@ const index = () => {
 
         <View className="flex-1 bg-light-background-secondary dark:bg-dark-background-secondary">
           <FlatList
-            data={chatList}
+            data={isPrivateChatsLoading ? [] : privateChats}
             ListHeaderComponent={<CommunityList iconColor={iconColor} />}
             // The header has the page background color, effectively masking the top of this container
             stickyHeaderIndices={[]} // Ensure it scrolls
@@ -63,13 +76,17 @@ const index = () => {
                 <PersonCard {...item} />
               </View>
             )}
-            keyExtractor={(item) => item.id!}
+            keyExtractor={(item) => item.conversationId.toString()}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View className="items-center mx-auto w-56 mt-20">
-                <Text className="text-center text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
-                  You no conversation yet 😞
-                </Text>
+                {isPrivateChatsLoading ? (
+                  <ActivityIndicator color={iconColor} size={20} />
+                ) : (
+                  <Text className="text-center text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
+                    You no conversation yet 😞
+                  </Text>
+                )}
               </View>
             }
             contentContainerStyle={{
@@ -85,40 +102,6 @@ const index = () => {
     </SafeAreaProvider>
   );
 };
-
-const CommunityList = ({ iconColor }: { iconColor: string }) => (
-  <View className="bg-light-background-primary dark:bg-dark-background-primary mb-8">
-    {/* community section */}
-    <View className="flex-col pt-8 gap-y-3 pb-5">
-      <Link href="/community">
-        <View className="flex-row justify-between items-center px-5 w-full">
-          <Text className="font-semibold text-xl text-light-text-primary dark:text-dark-text-primary">
-            Community
-          </Text>
-          <MaterialIcons name="navigate-next" size={24} color={iconColor} />
-        </View>
-      </Link>
-      <FlatList
-        data={sampleCommunityData}
-        renderItem={({ item }) => <CommunityCard {...item} />}
-        keyExtractor={(item) => item.id!}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 15, paddingHorizontal: 15 }}
-        ListEmptyComponent={
-          <View className="items-center mx-auto w-56 my-8">
-            <Text className="text-center text-light-text-secondaryLight">
-              You are not a member of any community yet 😞
-            </Text>
-          </View>
-        }
-      />
-    </View>
-
-    {/* Visual Transition to Chat List (Rounded Top) */}
-    <View className="h-5 w-full bg-light-background-secondary dark:bg-dark-background-secondary rounded-t-[5rem] absolute -bottom-10" />
-  </View>
-);
 
 const FloatingButton = () => {
   const router = useRouter();

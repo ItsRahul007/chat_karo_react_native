@@ -1,4 +1,4 @@
-import { I_Media } from "@/util/types/chat.types";
+import { MediaAttachment } from "@/util/interfaces/types";
 import { Modal, Platform, Pressable, Text, View } from "react-native";
 import MediaGrid from "./MediaGrid";
 
@@ -6,7 +6,7 @@ interface MessageOptionsModalProps {
   modalVisible: boolean;
   onRequestClose: () => void;
   isMyMessage: boolean;
-  media?: I_Media[];
+  media?: MediaAttachment[];
   message?: string;
   formatedTimestamp: string;
   handleCopy: () => void;

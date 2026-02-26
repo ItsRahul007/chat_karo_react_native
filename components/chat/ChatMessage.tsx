@@ -1,34 +1,36 @@
-import { I_Messages } from "@/util/types/chat.types";
+import { AuthContext } from "@/context/AuthContext";
+import { Message } from "@/util/interfaces/types";
 import * as Clipboard from "expo-clipboard";
-import React, { useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { Animated, Image, Pressable, Text, View } from "react-native";
 import MediaGrid from "./MediaGrid";
 import MessageOptionsModal from "./MessageOptionsModal";
 import SwipeToReply from "./SwipeToReply";
 
-interface ChatMessageProps extends I_Messages {
+interface ChatMessageProps extends Message {
   isCommunity?: boolean;
-  onReply?: (message: I_Messages) => void;
-  onReplyPress?: (messageId: string) => void;
+  onReply?: (message: Message) => void;
+  onReplyPress?: (messageId: bigint | number) => void;
   highlighted?: boolean;
 }
 
 const ChatMessage = (msgData: ChatMessageProps) => {
   const {
     message,
-    sender,
-    timestamp,
+    senderId,
+    createdAt,
     media,
-    avatar,
+    senderAvatar,
     senderName,
     isCommunity,
     onReply,
-    replyTo,
+    mentionMessage,
     onReplyPress,
     highlighted,
   } = msgData;
 
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { user } = useContext(AuthContext);
 
   React.useEffect(() => {
     if (highlighted) {
@@ -48,8 +50,8 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     }
   }, [highlighted]);
 
-  const isMyMessage = sender === "me";
-  const formatedTimestamp = new Date(timestamp).toLocaleTimeString([], {
+  const isMyMessage = senderId === user?.id;
+  const formatedTimestamp = new Date(createdAt).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -97,7 +99,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
         >
           {isCommunity && !isMyMessage && (
             <Image
-              source={{ uri: avatar }}
+              source={{ uri: senderAvatar }}
               className="w-8 h-8 rounded-full mr-2"
             />
           )}
@@ -126,9 +128,9 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                 pointerEvents: "none",
               }}
             />
-            {replyTo && (
+            {mentionMessage && (
               <Pressable
-                onPress={() => onReplyPress?.(replyTo.id)}
+                onPress={() => onReplyPress?.(mentionMessage.id)}
                 className={`m-1 p-2 rounded-lg border-l-4 border-l-orange-500 ${
                   isMyMessage ? "bg-black/20" : "bg-black/5 dark:bg-white/10"
                 }`}
@@ -139,9 +141,9 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                   }`}
                   numberOfLines={1}
                 >
-                  {replyTo.sender === "me"
+                  {mentionMessage.senderId === user?.id
                     ? "You"
-                    : replyTo.senderName || "User"}
+                    : mentionMessage.senderName || "User"}
                 </Text>
                 <Text
                   numberOfLines={1}
@@ -151,7 +153,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                       : "text-light-text-secondaryLight dark:text-dark-text-secondaryLight"
                   }`}
                 >
-                  {replyTo.message || "Media"}
+                  {mentionMessage.message || "Media"}
                 </Text>
               </Pressable>
             )}

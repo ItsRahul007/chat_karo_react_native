@@ -1,8 +1,8 @@
-import { I_Media } from "@/util/types/chat.types";
+import { MediaAttachment } from "@/util/interfaces/types";
 import { Text, View } from "react-native";
 import MediaItem from "./MediaItem";
 
-const MediaGrid = ({ media }: { media: I_Media[] | undefined }) => {
+const MediaGrid = ({ media }: { media: MediaAttachment[] | undefined }) => {
   if (!media || media.length === 0) return null;
 
   if (media.length === 1) {

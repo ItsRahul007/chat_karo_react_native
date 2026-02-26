@@ -1,8 +1,9 @@
-import { AvatarGroupProps } from "@/util/interfaces/commonInterfaces";
 import React from "react";
 import { Image, Text, View } from "react-native";
 
-const AvatarGroup = ({ users, limit = 4 }: AvatarGroupProps) => {
+const limit = 5;
+
+const AvatarGroup = ({ users }: { users: string[] }) => {
   // 1. Logic to slice data
   const usersToShow = users.slice(0, limit);
   const excessCount = users.length - limit;
@@ -14,8 +15,8 @@ const AvatarGroup = ({ users, limit = 4 }: AvatarGroupProps) => {
     <View className="flex-row items-center">
       {usersToShow.map((user, index) => (
         <Image
-          key={user.id}
-          source={{ uri: user.avatar }}
+          key={user}
+          source={{ uri: user }}
           className={`
             ${avatarClass}
             ${index !== 0 ? `-ml-3` : ""} 
