@@ -1,6 +1,8 @@
 import ChatMessage from "@/components/chat/ChatMessage";
 import CommonBackButton from "@/components/common/CommonBackButton";
 import GredientIcon from "@/components/common/GredientIcon";
+import ChatProfileSkeleton from "@/components/skeletons/ChatProfileSkeleton";
+import MessageListSkeleton from "@/components/skeletons/MessageListSkeleton";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
 import { getChatById, getChatProfileById } from "@/controller/chat.controller";
@@ -11,7 +13,7 @@ import { Message } from "@/util/interfaces/types";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { Link, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useState } from "react";
 import {
   FlatList,
@@ -44,7 +46,6 @@ const Chat = () => {
       : (conversationId as string);
 
   const theme = useColorScheme();
-  const router = useRouter();
   const insects = useSafeAreaInsets();
   let lastSender: string | undefined;
   const { user } = useContext(AuthContext);
@@ -144,26 +145,30 @@ const Chat = () => {
               className="flex-1 items-center justify-center ml-2"
             >
               <View className="flex-1 items-center justify-between flex-row gap-x-6">
-                <View className="flex-row items-center gap-x-2 flex-1">
-                  <View className="rounded-full h-14 w-14 overflow-hidden">
-                    <Image
-                      source={{ uri: chat?.avatar }}
-                      className="h-full w-full"
-                      resizeMode="contain"
-                    />
+                {isChatProfileLoading ? (
+                  <ChatProfileSkeleton />
+                ) : (
+                  <View className="flex-row items-center gap-x-2 flex-1">
+                    <View className="rounded-full h-14 w-14 overflow-hidden">
+                      <Image
+                        source={{ uri: chat?.avatar }}
+                        className="h-full w-full"
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text
+                        className="font-bold text-lg text-light-text-primary dark:text-dark-text-primary overflow-ellipsis"
+                        numberOfLines={1}
+                      >
+                        {chat?.name}
+                      </Text>
+                      <Text className="text-base text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
+                        Online
+                      </Text>
+                    </View>
                   </View>
-                  <View className="flex-1">
-                    <Text
-                      className="font-bold text-lg text-light-text-primary dark:text-dark-text-primary overflow-ellipsis"
-                      numberOfLines={1}
-                    >
-                      {chat?.name}
-                    </Text>
-                    <Text className="text-base text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
-                      Online
-                    </Text>
-                  </View>
-                </View>
+                )}
                 <View className="flex-row items-center justify-end gap-x-5">
                   <GredientIcon
                     icon={
@@ -193,49 +198,53 @@ const Chat = () => {
 
         {/* chat messages */}
         <View className="flex-1 py-1">
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            extraData={highlightedId}
-            renderItem={({ item }) => (
-              <ChatMessage
-                {...item}
-                isCommunity={isCommunity === "true"}
-                onReply={handleReply}
-                onReplyPress={handleReplyPress}
-                highlighted={item.id === highlightedId}
-              />
-            )}
-            ItemSeparatorComponent={({ leadingItem }) => {
-              const isSameSender =
-                lastSender == undefined || leadingItem?.sender === lastSender;
-              lastSender = leadingItem?.sender;
-              return (
-                <View
-                  style={{
-                    height: isSameSender ? 4 : 12,
-                  }}
+          {isMessagesLoading ? (
+            <MessageListSkeleton />
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              extraData={highlightedId}
+              renderItem={({ item }) => (
+                <ChatMessage
+                  {...item}
+                  isCommunity={isCommunity === "true"}
+                  onReply={handleReply}
+                  onReplyPress={handleReplyPress}
+                  highlighted={item.id === highlightedId}
                 />
-              );
-            }}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingVertical: 10, flexGrow: 1 }}
-            showsVerticalScrollIndicator={false}
-            inverted
-            onScrollToIndexFailed={(info) => {
-              flatListRef.current?.scrollToOffset({
-                offset: info.averageItemLength * info.index,
-                animated: true,
-              });
-            }}
-            ListEmptyComponent={
-              <View className="flex-1 items-center justify-center">
-                <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-sm">
-                  Say <Text className="font-bold">Hi</Text> to your friends 👋
-                </Text>
-              </View>
-            }
-          />
+              )}
+              ItemSeparatorComponent={({ leadingItem }) => {
+                const isSameSender =
+                  lastSender == undefined || leadingItem?.sender === lastSender;
+                lastSender = leadingItem?.sender;
+                return (
+                  <View
+                    style={{
+                      height: isSameSender ? 4 : 12,
+                    }}
+                  />
+                );
+              }}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ paddingVertical: 10, flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
+              inverted
+              onScrollToIndexFailed={(info) => {
+                flatListRef.current?.scrollToOffset({
+                  offset: info.averageItemLength * info.index,
+                  animated: true,
+                });
+              }}
+              ListEmptyComponent={
+                <View className="flex-1 items-center justify-center">
+                  <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-sm">
+                    Say <Text className="font-bold">Hi</Text> to your friends 👋
+                  </Text>
+                </View>
+              }
+            />
+          )}
         </View>
 
         {/* the input box for sending messages */}

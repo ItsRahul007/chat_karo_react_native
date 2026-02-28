@@ -292,7 +292,6 @@ const getChatById = async (
   isGroup: boolean,
 ): Promise<Message[]> => {
   try {
-    console.log(id, isGroup);
     const { data, error } = await supabase
       .from(TableNames.messages)
       .select(isGroup ? "*, sender:users (firstName, lastName, avatar)" : "*")
