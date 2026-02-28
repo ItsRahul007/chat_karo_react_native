@@ -2,7 +2,11 @@ import { MediaAttachment } from "@/util/interfaces/types";
 import { Text, View } from "react-native";
 import MediaItem from "./MediaItem";
 
-const MediaGrid = ({ media }: { media: MediaAttachment[] | undefined }) => {
+const MediaGrid = ({
+  media,
+}: {
+  media: MediaAttachment[] | undefined | null;
+}) => {
   if (!media || media.length === 0) return null;
 
   if (media.length === 1) {

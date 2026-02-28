@@ -54,8 +54,11 @@ interface Message {
   isEdited: boolean;
   mentionMessageId: bigint | number | null;
   mentionMessage: Message | null;
-  senderName?: string; //! it will be there only for list data and community chats
-  senderAvatar?: string; //! it will be there only for community chats
+  sender?: {
+    firstName: string;
+    lastName: string;
+    avatar: string;
+  };
 }
 
 type SingleChat = {

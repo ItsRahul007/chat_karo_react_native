@@ -20,8 +20,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     senderId,
     createdAt,
     media,
-    senderAvatar,
-    senderName,
+    sender,
     isCommunity,
     onReply,
     mentionMessage,
@@ -97,12 +96,12 @@ const ChatMessage = (msgData: ChatMessageProps) => {
             isMyMessage ? "justify-end pr-2" : "justify-start pl-2"
           }`}
         >
-          {isCommunity && !isMyMessage && (
+          {isCommunity && !isMyMessage && sender?.avatar ? (
             <Image
-              source={{ uri: senderAvatar }}
+              source={{ uri: sender?.avatar }}
               className="w-8 h-8 rounded-full mr-2"
             />
-          )}
+          ) : null}
           <View
             ref={messageRef}
             className={`rounded-2xl overflow-hidden ${
@@ -143,7 +142,9 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                 >
                   {mentionMessage.senderId === user?.id
                     ? "You"
-                    : mentionMessage.senderName || "User"}
+                    : mentionMessage.sender?.firstName +
+                        " " +
+                        mentionMessage.sender?.lastName || "User"}
                 </Text>
                 <Text
                   numberOfLines={1}
@@ -158,21 +159,26 @@ const ChatMessage = (msgData: ChatMessageProps) => {
               </Pressable>
             )}
 
-            {isCommunity && !isMyMessage && (
+            {isCommunity &&
+            !isMyMessage &&
+            sender?.firstName &&
+            sender?.lastName ? (
               <Text
                 className={
                   "text-orange-500 font-bold px-3 pt-2 text-sm " +
                   (media ? "pb-2" : "")
                 }
               >
-                {senderName}
+                {sender?.firstName + " " + sender?.lastName}
               </Text>
-            )}
+            ) : null}
 
             <MediaGrid media={media} />
 
             {/* Only apply padding if there is text or to maintain spacing for timestamp if no text */}
-            <View className={`${message ? "px-3 py-2" : "pb-6"}`}>
+            <View
+              className={`${message ? "px-3 py-2 " + (isCommunity ? "pt-0" : "") : "pb-6"}`}
+            >
               {message && (
                 <Text
                   className={`${

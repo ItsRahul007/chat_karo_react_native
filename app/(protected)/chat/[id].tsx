@@ -73,7 +73,8 @@ const Chat = () => {
 
   const { data: messages, isLoading: isMessagesLoading } = useQuery({
     queryKey: [QueryKeys.messages, conversationId],
-    queryFn: () => getChatById(conversationId as string),
+    queryFn: () =>
+      getChatById(conversationId as string, isCommunity === "true"),
   });
 
   const replyAnimatedStyle = useAnimatedStyle(() => {
@@ -259,7 +260,9 @@ const Chat = () => {
                     myId && replyingTo?.senderId === myId
                       ? "You"
                       : (isCommunity === "true"
-                          ? replyingTo?.senderName
+                          ? replyingTo?.sender?.firstName +
+                            " " +
+                            replyingTo?.sender?.lastName
                           : chat?.name) || "Unknown"
                   }
                 />

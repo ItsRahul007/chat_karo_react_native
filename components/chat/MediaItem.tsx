@@ -213,11 +213,11 @@ const RenderContent = ({
     return <AudioMessage mediaUrl={mediaUrl!} />;
   }
 
-  // if the file is an pdf
-  if (mediaUrl?.split(".").pop() === "pdf") {
-    const fileName = mediaUrl?.split("/").pop();
-    const formatedName = fileName!.charAt(0).toUpperCase() + fileName!.slice(1);
+  const fileName = mediaUrl?.split("/").pop();
+  const formatedName = fileName!.charAt(0).toUpperCase() + fileName!.slice(1);
 
+  // if the file is an pdf
+  if (mediaType === "pdf") {
     if (!isForChat) {
       return (
         <CommonFileBox
@@ -243,9 +243,6 @@ const RenderContent = ({
       </View>
     );
   }
-
-  const fileName = mediaUrl?.split("/").pop();
-  const formatedName = fileName!.charAt(0).toUpperCase() + fileName!.slice(1);
 
   if (!isForChat) {
     return (

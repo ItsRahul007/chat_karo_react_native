@@ -287,17 +287,26 @@ const getCommunityChats = async (): Promise<SingleCommunityChat[]> => {
 };
 
 //? used for fetching chat messages
-const getChatById = async (id: string): Promise<Message[]> => {
+const getChatById = async (
+  id: string,
+  isGroup: boolean,
+): Promise<Message[]> => {
   try {
+    console.log(id, isGroup);
     const { data, error } = await supabase
       .from(TableNames.messages)
-      .select("*")
+      .select(isGroup ? "*, sender:users (firstName, lastName, avatar)" : "*")
       .eq("conversationId", id)
       .order("createdAt", { ascending: true });
 
     if (error) throw error;
 
-    return data;
+    return data.map((message: any) => {
+      return {
+        ...message,
+        sender: isGroup ? message.sender : null,
+      };
+    });
   } catch (error) {
     console.error("Error fetching chat:", error);
     Toast.error("Error fetching chat");
@@ -316,7 +325,6 @@ const getChatProfileById = async (
 } | null> => {
   try {
     if (isGroup) {
-      console.log("isGroup", id);
       const { data, error } = await supabase
         .from(TableNames.conversations)
         .select("groupName,groupImage,id")
