@@ -5,7 +5,7 @@ import MyBlurView from "@/components/common/MyBlurView";
 import CommunityList from "@/components/home/CommunityList";
 import PersonCard from "@/components/home/PersonCard";
 import { ColorTheme } from "@/constants/colors";
-import { getPrivateChats } from "@/controller/chat.controller";
+import { CHAT_PAGE_SIZE, getPrivateChats } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
 import {
   gradientIconButtonIconSize,
@@ -14,9 +14,9 @@ import {
 import { QueryKeys, SearchParams } from "@/util/enum";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -37,10 +37,26 @@ const index = () => {
   const theme = useColorScheme();
   const iconColor = useIconColor();
 
-  const { data: privateChats, isLoading: isPrivateChatsLoading } = useQuery({
+  const {
+    data: privateChatsData,
+    isLoading: isPrivateChatsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: [QueryKeys.privateChats],
-    queryFn: getPrivateChats,
+    queryFn: ({ pageParam = 0 }) => getPrivateChats(pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < CHAT_PAGE_SIZE) return undefined;
+      return allPages.length;
+    },
   });
+
+  const privateChats = useMemo(
+    () => privateChatsData?.pages.flatMap((page) => page) ?? [],
+    [privateChatsData],
+  );
 
   return (
     <SafeAreaProvider>
@@ -94,6 +110,19 @@ const index = () => {
               paddingBottom: 150,
               gap: 15,
             }}
+            onEndReached={() => {
+              if (hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
+              }
+            }}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <View className="items-center py-4">
+                  <ActivityIndicator color={iconColor} size={16} />
+                </View>
+              ) : null
+            }
           />
         </View>
 

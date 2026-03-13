@@ -1,15 +1,10 @@
 import { TableNames } from "@/util/enum";
 import {
-  CommunityCardProps,
-  PersonCardProps,
-} from "@/util/interfaces/commonInterfaces";
-import {
   MediaAttachment,
   Message,
   SingleChat,
   SingleCommunityChat,
 } from "@/util/interfaces/types";
-import { chatList, sampleCommunityData } from "@/util/sample.data";
 import { supabase } from "@/util/supabase";
 import { Toast } from "@/util/toast";
 import * as FileSystem from "expo-file-system/legacy";
@@ -17,21 +12,7 @@ import * as MediaLibrary from "expo-media-library";
 import * as Notifications from "expo-notifications";
 import { Alert, Platform } from "react-native";
 
-const getChatHistoryById = (
-  chatId: string,
-  isCommunity: boolean,
-): PersonCardProps | CommunityCardProps | null => {
-  try {
-    if (isCommunity) {
-      return sampleCommunityData.filter((chat) => chat.id === chatId)[0];
-    }
-
-    return chatList.filter((chat) => chat.id === chatId)[0];
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
-};
+const CHAT_PAGE_SIZE = 10;
 
 const saveMediaIntoDevice = async ({ type, url }: MediaAttachment) => {
   if (!url) return;
@@ -220,7 +201,10 @@ const downloadFile = async ({
   }
 };
 
-const getPrivateChats = async (): Promise<SingleChat[]> => {
+const getPrivateChats = async (
+  page: number = 0,
+  pageSize: number = CHAT_PAGE_SIZE,
+): Promise<SingleChat[]> => {
   try {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user || !user.user.email) return [];
@@ -237,12 +221,16 @@ const getPrivateChats = async (): Promise<SingleChat[]> => {
       return [];
     }
 
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
     const { data, error } = await supabase
       .from(TableNames.inbox)
       .select("*")
       .eq("myId", userProfile.id)
       .eq("isGroup", false)
-      .order("lastMessage->>createdAt", { ascending: false });
+      .order("lastMessage->>createdAt", { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
 
@@ -254,7 +242,10 @@ const getPrivateChats = async (): Promise<SingleChat[]> => {
   }
 };
 
-const getCommunityChats = async (): Promise<SingleCommunityChat[]> => {
+const getCommunityChats = async (
+  page: number = 0,
+  pageSize: number = CHAT_PAGE_SIZE,
+): Promise<SingleCommunityChat[]> => {
   try {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user || !user.user.email) return [];
@@ -270,12 +261,16 @@ const getCommunityChats = async (): Promise<SingleCommunityChat[]> => {
       return [];
     }
 
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
     const { data, error } = await supabase
       .from(TableNames.inbox)
       .select("*")
       .eq("myId", userProfile.id)
       .eq("isGroup", true)
-      .order("lastMessage->>createdAt", { ascending: false });
+      .order("lastMessage->>createdAt", { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
 
@@ -290,20 +285,60 @@ const getCommunityChats = async (): Promise<SingleCommunityChat[]> => {
 const getChatById = async (
   id: string,
   isGroup: boolean,
+  page: number = 0,
+  pageSize: number = CHAT_PAGE_SIZE,
 ): Promise<Message[]> => {
   try {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
     const { data, error } = await supabase
       .from(TableNames.messages)
       .select(isGroup ? "*, sender:users (firstName, lastName, avatar)" : "*")
       .eq("conversationId", id)
-      .order("createdAt", { ascending: true });
+      .order("createdAt", { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
 
+    const mentionIds = Array.from(
+      new Set(
+        data
+          .filter((m: any) => m.mentionMessageId)
+          .map((m: any) => m.mentionMessageId),
+      ),
+    );
+
+    const parentMessagesMap: Record<string, any> = {};
+    if (mentionIds.length > 0) {
+      const { data: parents, error: parentErr } = await supabase
+        .from(TableNames.messages)
+        .select(
+          `id, message, media, senderId, sender:users (firstName, lastName)`,
+        )
+        .in("id", mentionIds);
+
+      if (!parentErr && parents) {
+        parents.forEach((p: any) => {
+          parentMessagesMap[p.id] = p;
+        });
+      }
+    }
+
     return data.map((message: any) => {
+      const parentMsg = message.mentionMessageId
+        ? parentMessagesMap[message.mentionMessageId]
+        : null;
+
       return {
         ...message,
         sender: isGroup ? message.sender : null,
+        mentionMessage: parentMsg
+          ? {
+              ...parentMsg,
+              sender: parentMsg.sender || null,
+            }
+          : null,
       };
     });
   } catch (error) {
@@ -359,11 +394,53 @@ const getChatProfileById = async (
   }
 };
 
+const sendMessage = async (
+  conversationId: bigint | number | string,
+  myId: bigint | number | string,
+  {
+    mentionMessageId = null,
+    media = null,
+    message = null,
+  }: {
+    mentionMessageId?: bigint | number | string | null;
+    media?: MediaAttachment[] | null;
+    message?: string | null;
+  } = {},
+) => {
+  //? check if message or media is present
+  if (!message && !media) {
+    Toast.error("Message or media is required");
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from(TableNames.messages)
+      .insert({
+        conversationId: conversationId,
+        senderId: myId,
+        message,
+        media,
+        mentionMessageId,
+      })
+      .select("*");
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error("Error sending message:", error);
+    Toast.error("Error sending message");
+    return null;
+  }
+};
+
 export {
+  CHAT_PAGE_SIZE,
   getChatById,
-  getChatHistoryById,
   getChatProfileById,
   getCommunityChats,
   getPrivateChats,
   saveMediaIntoDevice,
+  sendMessage,
 };

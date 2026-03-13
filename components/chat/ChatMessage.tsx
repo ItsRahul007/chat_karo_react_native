@@ -12,6 +12,7 @@ interface ChatMessageProps extends Message {
   onReply?: (message: Message) => void;
   onReplyPress?: (messageId: bigint | number) => void;
   highlighted?: boolean;
+  chatWithPersonName?: string; //? name of the person we are chatting with (one-on-one only)
 }
 
 const ChatMessage = (msgData: ChatMessageProps) => {
@@ -24,8 +25,10 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     isCommunity,
     onReply,
     mentionMessage,
+    mentionMessageId,
     onReplyPress,
     highlighted,
+    chatWithPersonName,
   } = msgData;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -87,6 +90,13 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     });
   };
 
+  //? for my message do not show the sender
+  const messageSenderName = !isCommunity
+    ? chatWithPersonName!
+    : sender?.firstName
+      ? sender?.firstName + " " + sender?.lastName
+      : "User";
+
   return (
     <>
       <SwipeToReply onReply={handleReply}>
@@ -127,9 +137,9 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                 pointerEvents: "none",
               }}
             />
-            {mentionMessage && (
+            {mentionMessage && mentionMessageId ? (
               <Pressable
-                onPress={() => onReplyPress?.(mentionMessage.id)}
+                onPress={() => onReplyPress?.(mentionMessageId)}
                 className={`m-1 p-2 rounded-lg border-l-4 border-l-orange-500 ${
                   isMyMessage ? "bg-black/20" : "bg-black/5 dark:bg-white/10"
                 }`}
@@ -140,11 +150,13 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                   }`}
                   numberOfLines={1}
                 >
-                  {mentionMessage.senderId === user?.id
+                  {mentionMessage.senderId == user?.id
                     ? "You"
-                    : mentionMessage.sender?.firstName +
+                    : !isCommunity
+                      ? chatWithPersonName!
+                      : mentionMessage.sender?.firstName +
                         " " +
-                        mentionMessage.sender?.lastName || "User"}
+                        mentionMessage.sender?.lastName}
                 </Text>
                 <Text
                   numberOfLines={1}
@@ -157,7 +169,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                   {mentionMessage.message || "Media"}
                 </Text>
               </Pressable>
-            )}
+            ) : null}
 
             {isCommunity &&
             !isMyMessage &&
@@ -169,7 +181,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                   (media ? "pb-2" : "")
                 }
               >
-                {sender?.firstName + " " + sender?.lastName}
+                {messageSenderName}
               </Text>
             ) : null}
 
@@ -177,7 +189,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
 
             {/* Only apply padding if there is text or to maintain spacing for timestamp if no text */}
             <View
-              className={`${message ? "px-3 py-2 " + (isCommunity ? "pt-0" : "") : "pb-6"}`}
+              className={`${message ? "px-3 py-2 " + (isCommunity && !isMyMessage ? "pt-0" : "") : "pb-6"}`}
             >
               {message && (
                 <Text

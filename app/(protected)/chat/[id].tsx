@@ -5,17 +5,23 @@ import ChatProfileSkeleton from "@/components/skeletons/ChatProfileSkeleton";
 import MessageListSkeleton from "@/components/skeletons/MessageListSkeleton";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
-import { getChatById, getChatProfileById } from "@/controller/chat.controller";
+import {
+  CHAT_PAGE_SIZE,
+  getChatById,
+  getChatProfileById,
+  sendMessage,
+} from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
 import { chatTopBarIconSize, gradientColors } from "@/util/constants";
 import { QueryKeys } from "@/util/enum";
 import { Message } from "@/util/interfaces/types";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams } from "expo-router";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Keyboard,
@@ -72,11 +78,27 @@ const Chat = () => {
       getChatProfileById(profileToFetchId as string, isCommunity === "true"),
   });
 
-  const { data: messages, isLoading: isMessagesLoading } = useQuery({
+  const {
+    data: messagesData,
+    isLoading: isMessagesLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: [QueryKeys.messages, conversationId],
-    queryFn: () =>
-      getChatById(conversationId as string, isCommunity === "true"),
+    queryFn: ({ pageParam = 0 }) =>
+      getChatById(conversationId as string, isCommunity === "true", pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < CHAT_PAGE_SIZE) return undefined;
+      return allPages.length;
+    },
   });
+
+  const messages = useMemo(
+    () => messagesData?.pages.flatMap((page) => page) ?? [],
+    [messagesData],
+  );
 
   const replyAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -212,6 +234,7 @@ const Chat = () => {
                   onReply={handleReply}
                   onReplyPress={handleReplyPress}
                   highlighted={item.id === highlightedId}
+                  chatWithPersonName={chat?.name}
                 />
               )}
               ItemSeparatorComponent={({ leadingItem }) => {
@@ -230,6 +253,19 @@ const Chat = () => {
               contentContainerStyle={{ paddingVertical: 10, flexGrow: 1 }}
               showsVerticalScrollIndicator={false}
               inverted
+              onEndReached={() => {
+                if (hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage();
+                }
+              }}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={
+                isFetchingNextPage ? (
+                  <View className="items-center py-4">
+                    <ActivityIndicator color={iconColor} size={16} />
+                  </View>
+                ) : null
+              }
               onScrollToIndexFailed={(info) => {
                 flatListRef.current?.scrollToOffset({
                   offset: info.averageItemLength * info.index,
@@ -308,6 +344,26 @@ const Chat = () => {
                   paddingVertical: Platform.OS === "ios" ? 10 : 0,
                 }}
               />
+              <Pressable
+                onPress={() => {
+                  if (value.trim().length === 0 || !myId || !conversationId)
+                    return;
+                  sendMessage(conversationId as string, myId, {
+                    message: value,
+                    mentionMessageId: replyingTo?.id ?? null,
+                  });
+                  onChangeText("");
+                  setReplyingTo(null);
+                }}
+                disabled={value.trim().length === 0}
+                className="disabled:opacity-50"
+              >
+                <Ionicons
+                  name={"send"}
+                  size={chatTopBarIconSize}
+                  color={iconColor}
+                />
+              </Pressable>
             </View>
           </View>
         </View>

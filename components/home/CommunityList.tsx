@@ -1,18 +1,32 @@
-import { getCommunityChats } from "@/controller/chat.controller";
+import { CHAT_PAGE_SIZE, getCommunityChats } from "@/controller/chat.controller";
 import { QueryKeys } from "@/util/enum";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
-import React from "react";
+import React, { useMemo } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import CommunityCard from "./CommunityCard";
 
 const CommunityList = ({ iconColor }: { iconColor: string }) => {
-  const { data: communityChats, isLoading: isCommunityChatsLoading } = useQuery(
-    {
-      queryKey: [QueryKeys.communityChats],
-      queryFn: getCommunityChats,
+  const {
+    data: communityChatsData,
+    isLoading: isCommunityChatsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: [QueryKeys.communityChats],
+    queryFn: ({ pageParam = 0 }) => getCommunityChats(pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < CHAT_PAGE_SIZE) return undefined;
+      return allPages.length;
     },
+  });
+
+  const communityChats = useMemo(
+    () => communityChatsData?.pages.flatMap((page) => page) ?? [],
+    [communityChatsData],
   );
 
   return (
@@ -34,6 +48,12 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 15, paddingHorizontal: 15, flex: 1 }}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
+          onEndReachedThreshold={0.5}
           ListEmptyComponent={
             <View className="items-center justify-center flex-1 my-8">
               {isCommunityChatsLoading ? (
