@@ -1,3 +1,4 @@
+import { TableNames } from "@/util/enum";
 import { UserProfile } from "@/util/interfaces/types";
 import { supabase } from "@/util/supabase";
 import { Toast } from "@/util/toast";
@@ -26,7 +27,7 @@ const createUser = async ({
     }
 
     const { data: profileData, error: profileError } = await supabase
-      .from("users")
+      .from(TableNames.users)
       .select("email")
       .eq("email", data.user.email)
       .single();
@@ -42,7 +43,7 @@ const createUser = async ({
     }
 
     const { data: insertedData, error: insertedError } = await supabase
-      .from("users")
+      .from(TableNames.users)
       .insert({
         email: data.user.email,
         avatar: image || data.user.user_metadata.picture,
@@ -97,7 +98,7 @@ const updateUser = async ({
     }
 
     const { data: updatedData, error: updatedError } = await supabase
-      .from("users")
+      .from(TableNames.users)
       .update({
         avatar: image,
         userName,

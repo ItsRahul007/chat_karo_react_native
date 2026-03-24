@@ -58,7 +58,6 @@ const usePushNotification = (): I_PushNotification => {
         token = await Notifications.getExpoPushTokenAsync({
           projectId,
         });
-        console.log("Push Token:", token);
       } catch (error) {
         console.log("Error getting push token:", error);
       }
