@@ -1,3 +1,4 @@
+import { CHAT_PAGE_SIZE } from "@/util/constants";
 import { TableNames } from "@/util/enum";
 import {
   MediaAttachment,
@@ -11,8 +12,6 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import * as Notifications from "expo-notifications";
 import { Alert, Platform } from "react-native";
-
-const CHAT_PAGE_SIZE = 10;
 
 const saveMediaIntoDevice = async ({ type, url }: MediaAttachment) => {
   if (!url) return;
@@ -201,25 +200,14 @@ const downloadFile = async ({
   }
 };
 
+//? personal chat list
 const getPrivateChats = async (
+  userId: bigint | number | string,
   page: number = 0,
   pageSize: number = CHAT_PAGE_SIZE,
 ): Promise<SingleChat[]> => {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user || !user.user.email) return [];
-
-    const { data: userProfile, error: profileError } = await supabase
-      .from(TableNames.users)
-      .select("id")
-      .eq("email", user.user.email)
-      .single();
-
-    if (profileError || !userProfile) {
-      Toast.error("Error fetching profile");
-      console.error("Error fetching profile:", profileError);
-      return [];
-    }
+    if (!userId) return [];
 
     const from = page * pageSize;
     const to = from + pageSize - 1;
@@ -227,8 +215,10 @@ const getPrivateChats = async (
     const { data, error } = await supabase
       .from(TableNames.inbox)
       .select("*")
-      .eq("myId", userProfile.id)
+      .eq("myId", userId)
       .eq("isGroup", false)
+      .order("isPinned", { ascending: false })
+      .order("unreadMessageCount", { ascending: false })
       .order("lastMessage->>createdAt", { ascending: false })
       .range(from, to);
 
@@ -242,24 +232,15 @@ const getPrivateChats = async (
   }
 };
 
+//? community chat list
 const getCommunityChats = async (
+  userId: bigint | number | string,
   page: number = 0,
   pageSize: number = CHAT_PAGE_SIZE,
+  orderBy: string = "lastMessage->>createdAt",
 ): Promise<SingleCommunityChat[]> => {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user || !user.user.email) return [];
-
-    const { data: userProfile, error: profileError } = await supabase
-      .from(TableNames.users)
-      .select("id")
-      .eq("email", user.user.email)
-      .single();
-
-    if (profileError || !userProfile) {
-      console.error("Error fetching profile:", profileError);
-      return [];
-    }
+    if (!userId) return [];
 
     const from = page * pageSize;
     const to = from + pageSize - 1;
@@ -267,9 +248,9 @@ const getCommunityChats = async (
     const { data, error } = await supabase
       .from(TableNames.inbox)
       .select("*")
-      .eq("myId", userProfile.id)
+      .eq("myId", userId)
       .eq("isGroup", true)
-      .order("lastMessage->>createdAt", { ascending: false })
+      .order(orderBy, { ascending: false })
       .range(from, to);
 
     if (error) throw error;
@@ -436,7 +417,6 @@ const sendMessage = async (
 };
 
 export {
-  CHAT_PAGE_SIZE,
   getChatById,
   getChatProfileById,
   getCommunityChats,

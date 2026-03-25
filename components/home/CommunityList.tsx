@@ -1,13 +1,17 @@
-import { CHAT_PAGE_SIZE, getCommunityChats } from "@/controller/chat.controller";
+import { AuthContext } from "@/context/AuthContext";
+import { getCommunityChats } from "@/controller/chat.controller";
+
 import { QueryKeys } from "@/util/enum";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import CommunityCard from "./CommunityCard";
 
 const CommunityList = ({ iconColor }: { iconColor: string }) => {
+  const { user } = useContext(AuthContext);
+
   const {
     data: communityChatsData,
     isLoading: isCommunityChatsLoading,
@@ -15,13 +19,12 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: [QueryKeys.communityChats],
-    queryFn: ({ pageParam = 0 }) => getCommunityChats(pageParam),
+    queryKey: [QueryKeys.communityChats, user?.id],
+    queryFn: ({ pageParam = 0 }) =>
+      getCommunityChats(user!.id, pageParam, 3, "unreadMessageCount"),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length < CHAT_PAGE_SIZE) return undefined;
-      return allPages.length;
-    },
+    getNextPageParam: () => undefined,
+    enabled: !!user?.id,
   });
 
   const communityChats = useMemo(

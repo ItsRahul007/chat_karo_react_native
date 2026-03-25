@@ -6,20 +6,23 @@ import MessageListSkeleton from "@/components/skeletons/MessageListSkeleton";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
 import {
-  CHAT_PAGE_SIZE,
   getChatById,
   getChatProfileById,
   sendMessage,
 } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
-import { chatTopBarIconSize, gradientColors } from "@/util/constants";
+import {
+  CHAT_PAGE_SIZE,
+  chatTopBarIconSize,
+  gradientColors,
+} from "@/util/constants";
 import { QueryKeys } from "@/util/enum";
 import { Message } from "@/util/interfaces/types";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,

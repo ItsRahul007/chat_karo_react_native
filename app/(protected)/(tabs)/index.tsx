@@ -5,9 +5,10 @@ import MyBlurView from "@/components/common/MyBlurView";
 import CommunityList from "@/components/home/CommunityList";
 import PersonCard from "@/components/home/PersonCard";
 import { ColorTheme } from "@/constants/colors";
-import { CHAT_PAGE_SIZE, getPrivateChats } from "@/controller/chat.controller";
+import { getPrivateChats } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
 import {
+  CHAT_PAGE_SIZE,
   gradientIconButtonIconSize,
   gradientIconButtonSize,
 } from "@/util/constants";
@@ -16,7 +17,8 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { AuthContext } from "@/context/AuthContext";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -36,6 +38,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 const index = () => {
   const theme = useColorScheme();
   const iconColor = useIconColor();
+  const { user } = useContext(AuthContext);
 
   const {
     data: privateChatsData,
@@ -44,13 +47,14 @@ const index = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: [QueryKeys.privateChats],
-    queryFn: ({ pageParam = 0 }) => getPrivateChats(pageParam),
+    queryKey: [QueryKeys.privateChats, user?.id],
+    queryFn: ({ pageParam = 0 }) => getPrivateChats(user!.id, pageParam),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < CHAT_PAGE_SIZE) return undefined;
       return allPages.length;
     },
+    enabled: !!user?.id,
   });
 
   const privateChats = useMemo(

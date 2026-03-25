@@ -30,50 +30,56 @@ const usePushNotification = (): I_PushNotification => {
   const notificationListener = useRef<Notifications.Subscription>(null);
   const responseListener = useRef<Notifications.Subscription>(null);
 
-  const registerPushNotification = async () => {
+  const registerPushNotification = async (): Promise<
+    Notifications.ExpoPushToken | undefined
+  > => {
     let token;
 
-    if (!Device.isDevice) {
-      console.error("Must use physical device for Push Notifications");
-      return;
-    }
-
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-
-    if (finalStatus !== "granted") {
-      console.error("Failed to get push token for push notification!");
-      return;
-    }
-
-    if (Constants.expoConfig?.extra?.eas?.projectId) {
-      try {
-        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-        token = await Notifications.getExpoPushTokenAsync({
-          projectId,
-        });
-      } catch (error) {
-        console.log("Error getting push token:", error);
+    try {
+      if (!Device.isDevice) {
+        throw new Error("Must use physical device for Push Notifications");
       }
-    } else {
-      console.log("No Project ID found, skipping push token registration");
-    }
 
-    if (Platform.OS == "android") {
-      Notifications.setNotificationChannelAsync("default", {
-        name: "default",
-        importance: Notifications.AndroidImportance.MAX,
-        lightColor: "#FF0000",
-      });
-    }
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
 
-    return token;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      // do not force user to grant user for notifications, leave it as a choice
+      if (finalStatus !== "granted") {
+        throw new Error("Failed to get push token for push notification!");
+      }
+
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+
+      if (projectId) {
+        try {
+          token = await Notifications.getExpoPushTokenAsync({
+            projectId,
+          });
+        } catch (error) {
+          console.log("Error getting push token:", error);
+        }
+      } else {
+        console.log("No Project ID found, skipping push token registration");
+      }
+
+      if (Platform.OS == "android") {
+        Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.MAX,
+          lightColor: "#FF0000",
+        });
+      }
+    } catch (error) {
+      console.log("Error getting push token:", error);
+    } finally {
+      return token;
+    }
   };
 
   useEffect(() => {
