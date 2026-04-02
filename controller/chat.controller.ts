@@ -416,6 +416,24 @@ const sendMessage = async (
   }
 };
 
+const updateLastReadTime = async (
+  conversationId: bigint | number | string,
+  myId: bigint | number | string,
+) => {
+  try {
+    const { error } = await supabase
+      .from(TableNames.participants)
+      .update({ lastReadTime: new Date().toISOString() })
+      .eq("conversationId", conversationId)
+      .eq("userId", myId);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error updating last read time:", error);
+    Toast.error("Error updating last read time");
+  }
+};
+
 export {
   getChatById,
   getChatProfileById,
@@ -423,4 +441,5 @@ export {
   getPrivateChats,
   saveMediaIntoDevice,
   sendMessage,
+  updateLastReadTime,
 };

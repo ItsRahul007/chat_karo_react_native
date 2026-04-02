@@ -75,6 +75,7 @@ type SingleChat = {
   isMuted: boolean;
   isBlocked: boolean;
   isRemoved: boolean;
+  onClick?: () => void;
 };
 
 type SingleCommunityChat = {

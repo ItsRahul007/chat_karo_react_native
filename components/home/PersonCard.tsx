@@ -16,6 +16,7 @@ const PersonCard = ({
   conversationId,
   isPinned,
   chatWithId,
+  onClick,
 }: SingleChat) => {
   const [isProfileClicked, setIsProfileClicked] = useState<boolean>(false);
   const formatedMessageTime = useFormatedTime(lastMessage.createdAt);
@@ -38,7 +39,10 @@ const PersonCard = ({
         ) : null}
       </Pressable>
       <Link href={`/chat/${conversationId}?chatWithId=${chatWithId}`} asChild>
-        <TouchableOpacity className="flex-1 flex-row items-start justify-between">
+        <TouchableOpacity
+          onPress={onClick}
+          className="flex-1 flex-row items-start justify-between"
+        >
           <View className="flex-1">
             <Text
               className="text-light-text-primary dark:text-dark-text-primary font-bold overflow-ellipsis"

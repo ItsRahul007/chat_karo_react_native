@@ -1,6 +1,5 @@
 import { ColorTheme } from "@/constants/colors";
 import AuthProvider, { AuthContext } from "@/context/AuthContext";
-import SocketProvider from "@/context/SocketContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -45,9 +44,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <SocketProvider>
-            <RootLayoutNav />
-          </SocketProvider>
+          <RootLayoutNav />
         </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>

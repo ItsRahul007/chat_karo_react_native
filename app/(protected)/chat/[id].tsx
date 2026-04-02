@@ -5,6 +5,7 @@ import ChatProfileSkeleton from "@/components/skeletons/ChatProfileSkeleton";
 import MessageListSkeleton from "@/components/skeletons/MessageListSkeleton";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 import {
   getChatById,
   getChatProfileById,
@@ -18,8 +19,13 @@ import {
 } from "@/util/constants";
 import { QueryKeys } from "@/util/enum";
 import { Message } from "@/util/interfaces/types";
+import { EmitMessages, ListenMessages } from "@/util/socket.calls";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useMemo, useState } from "react";
@@ -59,6 +65,8 @@ const Chat = () => {
   let lastSender: string | undefined;
   const { user } = useContext(AuthContext);
   const myId = user?.id;
+  const queryClient = useQueryClient();
+  const { socket } = useSocket();
 
   const iconColor = useIconColor();
 
@@ -126,6 +134,46 @@ const Chat = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!socket || !conversationId) return;
+
+    // Join the room for this conversation
+    socket.emit(EmitMessages.JOIN_ROOM, conversationId);
+
+    const handleReceiveMessage = (incomingMessage: Message) => {
+      console.log("handleReceiveMessage", incomingMessage);
+
+      // Only append if the message is for the current conversation
+      if (
+        incomingMessage.conversationId?.toString() === conversationId.toString()
+      ) {
+        queryClient.setQueryData(
+          [QueryKeys.messages, conversationId],
+          (old: any) => {
+            if (!old) return old;
+            const [firstPage, ...rest] = old.pages;
+            // Check if message already exists (to prevent duplicates if multiple paths update)
+            if (firstPage.some((m: Message) => m.id === incomingMessage.id))
+              return old;
+
+            return {
+              ...old,
+              pages: [[incomingMessage, ...firstPage], ...rest],
+            };
+          },
+        );
+      }
+    };
+
+    socket.on(ListenMessages.RECEIVE_MESSAGE, handleReceiveMessage);
+
+    return () => {
+      // Leave the room and clean up listener
+      socket.emit(EmitMessages.LEAVE_ROOM, conversationId);
+      socket.off(ListenMessages.RECEIVE_MESSAGE, handleReceiveMessage);
+    };
+  }, [socket, conversationId, queryClient]);
+
   const handleReply = (message: Message) => {
     setReplyingTo(message);
   };
@@ -142,6 +190,112 @@ const Chat = () => {
       setTimeout(() => {
         setHighlightedId(null);
       }, 2000);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    const trimmed = value.trim();
+    if (!trimmed || !myId || !conversationId) return;
+
+    const mentionMessageId = replyingTo?.id ?? null;
+    const tempId = Date.now();
+    const optimisticMessage: Message = {
+      id: tempId,
+      createdAt: new Date().toISOString(),
+      senderId: myId,
+      conversationId: Number(conversationId),
+      message: trimmed,
+      media: [],
+      isRead: false,
+      isDeleted: false,
+      isEdited: false,
+      mentionMessageId: mentionMessageId ?? null,
+      mentionMessage: replyingTo ?? null,
+      sender: undefined,
+    };
+
+    // Optimistically insert at the front of page 0 (inverted list)
+    queryClient.setQueryData(
+      [QueryKeys.messages, conversationId],
+      (old: any) => {
+        if (!old) return old;
+        const [firstPage, ...rest] = old.pages;
+        return {
+          ...old,
+          pages: [[optimisticMessage, ...firstPage], ...rest],
+        };
+      },
+    );
+
+    onChangeText("");
+    setReplyingTo(null);
+
+    const result = await sendMessage(conversationId as string, myId, {
+      message: trimmed,
+      mentionMessageId,
+    });
+
+    if (result && result[0]) {
+      const confirmedMessage = {
+        ...result[0],
+        mentionMessage: optimisticMessage.mentionMessage,
+      };
+
+      // Replace the temp message with the real one from the server
+      queryClient.setQueryData(
+        [QueryKeys.messages, conversationId],
+        (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: Message[]) =>
+              page.map((m: Message) =>
+                m.id === tempId ? confirmedMessage : m,
+              ),
+            ),
+          };
+        },
+      );
+
+      // Emit socket event with the real confirmed message
+      socket?.emit(EmitMessages.SEND_MESSAGE, {
+        message: confirmedMessage,
+        receiverId: chatWithId,
+        isGroup: isCommunity === "true",
+      });
+
+      // Update the sender's inbox (privateChats) cache
+      queryClient.setQueryData([QueryKeys.privateChats, myId], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any[]) =>
+            page.map((chat: any) =>
+              chat.conversationId?.toString() === conversationId?.toString()
+                ? {
+                    ...chat,
+                    lastMessage: confirmedMessage,
+                    unreadMessageCount: 0,
+                  }
+                : chat,
+            ),
+          ),
+        };
+      });
+    } else {
+      // Rollback on failure
+      queryClient.setQueryData(
+        [QueryKeys.messages, conversationId],
+        (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: Message[]) =>
+              page.filter((m: Message) => m.id !== tempId),
+            ),
+          };
+        },
+      );
     }
   };
 
@@ -348,16 +502,7 @@ const Chat = () => {
                 }}
               />
               <Pressable
-                onPress={() => {
-                  if (value.trim().length === 0 || !myId || !conversationId)
-                    return;
-                  sendMessage(conversationId as string, myId, {
-                    message: value,
-                    mentionMessageId: replyingTo?.id ?? null,
-                  });
-                  onChangeText("");
-                  setReplyingTo(null);
-                }}
+                onPress={handleSendMessage}
                 disabled={value.trim().length === 0}
                 className="disabled:opacity-50"
               >

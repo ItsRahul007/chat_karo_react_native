@@ -1,4 +1,5 @@
 import { usePushNotification } from "@/custom-hooks/usePushNotification";
+import { EmitMessages } from "@/util/socket.calls";
 import { supabase } from "@/util/supabase";
 import {
   createContext,
@@ -26,11 +27,13 @@ export const useSocket = () => useContext(SocketContext);
 
 // const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_SERVER_URL!;
 // use this command to get the ip: ipconfig getifaddr en0
+// const IP =
 const SOCKET_URL = "http://192.168.0.110:3001";
 
 const SocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn, user } = useContext(AuthContext);
   const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   const connectSocket = useCallback(async () => {
@@ -71,6 +74,7 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
     });
 
     socketRef.current = socket;
+    setSocket(socket);
   }, []);
 
   const disconnectSocket = useCallback(() => {
@@ -79,16 +83,12 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
       socketRef.current.disconnect();
       socketRef.current = null;
       setIsConnected(false);
+      setSocket(null);
       console.log("🔌 Socket manually disconnected");
     }
   }, []);
 
   useEffect(() => {
-    console.log("🔌 Socket effect:", {
-      isLoggedIn,
-      hasUser: !!user,
-      SOCKET_URL,
-    });
     if (isLoggedIn && user) {
       console.log("🔌 Attempting socket connection...");
       connectSocket();
@@ -111,14 +111,17 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     if (isConnected && socketRef.current && expoPushToken?.data) {
-      socketRef.current.emit("register-push-token", expoPushToken.data);
+      socketRef.current.emit(
+        EmitMessages.REGISTER_PUSH_TOKEN,
+        expoPushToken.data,
+      );
     }
   }, [isConnected, expoPushToken]);
 
   return (
     <SocketContext.Provider
       value={{
-        socket: socketRef.current,
+        socket: socket,
         isConnected,
       }}
     >
