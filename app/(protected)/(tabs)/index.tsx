@@ -6,7 +6,6 @@ import CommunityList from "@/components/home/CommunityList";
 import PersonCard from "@/components/home/PersonCard";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
-import { useSocket } from "@/context/SocketContext";
 import {
   getPrivateChats,
   updateLastReadTime,
@@ -18,8 +17,6 @@ import {
   gradientIconButtonSize,
 } from "@/util/constants";
 import { QueryKeys, SearchParams } from "@/util/enum";
-import { Message } from "@/util/interfaces/types";
-import { ListenMessages } from "@/util/socket.calls";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +42,6 @@ const index = () => {
   const theme = useColorScheme();
   const iconColor = useIconColor();
   const { user } = useContext(AuthContext);
-  const { socket } = useSocket();
   const queryClient = useQueryClient();
 
   const {
@@ -69,42 +65,6 @@ const index = () => {
     () => privateChatsData?.pages.flatMap((page) => page) ?? [],
     [privateChatsData],
   );
-
-  const handleReceiveMessage = (message: Message) => {
-    queryClient.setQueryData([QueryKeys.privateChats, user?.id], (old: any) => {
-      if (!old) return old;
-      return {
-        ...old,
-        pages: old.pages.map((page: any[]) =>
-          page.map((chat: any) =>
-            chat.conversationId?.toString() ===
-            message.conversationId?.toString()
-              ? {
-                  ...chat,
-                  lastMessage: message,
-                  unreadMessageCount: (chat.unreadMessageCount || 0) + 1,
-                }
-              : chat,
-          ),
-        ),
-      };
-    });
-  };
-
-  useEffect(() => {
-    if (!socket || !user?.id) return;
-
-    socket.on(ListenMessages.RECEIVE_MESSAGE, handleReceiveMessage);
-    socket.on(ListenMessages.NEW_MESSAGE, (message: Message) => {
-      console.log("NEW_MESSAGE", message);
-      handleReceiveMessage(message);
-    });
-
-    return () => {
-      socket.off(ListenMessages.RECEIVE_MESSAGE, handleReceiveMessage);
-      socket.off(ListenMessages.NEW_MESSAGE, handleReceiveMessage);
-    };
-  }, [socket, user?.id, queryClient]);
 
   const setUnreadMessageCountToZero = (conversationId: bigint) => {
     queryClient.setQueryData([QueryKeys.privateChats, user?.id], (old: any) => {

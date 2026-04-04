@@ -1,6 +1,12 @@
+import {
+  handleInboxUpdate,
+  handleReceiveMessage,
+} from "@/controller/socket.controller";
 import { usePushNotification } from "@/custom-hooks/usePushNotification";
-import { EmitMessages } from "@/util/socket.calls";
+import { Message } from "@/util/interfaces/types";
+import { EmitMessages, ListenMessages } from "@/util/socket.calls";
 import { supabase } from "@/util/supabase";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
   PropsWithChildren,
@@ -32,6 +38,7 @@ const SOCKET_URL = "http://192.168.0.110:3001";
 
 const SocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn, user } = useContext(AuthContext);
+  const queryClient = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -107,6 +114,69 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
     };
   }, [isLoggedIn, user, connectSocket, disconnectSocket]);
 
+  // ─── Centralized socket event listeners ───────────────────────────
+  // All socket events are handled here so that caches stay updated
+  // regardless of which screen is currently mounted.
+  useEffect(() => {
+    const s = socketRef.current;
+    if (!s || !isConnected || !user?.id) return;
+
+    const onReceiveMessageWhileInsideAConversation = ({
+      message,
+      isCommunity,
+    }: {
+      message: Message;
+      isCommunity: boolean;
+    }) => {
+      //* update the chat, don't increment unread count
+      console.log("📩 [SocketContext] RECEIVE_MESSAGE", message.id);
+      handleReceiveMessage(queryClient, message);
+      handleInboxUpdate({
+        queryClient,
+        userId: user.id,
+        message,
+        isCommunity,
+        incrementUnread: false,
+      });
+    };
+
+    const onNewMessageWhileNotInConversation = ({
+      message,
+      isCommunity,
+    }: {
+      message: Message;
+      isCommunity: boolean;
+    }) => {
+      //* update the chat, increment unread count
+      console.log(
+        "📩 [SocketContext] NEW_MESSAGE",
+        message.id,
+        "isCommunity",
+        isCommunity,
+      );
+      handleInboxUpdate({ queryClient, userId: user.id, message, isCommunity });
+    };
+
+    s.on(
+      ListenMessages.RECEIVE_MESSAGE,
+      onReceiveMessageWhileInsideAConversation,
+    );
+    s.on(ListenMessages.NEW_MESSAGE, onNewMessageWhileNotInConversation);
+
+    // Future events can be registered here:
+    // s.on(ListenMessages.USER_TYPING, onUserTyping);
+    // s.on(ListenMessages.USER_STOP_TYPING, onUserStopTyping);
+
+    return () => {
+      s.off(
+        ListenMessages.RECEIVE_MESSAGE,
+        onReceiveMessageWhileInsideAConversation,
+      );
+      s.off(ListenMessages.NEW_MESSAGE, onNewMessageWhileNotInConversation);
+    };
+  }, [isConnected, user?.id, queryClient]);
+
+  // ─── Push token registration ─────────────────────────────────────
   const { expoPushToken } = usePushNotification();
 
   useEffect(() => {

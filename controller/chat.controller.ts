@@ -250,6 +250,8 @@ const getCommunityChats = async (
       .select("*")
       .eq("myId", userId)
       .eq("isGroup", true)
+      .order("isPinned", { ascending: false })
+      .order("unreadMessageCount", { ascending: false })
       .order(orderBy, { ascending: false })
       .range(from, to);
 

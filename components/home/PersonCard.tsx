@@ -7,6 +7,10 @@ import React, { useState } from "react";
 import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import ShowAvatar from "./ShowAvatar";
 
+interface PersonCardProps extends SingleChat {
+  isTyping?: boolean;
+}
+
 const PersonCard = ({
   firstName,
   lastName,
@@ -17,7 +21,8 @@ const PersonCard = ({
   isPinned,
   chatWithId,
   onClick,
-}: SingleChat) => {
+  isTyping = false,
+}: PersonCardProps) => {
   const [isProfileClicked, setIsProfileClicked] = useState<boolean>(false);
   const formatedMessageTime = useFormatedTime(lastMessage.createdAt);
 
@@ -50,7 +55,7 @@ const PersonCard = ({
             >
               {firstName + " " + lastName}
             </Text>
-            {/* {isTyping ? (
+            {isTyping ? (
               <Text className="text-gradientSecond font-semibold">
                 Typing...
               </Text>
@@ -65,8 +70,8 @@ const PersonCard = ({
               >
                 {lastMessage.message}
               </Text>
-            )} */}
-            <Text
+            )}
+            {/* <Text
               className={`overflow-ellipsis ${
                 unreadMessageCount && unreadMessageCount > 0
                   ? "text-light-text-secondaryDark dark:text-dark-text-secondaryDark"
@@ -75,7 +80,7 @@ const PersonCard = ({
               numberOfLines={1}
             >
               {lastMessage.message}
-            </Text>
+            </Text> */}
           </View>
           <View className="items-end gap-y-1">
             <Text

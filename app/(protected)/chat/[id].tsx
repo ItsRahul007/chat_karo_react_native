@@ -19,7 +19,7 @@ import {
 } from "@/util/constants";
 import { QueryKeys } from "@/util/enum";
 import { Message } from "@/util/interfaces/types";
-import { EmitMessages, ListenMessages } from "@/util/socket.calls";
+import { EmitMessages } from "@/util/socket.calls";
 import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import {
   useInfiniteQuery,
@@ -119,13 +119,13 @@ const Chat = () => {
   }, [replyingTo]);
 
   useEffect(() => {
-    const showListener = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => setIsKeyboardOpen(true),
+    const willOrDid = Platform.OS === "ios" ? "Will" : "Did";
+
+    const showListener = Keyboard.addListener(`keyboard${willOrDid}Show`, () =>
+      setIsKeyboardOpen(true),
     );
-    const hideListener = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setIsKeyboardOpen(false),
+    const hideListener = Keyboard.addListener(`keyboard${willOrDid}Hide`, () =>
+      setIsKeyboardOpen(false),
     );
 
     return () => {
@@ -140,39 +140,11 @@ const Chat = () => {
     // Join the room for this conversation
     socket.emit(EmitMessages.JOIN_ROOM, conversationId);
 
-    const handleReceiveMessage = (incomingMessage: Message) => {
-      console.log("handleReceiveMessage", incomingMessage);
-
-      // Only append if the message is for the current conversation
-      if (
-        incomingMessage.conversationId?.toString() === conversationId.toString()
-      ) {
-        queryClient.setQueryData(
-          [QueryKeys.messages, conversationId],
-          (old: any) => {
-            if (!old) return old;
-            const [firstPage, ...rest] = old.pages;
-            // Check if message already exists (to prevent duplicates if multiple paths update)
-            if (firstPage.some((m: Message) => m.id === incomingMessage.id))
-              return old;
-
-            return {
-              ...old,
-              pages: [[incomingMessage, ...firstPage], ...rest],
-            };
-          },
-        );
-      }
-    };
-
-    socket.on(ListenMessages.RECEIVE_MESSAGE, handleReceiveMessage);
-
     return () => {
-      // Leave the room and clean up listener
+      // Leave the room when navigating away
       socket.emit(EmitMessages.LEAVE_ROOM, conversationId);
-      socket.off(ListenMessages.RECEIVE_MESSAGE, handleReceiveMessage);
     };
-  }, [socket, conversationId, queryClient]);
+  }, [socket, conversationId]);
 
   const handleReply = (message: Message) => {
     setReplyingTo(message);
@@ -239,6 +211,8 @@ const Chat = () => {
       const confirmedMessage = {
         ...result[0],
         mentionMessage: optimisticMessage.mentionMessage,
+        //? for community we need this key
+        senderName: user?.firstName,
       };
 
       // Replace the temp message with the real one from the server
@@ -261,27 +235,30 @@ const Chat = () => {
       socket?.emit(EmitMessages.SEND_MESSAGE, {
         message: confirmedMessage,
         receiverId: chatWithId,
-        isGroup: isCommunity === "true",
+        isCommunity: isCommunity === "true",
       });
 
       // Update the sender's inbox (privateChats) cache
-      queryClient.setQueryData([QueryKeys.privateChats, myId], (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page: any[]) =>
-            page.map((chat: any) =>
-              chat.conversationId?.toString() === conversationId?.toString()
-                ? {
-                    ...chat,
-                    lastMessage: confirmedMessage,
-                    unreadMessageCount: 0,
-                  }
-                : chat,
+      queryClient.setQueryData(
+        [isCommunity ? QueryKeys.communityChats : QueryKeys.privateChats, myId],
+        (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: any[]) =>
+              page.map((chat: any) =>
+                chat.conversationId?.toString() === conversationId?.toString()
+                  ? {
+                      ...chat,
+                      lastMessage: confirmedMessage,
+                      unreadMessageCount: 0,
+                    }
+                  : chat,
+              ),
             ),
-          ),
-        };
-      });
+          };
+        },
+      );
     } else {
       // Rollback on failure
       queryClient.setQueryData(

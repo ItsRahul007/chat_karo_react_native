@@ -84,7 +84,7 @@ type SingleCommunityChat = {
   firstName: string; // it will be group name
   avatar: string; // it will be group image
   groupAvatars: string[]; // list of member's avatar link
-  lastMessage: Message;
+  lastMessage: Message & { senderName: string };
   unreadMessageCount: number;
   isPinned: boolean;
   isMuted: boolean;

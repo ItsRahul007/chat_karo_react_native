@@ -5,6 +5,7 @@ import {
   Image,
   Pressable,
   Text,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
@@ -14,6 +15,7 @@ import UnreadMessageCount from "./UnreadMessageCount";
 
 interface CommunityCardProps extends SingleCommunityChat {
   isExpanded?: boolean;
+  onClick?: () => void;
 }
 
 const CommunityCard = ({
@@ -24,15 +26,17 @@ const CommunityCard = ({
   isExpanded = false,
   conversationId,
   groupAvatars,
+  onClick,
 }: CommunityCardProps) => {
   const [isProfileClicked, setIsProfileClicked] = useState<boolean>(false);
 
   return (
     <Link asChild href={`/chat/${conversationId}?isCommunity=true`}>
-      <Pressable
+      <TouchableOpacity
         className={`bg-light-comunityCard-background dark:bg-dark-comunityCard-background ${
           isExpanded ? "w-[26rem] h-44" : "w-72 h-48"
         } flex flex-col rounded-3xl px-4 py-2 justify-evenly`}
+        onPress={onClick}
       >
         <ShowAvatar
           visible={isProfileClicked}
@@ -62,7 +66,7 @@ const CommunityCard = ({
               </Text>
               {isExpanded ? (
                 <MessageBox
-                  messagedPersonName={lastMessage.senderName!}
+                  messagedPersonName={lastMessage.senderName ?? "Unknown"}
                   lastMessage={lastMessage.message}
                 />
               ) : null}
@@ -75,7 +79,7 @@ const CommunityCard = ({
 
         {!isExpanded ? (
           <MessageBox
-            messagedPersonName={lastMessage.senderName!}
+            messagedPersonName={lastMessage.senderName ?? "Unknown"}
             lastMessage={lastMessage.message}
           />
         ) : null}
@@ -83,7 +87,7 @@ const CommunityCard = ({
         <View className="flex-row items-center justify-start">
           <AvatarGroup users={groupAvatars} />
         </View>
-      </Pressable>
+      </TouchableOpacity>
     </Link>
   );
 };

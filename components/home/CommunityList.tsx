@@ -1,9 +1,12 @@
 import { AuthContext } from "@/context/AuthContext";
-import { getCommunityChats } from "@/controller/chat.controller";
+import {
+  getCommunityChats,
+  updateLastReadTime,
+} from "@/controller/chat.controller";
 
 import { QueryKeys } from "@/util/enum";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import React, { useContext, useMemo } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
@@ -11,6 +14,7 @@ import CommunityCard from "./CommunityCard";
 
 const CommunityList = ({ iconColor }: { iconColor: string }) => {
   const { user } = useContext(AuthContext);
+  const queryClient = useQueryClient();
 
   const {
     data: communityChatsData,
@@ -32,6 +36,31 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => {
     [communityChatsData],
   );
 
+  const setUnreadMessageCountToZero = (conversationId: bigint) => {
+    queryClient.setQueryData(
+      [QueryKeys.communityChats, user?.id],
+      (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any[]) =>
+            page.map((chat: any) =>
+              chat.conversationId?.toString() === conversationId.toString()
+                ? {
+                    ...chat,
+                    unreadMessageCount: 0,
+                  }
+                : chat,
+            ),
+          ),
+        };
+      },
+    );
+
+    // update lastReadTime in participants in DB
+    updateLastReadTime(conversationId, user?.id!);
+  };
+
   return (
     <View className="bg-light-background-primary dark:bg-dark-background-primary mb-8">
       {/* community section */}
@@ -46,7 +75,12 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => {
         </Link>
         <FlatList
           data={communityChats}
-          renderItem={({ item }) => <CommunityCard {...item} />}
+          renderItem={({ item }) => (
+            <CommunityCard
+              {...item}
+              onClick={() => setUnreadMessageCountToZero(item.conversationId)}
+            />
+          )}
           keyExtractor={(item) => item.conversationId.toString()}
           horizontal
           showsHorizontalScrollIndicator={false}
