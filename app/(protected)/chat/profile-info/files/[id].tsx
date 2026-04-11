@@ -1,6 +1,7 @@
 import MediaItem from "@/components/chat/MediaItem";
 import CommonTopBar from "@/components/common/CommonTopBar";
-import { getChatHistoryById } from "@/controller/chat.controller";
+import { getChatMediaById } from "@/controller/chat.controller";
+import { useQuery } from "@tanstack/react-query";
 import { I_Media } from "@/util/types/chat.types";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
@@ -8,11 +9,13 @@ import { FlatList, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const AlFiles = () => {
-  const { id, isCommunity } = useLocalSearchParams();
-
-  const chat = getChatHistoryById(id as string, isCommunity === "true");
-  const mediaFiles: I_Media[] =
-    chat?.messages?.flatMap((msg) => msg.media || []) || [];
+  const { id, isCommunity, conversationId } = useLocalSearchParams();
+  
+  const { data: mediaFiles = [] } = useQuery({
+    queryKey: ["chatMedia", conversationId],
+    queryFn: () => getChatMediaById(conversationId as string),
+    enabled: !!conversationId
+  });
 
   return (
     <SafeAreaProvider>
@@ -32,7 +35,7 @@ const AlFiles = () => {
                 />
               </View>
             )}
-            keyExtractor={(item, index) => item.mediaUrl || index.toString()}
+            keyExtractor={(item: any, index) => item.url || index.toString()}
             numColumns={3}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 20 }}

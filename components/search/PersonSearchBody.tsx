@@ -1,12 +1,14 @@
+import { AuthContext } from "@/context/AuthContext";
 import { searchPerson } from "@/controller/search.controller";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { FlatList, Text, View } from "react-native";
-import PersonCard from "../home/PersonCard";
+import SearchPersonCard from "./SearchPersonCard";
 import PersonCardSkeleton from "../skeletons/PersonCardSkeleton";
 import SearchHeader from "./SearchHeader";
 
 const PersonSearchBody = ({ newChat = false }: { newChat?: boolean }) => {
+  const { user } = useContext(AuthContext);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [data, setData] = useState<PersonCardProps[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -21,7 +23,7 @@ const PersonSearchBody = ({ newChat = false }: { newChat?: boolean }) => {
     }
     setLoading(true);
     try {
-      const result = await searchPerson(query);
+      const result = await searchPerson(query, user?.id);
       setData(result);
     } catch (error) {
       setError(error as Error);
@@ -31,8 +33,13 @@ const PersonSearchBody = ({ newChat = false }: { newChat?: boolean }) => {
   };
 
   useEffect(() => {
-    handleSearch(searchQuery);
+    const delayDebounceFn = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
+
 
   return (
     <View className="flex-1">
@@ -64,7 +71,7 @@ const PersonSearchBody = ({ newChat = false }: { newChat?: boolean }) => {
             renderItem={({ item }) => (
               <View className="px-6">
                 <View className="bg-light-background-secondary dark:bg-dark-background-secondary rounded-3xl p-4">
-                  <PersonCard {...item} />
+                  <SearchPersonCard {...item} newChat={newChat} />
                 </View>
               </View>
             )}

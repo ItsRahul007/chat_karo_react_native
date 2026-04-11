@@ -339,12 +339,14 @@ const getChatProfileById = async (
   avatar: string;
   name: string;
   id: bigint;
+  about?: string;
+  email?: string;
 } | null> => {
   try {
     if (isGroup) {
       const { data, error } = await supabase
         .from(TableNames.conversations)
-        .select("groupName,groupImage,id")
+        .select("groupName,groupImage,groupAbout,id")
         .eq("id", id)
         .single();
 
@@ -353,12 +355,13 @@ const getChatProfileById = async (
       return {
         avatar: data.groupImage,
         name: data.groupName,
+        about: data.groupAbout,
         id: data.id,
       };
     } else {
       const { data, error } = await supabase
         .from(TableNames.users)
-        .select("firstName,lastName,avatar,id")
+        .select("firstName,lastName,avatar,about,email,id")
         .eq("id", id)
         .single();
 
@@ -367,6 +370,8 @@ const getChatProfileById = async (
       return {
         avatar: data.avatar,
         name: `${data.firstName} ${data.lastName}`,
+        about: data.about,
+        email: data.email,
         id: data.id,
       };
     }
@@ -436,8 +441,110 @@ const updateLastReadTime = async (
   }
 };
 
+export const updateCommunityProfile = async (
+  id: string,
+  payload: { groupName?: string; groupAbout?: string; groupImage?: string },
+) => {
+  try {
+    const { data, error } = await supabase
+      .from(TableNames.conversations)
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error updating community profile:", error);
+    Toast.error("Error updating community profile");
+    return null;
+  }
+};
+
+const getChatMembersById = async (conversationId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from(TableNames.participants)
+      .select(
+        `
+        isAdmin,
+        isOwner,
+        users (
+          id,
+          firstName,
+          lastName,
+          avatar
+        )
+      `,
+      )
+      .eq("conversationId", conversationId);
+
+    if (error) throw error;
+
+    return data.map((p: any) => ({
+      id: p.users.id,
+      name: `${p.users.firstName} ${p.users.lastName}`,
+      avatar: p.users.avatar,
+      isAdmin: p.isAdmin,
+      isOwner: p.isOwner,
+    }));
+  } catch (error) {
+    console.error("Error fetching chat members:", error);
+    return [];
+  }
+};
+
+const getChatMediaById = async (conversationId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from(TableNames.messages)
+      .select("media")
+      .eq("conversationId", conversationId)
+      .not("media", "is", null);
+
+    if (error) throw error;
+
+    // Each message has media: MediaAttachment[]
+    // we want to return a flat array
+    return data.flatMap((m: any) => m.media || []);
+  } catch (error) {
+    console.error("Error fetching chat media:", error);
+    return [];
+  }
+};
+
+const addCommunityMembers = async (
+  conversationId: string | number | bigint,
+  userIds: (string | number | bigint)[],
+) => {
+  try {
+    const participants = userIds.map((userId) => ({
+      conversationId,
+      userId,
+      isAdmin: false,
+      isOwner: false,
+    }));
+
+    const { error } = await supabase
+      .from(TableNames.participants)
+      .insert(participants);
+
+    if (error) throw error;
+    Toast.success("Members added successfully");
+    return true;
+  } catch (error) {
+    console.error("Error adding members:", error);
+    Toast.error("Failed to add members");
+    return false;
+  }
+};
+
 export {
+  addCommunityMembers,
   getChatById,
+  getChatMediaById,
+  getChatMembersById,
   getChatProfileById,
   getCommunityChats,
   getPrivateChats,
@@ -445,3 +552,4 @@ export {
   sendMessage,
   updateLastReadTime,
 };
+

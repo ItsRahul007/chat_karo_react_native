@@ -13,8 +13,6 @@ const Search = () => {
     ? params.conversationId[0]
     : params.conversationId;
 
-  console.log("Search For:", searchFor);
-
   return (
     <SafeAreaProvider>
       <SafeAreaView

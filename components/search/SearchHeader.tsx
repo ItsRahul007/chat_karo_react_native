@@ -23,11 +23,16 @@ const SearchHeader = ({
         <TextInput
           placeholder="What are you looking for?"
           placeholderTextColor={iconColor}
-          className="text-light-text-primary dark:text-dark-text-primary flex-1"
+          className="text-light-text-primary dark:text-dark-text-primary flex-1 h-full"
           value={value}
           onChangeText={onValueChange}
           onSubmitEditing={() => onSearch(value)}
         />
+        {value.length > 0 && (
+          <Pressable onPress={() => onValueChange("")} className="mr-2">
+            <FontAwesome name="times-circle" size={20} color={iconColor} />
+          </Pressable>
+        )}
         <Pressable onPress={() => onSearch(value)}>
           <FontAwesome
             name="search"
@@ -35,6 +40,7 @@ const SearchHeader = ({
             color={iconColor}
           />
         </Pressable>
+
       </View>
     </View>
   );

@@ -1,6 +1,7 @@
 import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
 import CommonBackButton from "@/components/common/CommonBackButton";
-import { getChatHistoryById } from "@/controller/chat.controller";
+import { getChatMembersById } from "@/controller/chat.controller";
+import { useQuery } from "@tanstack/react-query";
 import {
   gradientIconButtonIconSize,
   gradientIconButtonSize,
@@ -14,15 +15,18 @@ import { FlatList, Image, Pressable, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const Members = () => {
-  const { id } = useLocalSearchParams();
-  const chat = getChatHistoryById(id as string, true);
-  const [members, setMembers] = useState((chat as any)?.users || []);
+  const { id: conversationId } = useLocalSearchParams();
   const isUserAdmin = true;
 
+  const { data: chatMembers = [], refetch } = useQuery({
+    queryKey: ["chatMembers", conversationId],
+    queryFn: () => getChatMembersById(conversationId as string),
+    enabled: !!conversationId
+  });
+
   const removeMember = (userId: string) => {
-    setMembers((prev: SingleUser[]) =>
-      prev.filter((user) => user.id !== userId),
-    );
+    // Implement API call to remove member, then refetch
+    console.log("remove member", userId);
   };
 
   return (
@@ -36,7 +40,7 @@ const Members = () => {
         </View>
 
         <FlatList
-          data={members}
+          data={chatMembers}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 16, gap: 16 }}
           renderItem={({ item }) => (
@@ -57,7 +61,7 @@ const Members = () => {
 
         {isUserAdmin && (
           <Link
-            href={`/search?for=${SearchParams.addCommunityMember}&conversationId=${id}`}
+            href={`/search?for=${SearchParams.addCommunityMember}&conversationId=${conversationId}`}
             asChild
           >
             <BackgroundGredientIconButton

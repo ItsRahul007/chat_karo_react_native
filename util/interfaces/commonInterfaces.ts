@@ -9,20 +9,22 @@ interface SingleUser {
 }
 
 interface AvatarGroupProps {
-  users: SingleUser[];
+  users?: SingleUser[];
   limit?: number;
 }
 
 interface CommunityCardProps extends AvatarGroupProps {
   id: string;
   name: string;
-  lastMessage: string;
-  lastMessageTime: string;
-  messagedPersonName: string;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  messagedPersonName?: string;
   unreadMessageCount?: number;
   avatar: string;
   isExpanded?: boolean;
   messages?: I_Messages[];
+  groupAvatars?: string[];
+  about?: string;
 }
 
 interface PersonCardProps {
@@ -31,13 +33,16 @@ interface PersonCardProps {
   name: string;
   userName: string;
   email: string;
-  lastMessage: string;
+  lastMessage?: string;
   unreadMessageCount?: number;
-  lastMessageTime: string;
+  lastMessageTime?: string;
   isTyping?: boolean;
   isPined?: boolean;
   messages?: I_Messages[];
+  about?: string;
 }
+
+
 
 export type {
   AvatarGroupProps,

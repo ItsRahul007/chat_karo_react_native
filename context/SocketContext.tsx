@@ -34,7 +34,7 @@ export const useSocket = () => useContext(SocketContext);
 // const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_SERVER_URL!;
 // use this command to get the ip: ipconfig getifaddr en0
 // const IP =
-const SOCKET_URL = "http://192.168.0.110:3001";
+const SOCKET_URL = "http://192.168.0.111:3001";
 
 const SocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn, user } = useContext(AuthContext);

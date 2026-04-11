@@ -93,7 +93,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
   //? for my message do not show the sender
   const messageSenderName = !isCommunity
     ? chatWithPersonName!
-    : sender?.firstName
+    : sender?.firstName && sender?.lastName
       ? sender?.firstName + " " + sender?.lastName
       : "User";
 

@@ -2,7 +2,7 @@ import { searchCommunity } from "@/controller/search.controller";
 import { CommunityCardProps } from "@/util/interfaces/commonInterfaces";
 import React, { useEffect, useState } from "react";
 import { FlatList, Text, View } from "react-native";
-import CommunityCard from "../home/CommunityCard";
+import SearchCommunityCard from "./SearchCommunityCard";
 import CommunityCardSkeleton from "../skeletons/CommunityCardSkeleton";
 import SearchHeader from "./SearchHeader";
 
@@ -31,8 +31,13 @@ const CommunitySearchBody = () => {
   };
 
   useEffect(() => {
-    handleSearch(searchQuery);
+    const delayDebounceFn = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
+
 
   return (
     <View className="flex-1">
@@ -57,7 +62,7 @@ const CommunitySearchBody = () => {
           <FlatList
             data={data}
             renderItem={({ item }) => (
-              <CommunityCard {...item} isExpanded={true} />
+              <SearchCommunityCard {...item} />
             )}
             keyExtractor={(item) => item.id}
             ListEmptyComponent={

@@ -211,8 +211,6 @@ const Chat = () => {
       const confirmedMessage = {
         ...result[0],
         mentionMessage: optimisticMessage.mentionMessage,
-        //? for community we need this key
-        senderName: user?.firstName,
       };
 
       // Replace the temp message with the real one from the server
@@ -297,7 +295,7 @@ const Chat = () => {
             <Link
               href={`/chat/profile-info/${chat?.id}?isCommunity=${
                 isCommunity === "true"
-              }`}
+              }&conversationId=${conversationId}`}
               className="flex-1 items-center justify-center ml-2"
             >
               <View className="flex-1 items-center justify-between flex-row gap-x-6">

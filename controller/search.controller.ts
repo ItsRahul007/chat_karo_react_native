@@ -2,24 +2,42 @@ import {
   CommunityCardProps,
   PersonCardProps,
 } from "@/util/interfaces/commonInterfaces";
-import { chatList, sampleCommunityData } from "@/util/sample.data";
+import { supabase } from "@/util/supabase";
+import { TableNames } from "@/util/enum";
 
-const searchPerson = async (query: string): Promise<PersonCardProps[]> => {
+const searchPerson = async (
+  query: string,
+  currentUserId?: string | bigint,
+): Promise<PersonCardProps[]> => {
   try {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (!query) {
-          resolve([]);
-        }
-        resolve(
-          chatList.filter((chat) =>
-            chat.name.toLowerCase().includes(query.toLowerCase()),
-          ),
-        );
-      }, 1500);
-    });
+    if (!query) return [];
+
+    let supabaseQuery = supabase
+      .from(TableNames.users)
+      .select("id, firstName, lastName, avatar, about, email, userName")
+      .or(`firstName.ilike.%${query}%,lastName.ilike.%${query}%,userName.ilike.%${query}%`);
+
+
+    if (currentUserId) {
+      supabaseQuery = supabaseQuery.neq("id", currentUserId);
+    }
+
+    const { data, error } = await supabaseQuery.limit(20);
+
+    if (error) throw error;
+
+    return (data || []).map((user: any) => ({
+      id: String(user.id),
+      name: `${user.firstName} ${user.lastName}`,
+      avatar: user.avatar,
+      about: user.about,
+      email: user.email,
+      userName: user.userName,
+    }));
+
   } catch (error) {
-    throw error;
+    console.error("Error searching person:", error);
+    return [];
   }
 };
 
@@ -27,20 +45,28 @@ const searchCommunity = async (
   query: string,
 ): Promise<CommunityCardProps[]> => {
   try {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (!query) {
-          resolve([]);
-        }
-        resolve(
-          sampleCommunityData.filter((chat) =>
-            chat.name.toLowerCase().includes(query.toLowerCase()),
-          ),
-        );
-      }, 1500);
-    });
+    if (!query) return [];
+
+    const { data, error } = await supabase
+      .from(TableNames.conversations)
+      .select("id, groupName, groupImage, groupAbout")
+      .eq("isGroup", true)
+      .ilike("groupName", `%${query}%`)
+      .limit(20);
+
+    if (error) throw error;
+
+    return (data || []).map((community: any) => ({
+      id: String(community.id),
+      name: community.groupName,
+      avatar: community.groupImage,
+      about: community.groupAbout,
+      groupAvatars: [],
+    }));
+
   } catch (error) {
-    throw error;
+    console.error("Error searching community:", error);
+    return [];
   }
 };
 
@@ -49,3 +75,4 @@ const searchConversation = (query: string) => {
 };
 
 export { searchCommunity, searchConversation, searchPerson };
+

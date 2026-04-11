@@ -1,12 +1,15 @@
+import { AuthContext } from "@/context/AuthContext";
 import { searchPerson } from "@/controller/search.controller";
+import { addCommunityMembers } from "@/controller/chat.controller";
 import {
   gradientIconButtonIconSize,
   gradientIconButtonSize,
 } from "@/util/constants";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import { Entypo } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { FlatList, Text, View } from "react-native";
 import AddMemberCard from "../common/AddMemberCard";
 import BackgroundGredientIconButton from "../common/BackgroundGredientIconButton";
@@ -19,6 +22,7 @@ const AddCommunityMemberSearchBody = ({
   communityId: string;
 }) => {
   const router = useRouter();
+  const { user } = useContext(AuthContext);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [data, setData] = useState<PersonCardProps[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<PersonCardProps[]>([]);
@@ -34,7 +38,7 @@ const AddCommunityMemberSearchBody = ({
     }
     setLoading(true);
     try {
-      const result = await searchPerson(query);
+      const result = await searchPerson(query, user?.id);
       setData(result);
     } catch (error) {
       setError(error as Error);
@@ -44,8 +48,13 @@ const AddCommunityMemberSearchBody = ({
   };
 
   useEffect(() => {
-    handleSearch(searchQuery);
+    const delayDebounceFn = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
+
 
   const handleSelectChange = (user: PersonCardProps) => {
     if (isUserSelected(user.id)) {
@@ -56,9 +65,32 @@ const AddCommunityMemberSearchBody = ({
     }
   };
 
+  const queryClient = useQueryClient();
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAddMembers = async () => {
+    if (selectedUsers.length === 0) return;
+    setIsAdding(true);
+    try {
+      const userIds = selectedUsers.map((u) => u.id);
+      const success = await addCommunityMembers(communityId, userIds);
+      if (success) {
+        queryClient.invalidateQueries({
+          queryKey: ["chatMembers", communityId],
+        });
+        router.back();
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   const isUserSelected = (id: string): boolean => {
     return selectedUsers.some((user) => user.id === id);
   };
+
 
   return (
     <View className="flex-1">
@@ -118,13 +150,12 @@ const AddCommunityMemberSearchBody = ({
               color="white"
             />
           }
-          onPress={() => {
-            router.back();
-            console.log("add member");
-          }}
+          onPress={handleAddMembers}
           size={gradientIconButtonSize}
           className="absolute bottom-0 right-2"
+          isLoading={isAdding}
         />
+
       ) : null}
     </View>
   );
