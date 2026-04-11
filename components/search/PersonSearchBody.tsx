@@ -23,9 +23,10 @@ const PersonSearchBody = ({ newChat = false }: { newChat?: boolean }) => {
     }
     setLoading(true);
     try {
-      const result = await searchPerson(query, user?.id);
+      const result = await searchPerson(query, user?.id, newChat);
       setData(result);
     } catch (error) {
+
       setError(error as Error);
     } finally {
       setLoading(false);

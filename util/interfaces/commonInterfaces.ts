@@ -40,7 +40,9 @@ interface PersonCardProps {
   isPined?: boolean;
   messages?: I_Messages[];
   about?: string;
+  conversationId?: string;
 }
+
 
 
 

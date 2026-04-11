@@ -18,7 +18,7 @@ const createUser = async ({
   image: string;
   updateLocalUser?: (data: Partial<UserProfile>) => void;
 }): Promise<{ success: boolean; message: string }> => {
-  Toast.loading("Creating user...");
+  Toast.loading("Saving details...");
   try {
     const { data, error } = await supabase.auth.getUser();
     if (error) {
@@ -56,17 +56,17 @@ const createUser = async ({
       .single();
 
     if (insertedError) {
-      Toast.error(insertedError.message);
+      Toast.error("Failed to save details");
       console.error("Error creating user:", insertedError);
-      return { success: false, message: insertedError.message };
+      return { success: false, message: "Failed to save details" };
     }
 
     if (updateLocalUser) {
       updateLocalUser(insertedData as UserProfile);
     }
 
-    Toast.success("User created successfully");
-    return { success: true, message: "User created successfully" };
+    Toast.success("Details saved successfully");
+    return { success: true, message: "Details saved successfully" };
   } catch (error) {
     console.error("Error creating user:", error);
     Toast.error("Something went wrong");

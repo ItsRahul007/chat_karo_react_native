@@ -9,9 +9,15 @@ const SearchPersonCard = ({
   userName,
   id,
   newChat,
+  conversationId,
 }: PersonCardProps & { newChat?: boolean }) => {
+  const href = newChat
+    ? `/chat/new?userId=${id}`
+    : `/chat/${conversationId}?chatWithId=${id}`;
+
   return (
-    <Link href={`/chat/new?userId=${id}`} asChild>
+    <Link href={href as any} asChild>
+
       <Pressable>
         <View className="flex-row items-center justify-start gap-x-4">
           <Image source={{ uri: avatar }} className="w-16 h-16 rounded-full" />
