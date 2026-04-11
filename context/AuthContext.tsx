@@ -107,6 +107,11 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      try {
+        await GoogleSignin.signOut();
+      } catch (error) {
+        // Ignore error if not signed in
+      }
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     },

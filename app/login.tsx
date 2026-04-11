@@ -1,5 +1,4 @@
 import { AuthContext } from "@/context/AuthContext";
-import { AntDesign } from "@expo/vector-icons";
 import React, { useContext, useEffect } from "react";
 import {
   Image,
@@ -69,7 +68,7 @@ const Login = () => {
           </TouchableOpacity>
 
           {/* Apple Login Button */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             activeOpacity={0.8}
             className="w-full flex-row items-center justify-center bg-black dark:bg-white p-4 rounded-2xl shadow-lg shadow-black/30"
             // onPress={() => showToast("Login Successful", "alert")}
@@ -82,7 +81,7 @@ const Login = () => {
             <Text className="text-base font-bold text-white dark:text-black ml-3">
               Continue with Apple
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <Text className="absolute bottom-10 text-xs text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-center">
