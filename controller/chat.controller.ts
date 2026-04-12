@@ -423,6 +423,47 @@ const sendMessage = async (
   }
 };
 
+const startNewChat = async (
+  myId: bigint | number | string,
+  chatWithId: bigint | number | string,
+  messageContent: {
+    message?: string | null;
+    media?: MediaAttachment[] | null;
+  },
+) => {
+  try {
+    // 1. Create a new conversation
+    const { data: conversation, error: convError } = await supabase
+      .from(TableNames.conversations)
+      .insert({ isGroup: false })
+      .select("id")
+      .single();
+
+    if (convError) throw convError;
+    const conversationId = conversation.id;
+
+    // 2. Add participants
+    const participants = [
+      { conversationId, userId: myId, isAdmin: false, isOwner: false },
+      { conversationId, userId: chatWithId, isAdmin: false, isOwner: false },
+    ];
+
+    const { error: partError } = await supabase
+      .from(TableNames.participants)
+      .insert(participants);
+
+    if (partError) throw partError;
+
+    // 3. Send the first message
+    return await sendMessage(conversationId, myId, messageContent);
+  } catch (error) {
+    console.error("Error starting new chat:", error);
+    Toast.error("Error starting new chat");
+    return null;
+  }
+};
+
+
 const updateLastReadTime = async (
   conversationId: bigint | number | string,
   myId: bigint | number | string,
@@ -440,6 +481,7 @@ const updateLastReadTime = async (
     Toast.error("Error updating last read time");
   }
 };
+
 
 export const updateCommunityProfile = async (
   id: string,
@@ -550,6 +592,8 @@ export {
   getPrivateChats,
   saveMediaIntoDevice,
   sendMessage,
+  startNewChat,
   updateLastReadTime,
 };
+
 

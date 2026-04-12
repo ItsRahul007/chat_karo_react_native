@@ -32,7 +32,7 @@ interface PersonCardProps {
   avatar: string;
   name: string;
   userName: string;
-  email: string;
+  email?: string;
   lastMessage?: string;
   unreadMessageCount?: number;
   lastMessageTime?: string;
@@ -42,9 +42,6 @@ interface PersonCardProps {
   about?: string;
   conversationId?: string;
 }
-
-
-
 
 export type {
   AvatarGroupProps,

@@ -10,6 +10,7 @@ import {
   getChatById,
   getChatProfileById,
   sendMessage,
+  startNewChat,
 } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
 import {
@@ -27,7 +28,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useLocalSearchParams } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -50,7 +51,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Chat = () => {
   const {
-    id: conversationId,
+    id: conversationId, // it can be new as well
     isCommunity,
     chatWithId,
   } = useLocalSearchParams();
@@ -67,8 +68,8 @@ const Chat = () => {
   const myId = user?.id;
   const queryClient = useQueryClient();
   const { socket } = useSocket();
-
   const iconColor = useIconColor();
+  const router = useRouter();
 
   const placeholderColor =
     theme === "light"
@@ -98,7 +99,13 @@ const Chat = () => {
   } = useInfiniteQuery({
     queryKey: [QueryKeys.messages, conversationId],
     queryFn: ({ pageParam = 0 }) =>
-      getChatById(conversationId as string, isCommunity === "true", pageParam),
+      conversationId === "new"
+        ? Promise.resolve([])
+        : getChatById(
+            conversationId as string,
+            isCommunity === "true",
+            pageParam,
+          ),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < CHAT_PAGE_SIZE) return undefined;
@@ -175,7 +182,7 @@ const Chat = () => {
       id: tempId,
       createdAt: new Date().toISOString(),
       senderId: myId,
-      conversationId: Number(conversationId),
+      conversationId: conversationId === "new" ? 0 : Number(conversationId),
       message: trimmed,
       media: [],
       isRead: false,
@@ -190,7 +197,7 @@ const Chat = () => {
     queryClient.setQueryData(
       [QueryKeys.messages, conversationId],
       (old: any) => {
-        if (!old) return old;
+        if (!old) return { pages: [[]], pageParams: [0] };
         const [firstPage, ...rest] = old.pages;
         return {
           ...old,
@@ -202,10 +209,29 @@ const Chat = () => {
     onChangeText("");
     setReplyingTo(null);
 
-    const result = await sendMessage(conversationId as string, myId, {
-      message: trimmed,
-      mentionMessageId,
-    });
+    let result: any;
+    let actualConversationId = conversationId;
+    let isNewChat = false;
+
+    if (conversationId === "new") {
+      result = await startNewChat(myId, chatWithId as string, {
+        message: trimmed,
+      });
+
+      if (result && result[0]) {
+        actualConversationId = result[0].conversationId.toString();
+        // Update URL and reset query states for the new conversation
+        router.setParams({ id: actualConversationId });
+        isNewChat = true;
+        // Invalidate old search results etc
+        queryClient.invalidateQueries({ queryKey: [QueryKeys.privateChats] });
+      }
+    } else {
+      result = await sendMessage(conversationId as string, myId, {
+        message: trimmed,
+        mentionMessageId,
+      });
+    }
 
     if (result && result[0]) {
       const confirmedMessage = {
@@ -213,11 +239,16 @@ const Chat = () => {
         mentionMessage: optimisticMessage.mentionMessage,
       };
 
-      // Replace the temp message with the real one from the server
+      // Replace the temp message
       queryClient.setQueryData(
-        [QueryKeys.messages, conversationId],
+        [QueryKeys.messages, actualConversationId],
         (old: any) => {
-          if (!old) return old;
+          if (!old) {
+            return {
+              pages: [[confirmedMessage]],
+              pageParams: [0],
+            };
+          }
           return {
             ...old,
             pages: old.pages.map((page: Message[]) =>
@@ -229,23 +260,30 @@ const Chat = () => {
         },
       );
 
-      // Emit socket event with the real confirmed message
+      // Emit socket event
       socket?.emit(EmitMessages.SEND_MESSAGE, {
         message: confirmedMessage,
         receiverId: chatWithId,
         isCommunity: isCommunity === "true",
+        isNewChat,
       });
 
-      // Update the sender's inbox (privateChats) cache
+      // Update the sender's inbox
       queryClient.setQueryData(
-        [isCommunity ? QueryKeys.communityChats : QueryKeys.privateChats, myId],
+        [
+          isCommunity === "true"
+            ? QueryKeys.communityChats
+            : QueryKeys.privateChats,
+          myId,
+        ],
         (old: any) => {
           if (!old) return old;
           return {
             ...old,
             pages: old.pages.map((page: any[]) =>
               page.map((chat: any) =>
-                chat.conversationId?.toString() === conversationId?.toString()
+                chat.conversationId?.toString() ===
+                actualConversationId?.toString()
                   ? {
                       ...chat,
                       lastMessage: confirmedMessage,
@@ -258,7 +296,7 @@ const Chat = () => {
         },
       );
     } else {
-      // Rollback on failure
+      // Rollback
       queryClient.setQueryData(
         [QueryKeys.messages, conversationId],
         (old: any) => {

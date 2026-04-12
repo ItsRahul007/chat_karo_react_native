@@ -28,13 +28,17 @@ const searchPerson = async (
 
       let supabaseQuery = supabase
         .from(TableNames.users)
-        .select("id, firstName, lastName, avatar, about, email, userName")
+        .select("id, firstName, lastName, avatar, userName")
         .or(
-          `firstName.ilike.%${query}%,lastName.ilike.%${query}%,userName.ilike.%${query}%`,
+          `firstName.ilike.%${query}%, lastName.ilike.%${query}%, userName.ilike.%${query}%`,
         );
 
       if (excludedIds.length > 0) {
-        supabaseQuery = supabaseQuery.not("id", "in", `(${excludedIds.join(",")})`);
+        supabaseQuery = supabaseQuery.not(
+          "id",
+          "in",
+          `(${excludedIds.join(",")})`,
+        );
       }
 
       const { data: userData, error: userError } =
@@ -46,39 +50,19 @@ const searchPerson = async (
       // Search only users I've chatted with
       const { data: inboxData, error: inboxError } = await supabase
         .from(TableNames.inbox)
-        .select("*")
+        .select(
+          "chatWithId, firstName, lastName, avatar, userName, conversationId",
+        )
         .eq("myId", currentUserId)
         .eq("isGroup", false)
         .or(
-          `firstName.ilike.%${query}%,lastName.ilike.%${query}%,userName.ilike.%${query}%`,
+          `firstName.ilike.%${query}%, lastName.ilike.%${query}%, userName.ilike.%${query}%`,
         )
         .limit(20);
 
-      if (inboxError) throw inboxError;
-
-      if (inboxData && inboxData.length > 0) {
-        const chatWithIds = inboxData.map((i: any) => i.chatWithId);
-        const { data: usersData, error: usersError } = await supabase
-          .from(TableNames.users)
-          .select("id, userName")
-          .in("id", chatWithIds);
-
-        if (usersError) throw usersError;
-
-        const userNameMap = new Map(
-          usersData?.map((u: any) => [String(u.id), u.userName]),
-        );
-
-        data = inboxData.map((inbox: any) => ({
-          ...inbox,
-          userName: userNameMap.get(String(inbox.chatWithId)) || "",
-        }));
-      } else {
-        data = [];
-      }
-      error = null;
+      data = inboxData;
+      error = inboxError;
     }
-
 
     if (error) throw error;
 
@@ -86,8 +70,6 @@ const searchPerson = async (
       id: String(newChat ? user.id : user.chatWithId),
       name: `${user.firstName} ${user.lastName}`,
       avatar: user.avatar,
-      about: user.about || "",
-      email: user.email || "",
       userName: user.userName || "",
       conversationId: newChat ? undefined : String(user.conversationId),
     }));

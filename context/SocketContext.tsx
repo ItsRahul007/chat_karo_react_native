@@ -33,8 +33,7 @@ export const useSocket = () => useContext(SocketContext);
 
 // const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_SERVER_URL!;
 // use this command to get the ip: ipconfig getifaddr en0
-// const IP =
-const SOCKET_URL = "http://192.168.0.111:3001";
+const SOCKET_URL = "http://192.168.0.118:3001";
 
 const SocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn, user } = useContext(AuthContext);
@@ -143,9 +142,11 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
     const onNewMessageWhileNotInConversation = ({
       message,
       isCommunity,
+      isNewChat,
     }: {
       message: Message;
       isCommunity: boolean;
+      isNewChat: boolean;
     }) => {
       //* update the chat, increment unread count
       console.log(
@@ -154,7 +155,14 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
         "isCommunity",
         isCommunity,
       );
-      handleInboxUpdate({ queryClient, userId: user.id, message, isCommunity });
+
+      handleInboxUpdate({
+        queryClient,
+        userId: user.id,
+        message,
+        isCommunity,
+        isNewChat,
+      });
     };
 
     s.on(

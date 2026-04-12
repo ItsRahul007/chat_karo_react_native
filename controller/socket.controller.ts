@@ -38,18 +38,29 @@ export function handleInboxUpdate({
   message,
   incrementUnread = true,
   isCommunity = false,
+  isNewChat = false,
 }: {
   queryClient: QueryClient;
   userId: string | bigint;
   message: Message;
   incrementUnread?: boolean;
   isCommunity?: boolean;
+  isNewChat?: boolean;
 }) {
   const firstKey = isCommunity
     ? QueryKeys.communityChats
     : QueryKeys.privateChats;
 
-  console.log(firstKey, isCommunity);
+  console.log("isNewChat", isNewChat);
+
+  /* 
+  * if it's a new chat means receiver doesn't have inside the chat and it is defiently a new message call
+  ? in that case refetch the chat lists again
+  */
+  if (isNewChat) {
+    queryClient.refetchQueries({ queryKey: [firstKey, userId] });
+    return;
+  }
 
   queryClient.setQueryData([firstKey, userId], (old: any) => {
     if (!old) return old;
