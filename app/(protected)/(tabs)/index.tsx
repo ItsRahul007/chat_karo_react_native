@@ -51,7 +51,7 @@ const index = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: [QueryKeys.privateChats, user?.id],
+    queryKey: [QueryKeys.privateChats],
     queryFn: ({ pageParam = 0 }) => getPrivateChats(user!.id, pageParam),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {

@@ -64,11 +64,15 @@ const CommunityCard = ({
               >
                 {firstName}
               </Text>
-              {isExpanded ? (
+              {isExpanded && lastMessage ? (
                 <MessageBox
                   messagedPersonName={lastMessage.senderName ?? "Unknown"}
                   lastMessage={lastMessage.message}
                 />
+              ) : isExpanded ? (
+                <Text className="text-light-comunityCard-textSecondary dark:text-light-comunityCard-textSecondary italic">
+                  No messages yet
+                </Text>
               ) : null}
             </View>
             {unreadMessageCount ? (
@@ -77,12 +81,17 @@ const CommunityCard = ({
           </View>
         </View>
 
-        {!isExpanded ? (
+        {!isExpanded && lastMessage ? (
           <MessageBox
             messagedPersonName={lastMessage.senderName ?? "Unknown"}
             lastMessage={lastMessage.message}
           />
+        ) : !isExpanded ? (
+          <Text className="text-light-comunityCard-textSecondary dark:text-light-comunityCard-textSecondary italic">
+            No messages yet
+          </Text>
         ) : null}
+
 
         <View className="flex-row items-center justify-start">
           <AvatarGroup users={groupAvatars} />

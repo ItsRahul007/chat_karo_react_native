@@ -5,11 +5,10 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 export default function ProtectedLayout() {
-  if (Device.isDevice) {
-    usePushNotification();
-  }
+  usePushNotification();
 
   return (
+
     <>
       <SocketProvider>
         <Stack screenOptions={{ headerShown: false }}>

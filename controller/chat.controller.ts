@@ -582,8 +582,58 @@ const addCommunityMembers = async (
   }
 };
 
+const createCommunity = async ({
+  groupName,
+  groupImage,
+  groupAbout,
+  participants,
+}: {
+  groupName: string;
+  groupImage?: string;
+  groupAbout?: string;
+  participants: { userId: string | number | bigint; isAdmin: boolean; isOwner: boolean }[];
+}) => {
+  try {
+    // 1. Create a new community conversation
+    const { data: conversation, error: convError } = await supabase
+      .from(TableNames.conversations)
+      .insert({
+        isGroup: true,
+        groupName,
+        groupImage,
+        groupAbout,
+      })
+      .select("id")
+      .single();
+
+    if (convError) throw convError;
+    const conversationId = conversation.id;
+
+    // 2. Add participants
+    const participantsData = participants.map((p) => ({
+      ...p,
+      conversationId,
+    }));
+
+    const { error: partError } = await supabase
+      .from(TableNames.participants)
+      .insert(participantsData);
+
+    if (partError) throw partError;
+
+    Toast.success("Community created successfully");
+    return conversationId;
+  } catch (error) {
+    console.error("Error creating community:", error);
+    Toast.error("Failed to create community");
+    return null;
+  }
+};
+
+
 export {
   addCommunityMembers,
+  createCommunity,
   getChatById,
   getChatMediaById,
   getChatMembersById,
@@ -595,5 +645,6 @@ export {
   startNewChat,
   updateLastReadTime,
 };
+
 
 

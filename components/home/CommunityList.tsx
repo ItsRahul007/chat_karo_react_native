@@ -37,25 +37,22 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => {
   );
 
   const setUnreadMessageCountToZero = (conversationId: bigint) => {
-    queryClient.setQueryData(
-      [QueryKeys.communityChats, user?.id],
-      (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page: any[]) =>
-            page.map((chat: any) =>
-              chat.conversationId?.toString() === conversationId.toString()
-                ? {
-                    ...chat,
-                    unreadMessageCount: 0,
-                  }
-                : chat,
-            ),
+    queryClient.setQueryData([QueryKeys.communityChats], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page: any[]) =>
+          page.map((chat: any) =>
+            chat.conversationId?.toString() === conversationId.toString()
+              ? {
+                  ...chat,
+                  unreadMessageCount: 0,
+                }
+              : chat,
           ),
-        };
-      },
-    );
+        ),
+      };
+    });
 
     // update lastReadTime in participants in DB
     updateLastReadTime(conversationId, user?.id!);
@@ -84,7 +81,8 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => {
           keyExtractor={(item) => item.conversationId.toString()}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 15, paddingHorizontal: 15, flex: 1 }}
+          contentContainerStyle={{ gap: 15, paddingHorizontal: 15 }}
+
           onEndReached={() => {
             if (hasNextPage && !isFetchingNextPage) {
               fetchNextPage();
