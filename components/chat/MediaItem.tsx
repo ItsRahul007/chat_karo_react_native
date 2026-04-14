@@ -2,12 +2,12 @@ import { saveMediaIntoDevice } from "@/controller/chat.controller";
 import useFetch from "@/custom-hooks/useFetch";
 import { generateThumbnail, useIconColor } from "@/util/common.functions";
 import { MediaAttachment } from "@/util/interfaces/types";
+import { Toast } from "@/util/toast";
 import { AntDesign, Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Linking,
   Modal,
@@ -57,10 +57,10 @@ const MediaItem = ({
       if (supported) {
         await Linking.openURL(googleDriveUrl);
       } else {
-        Alert.alert("Error", "Cannot open this file");
+        Toast.error("Cannot open this file");
       }
     } else {
-      Alert.alert("Unsupported File", "This file type is not supported.");
+      Toast.error("This file type is not supported.");
     }
   };
 

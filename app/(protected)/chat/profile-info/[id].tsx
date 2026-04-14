@@ -4,14 +4,15 @@ import Options from "@/components/chat/profile-info/Options";
 import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
 import CommonBackButton from "@/components/common/CommonBackButton";
 import CustomIconSwitch from "@/components/common/CustomIconSwitch";
+import SkeletonBase from "@/components/skeletons/SkeletonBase";
 import { ColorTheme } from "@/constants/colors";
+import { AuthContext } from "@/context/AuthContext";
 import {
   getChatMediaById,
   getChatMembersById,
   getChatProfileById,
   updateCommunityProfile,
 } from "@/controller/chat.controller";
-import { AuthContext } from "@/context/AuthContext";
 import { useIconColor } from "@/util/common.functions";
 import {
   chatTopBarIconSize,
@@ -19,19 +20,18 @@ import {
   profileInfoIconSize,
 } from "@/util/constants";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
+import { Toast } from "@/util/toast";
 import {
   Entypo,
   Feather,
   Fontisto,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { Link, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState, useContext } from "react";
-import SkeletonBase from "@/components/skeletons/SkeletonBase";
+import React, { useContext, useEffect, useState } from "react";
 import {
-  Alert,
   FlatList,
   Image,
   Pressable,
@@ -47,7 +47,7 @@ const ProfileInfo = () => {
   const { id, isCommunity: community, conversationId } = useLocalSearchParams();
   const isCommunity = community === "true";
   const theme = useColorScheme();
-  
+
   const { user } = useContext(AuthContext);
   const queryClient = useQueryClient();
 
@@ -71,7 +71,7 @@ const ProfileInfo = () => {
   });
 
   const currentUserMember = chatMembers.find(
-    (m: SingleUser) => String(m.id) === String(user?.id)
+    (m: SingleUser) => String(m.id) === String(user?.id),
   );
   const isUserAdmin =
     currentUserMember?.isAdmin || currentUserMember?.isOwner || false;
@@ -105,7 +105,7 @@ const ProfileInfo = () => {
         setAvatar(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to pick image");
+      Toast.error("Failed to pick image");
     }
   };
 
@@ -201,9 +201,7 @@ const ProfileInfo = () => {
                       </Text>
                     )}
                     {isUserAdmin && isCommunity && !isChatLoading ? (
-                      <Pressable
-                        onPress={handleEditName}
-                      >
+                      <Pressable onPress={handleEditName}>
                         <Feather
                           name={isEditingName ? "check" : "edit-2"}
                           size={profileInfoIconSize}
@@ -235,10 +233,7 @@ const ProfileInfo = () => {
                       </Text>
                     )}
                     {isUserAdmin && isCommunity && !isChatLoading ? (
-                      <Pressable
-                        onPress={handleEditAbout}
-                        className="ml-2"
-                      >
+                      <Pressable onPress={handleEditAbout} className="ml-2">
                         <Feather
                           name={isEditingAbout ? "check" : "edit-2"}
                           size={profileInfoIconSize}

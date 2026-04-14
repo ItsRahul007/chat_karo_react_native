@@ -19,10 +19,7 @@ const saveMediaIntoDevice = async ({ type, url }: MediaAttachment) => {
   try {
     const { status } = await MediaLibrary.requestPermissionsAsync(true);
     if (status !== "granted") {
-      Alert.alert(
-        "Permission needed",
-        "Please grant permission to save media.",
-      );
+      Toast.alert("Please grant permission to save media.");
       return;
     }
 
@@ -86,7 +83,7 @@ const saveMediaIntoDevice = async ({ type, url }: MediaAttachment) => {
     downloadFile({ mediaType: type!, mediaUrl: url, fileUri });
   } catch (error) {
     console.error(error);
-    Alert.alert("Error", "Failed to save media.");
+    Toast.error("Failed to save media.");
   }
 };
 
@@ -196,7 +193,7 @@ const downloadFile = async ({
     if (lastNotificationId) {
       await Notifications.dismissNotificationAsync(lastNotificationId);
     }
-    Alert.alert("Error", "Download failed.");
+    Toast.error("Download failed");
   }
 };
 
@@ -463,7 +460,6 @@ const startNewChat = async (
   }
 };
 
-
 const updateLastReadTime = async (
   conversationId: bigint | number | string,
   myId: bigint | number | string,
@@ -481,7 +477,6 @@ const updateLastReadTime = async (
     Toast.error("Error updating last read time");
   }
 };
-
 
 export const updateCommunityProfile = async (
   id: string,
@@ -591,7 +586,11 @@ const createCommunity = async ({
   groupName: string;
   groupImage?: string;
   groupAbout?: string;
-  participants: { userId: string | number | bigint; isAdmin: boolean; isOwner: boolean }[];
+  participants: {
+    userId: string | number | bigint;
+    isAdmin: boolean;
+    isOwner: boolean;
+  }[];
 }) => {
   try {
     // 1. Create a new community conversation
@@ -630,7 +629,6 @@ const createCommunity = async ({
   }
 };
 
-
 export {
   addCommunityMembers,
   createCommunity,
@@ -645,6 +643,3 @@ export {
   startNewChat,
   updateLastReadTime,
 };
-
-
-

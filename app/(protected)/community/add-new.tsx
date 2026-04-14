@@ -5,7 +5,7 @@ import GredientIcon from "@/components/common/GredientIcon";
 import { AuthContext } from "@/context/AuthContext";
 import { createCommunity, getPrivateChats } from "@/controller/chat.controller";
 
-import { useIconColor } from "@/util/common.functions";
+import { handleUploadFile, useIconColor } from "@/util/common.functions";
 import {
   chatTopBarIconSize,
   gradientIconButtonIconSize,
@@ -21,7 +21,6 @@ import { useRouter } from "expo-router";
 import { useContext, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -38,7 +37,9 @@ const AddNew = () => {
   const router = useRouter();
   const { user } = useContext(AuthContext);
   const queryClient = useQueryClient();
-  const [avatar, setAvatar] = useState<string | undefined>(undefined);
+  const [avatar, setAvatar] = useState<ImagePicker.ImagePickerAsset | null>(
+    null,
+  );
   const [step, setStep] = useState<number>(1);
   const [selectedPersons, setSelectedPersons] = useState<PersonCardProps[]>([]);
   const [communityName, setCommunityName] = useState<string>("");
@@ -55,10 +56,10 @@ const AddNew = () => {
       });
 
       if (!result.canceled) {
-        setAvatar(result.assets[0].uri);
+        setAvatar(result.assets[0]);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to pick image");
+      Toast.error("Failed to pick image");
     }
   };
 
@@ -169,7 +170,7 @@ const AddNew = () => {
                     isOwner: false,
                   }));
 
-                  // Add current user as owner
+                  //* Add current user as owner
                   if (user) {
                     participants.push({
                       userId: user.id.toString(),
@@ -178,10 +179,25 @@ const AddNew = () => {
                     });
                   }
 
+                  //* Upload group image
+                  let imageUrl = "";
+                  if (avatar) {
+                    const { success, data } = await handleUploadFile(
+                      avatar,
+                      "profile-pictures",
+                    );
+                    if (!success || !data) {
+                      Toast.error("Failed to upload image");
+                      return;
+                    }
+
+                    imageUrl = data;
+                  }
+
                   const conversationId = await createCommunity({
                     groupName: communityName,
                     groupAbout: communityAbout,
-                    groupImage: avatar,
+                    groupImage: imageUrl,
                     participants,
                   });
 
@@ -220,7 +236,7 @@ const Step2 = ({
   communityAbout,
   onCommunityAboutChange,
 }: {
-  avatar: string | undefined;
+  avatar: ImagePicker.ImagePickerAsset | null;
   pickImage: () => void;
   onRemoveMember: (person: PersonCardProps) => void;
   selectedPersons: PersonCardProps[];
@@ -253,7 +269,7 @@ const Step2 = ({
           >
             {avatar ? (
               <Image
-                source={{ uri: avatar }}
+                source={{ uri: avatar.uri }}
                 className="w-full h-full rounded-[3rem]"
               />
             ) : (
