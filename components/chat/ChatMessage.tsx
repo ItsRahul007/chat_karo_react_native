@@ -13,6 +13,7 @@ interface ChatMessageProps extends Message {
   onReplyPress?: (messageId: bigint | number) => void;
   highlighted?: boolean;
   chatWithPersonName?: string; //? name of the person we are chatting with (one-on-one only)
+  isSameSenderAsNext?: boolean;
 }
 
 const ChatMessage = (msgData: ChatMessageProps) => {
@@ -29,6 +30,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     onReplyPress,
     highlighted,
     chatWithPersonName,
+    isSameSenderAsNext,
   } = msgData;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -106,11 +108,15 @@ const ChatMessage = (msgData: ChatMessageProps) => {
             isMyMessage ? "justify-end pr-2" : "justify-start pl-2"
           }`}
         >
-          {isCommunity && !isMyMessage && sender?.avatar ? (
-            <Image
-              source={{ uri: sender?.avatar }}
-              className="w-8 h-8 rounded-full mr-2"
-            />
+          {isCommunity && !isMyMessage ? (
+            <View className="w-8 h-8 mr-2">
+              {!isSameSenderAsNext && sender?.avatar ? (
+                <Image
+                  source={{ uri: sender?.avatar }}
+                  className="w-full h-full rounded-full"
+                />
+              ) : null}
+            </View>
           ) : null}
           <View
             ref={messageRef}
@@ -174,7 +180,8 @@ const ChatMessage = (msgData: ChatMessageProps) => {
             {isCommunity &&
             !isMyMessage &&
             sender?.firstName &&
-            sender?.lastName ? (
+            sender?.lastName &&
+            !isSameSenderAsNext ? (
               <Text
                 className={
                   "text-orange-500 font-bold px-3 pt-2 text-sm " +
@@ -189,7 +196,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
 
             {/* Only apply padding if there is text or to maintain spacing for timestamp if no text */}
             <View
-              className={`${message ? "px-3 py-2 " + (isCommunity && !isMyMessage ? "pt-0" : "") : "pb-6"}`}
+              className={`${message ? "px-3 py-2 " + (!isSameSenderAsNext && isCommunity && !isMyMessage ? "pt-0" : "") : "pb-6"}`}
             >
               {message && (
                 <Text

@@ -67,7 +67,7 @@ const index = () => {
   );
 
   const setUnreadMessageCountToZero = (conversationId: bigint) => {
-    queryClient.setQueryData([QueryKeys.privateChats, user?.id], (old: any) => {
+    queryClient.setQueryData([QueryKeys.privateChats], (old: any) => {
       if (!old) return old;
       return {
         ...old,

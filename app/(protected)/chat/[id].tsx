@@ -63,7 +63,7 @@ const Chat = () => {
 
   const theme = useColorScheme();
   const insects = useSafeAreaInsets();
-  let lastSender: string | undefined;
+
   const { user } = useContext(AuthContext);
   const myId = user?.id;
   const queryClient = useQueryClient();
@@ -113,10 +113,15 @@ const Chat = () => {
     },
   });
 
-  const messages = useMemo(
-    () => messagesData?.pages.flatMap((page) => page) ?? [],
-    [messagesData],
-  );
+  const messages = useMemo(() => {
+    const flatMessages = messagesData?.pages.flatMap((page) => page) ?? [];
+    return flatMessages.map((m, i) => ({
+      ...m,
+      isSameSenderAsNext:
+        i < flatMessages.length - 1 &&
+        m.senderId.toString() === flatMessages[i + 1].senderId.toString(),
+    }));
+  }, [messagesData]);
 
   const replyAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -274,7 +279,6 @@ const Chat = () => {
           isCommunity === "true"
             ? QueryKeys.communityChats
             : QueryKeys.privateChats,
-          myId,
         ],
         (old: any) => {
           if (!old) return old;
@@ -408,13 +412,11 @@ const Chat = () => {
                 />
               )}
               ItemSeparatorComponent={({ leadingItem }) => {
-                const isSameSender =
-                  lastSender == undefined || leadingItem?.sender === lastSender;
-                lastSender = leadingItem?.sender;
+                const isSameSender = leadingItem.isSameSenderAsNext;
                 return (
                   <View
                     style={{
-                      height: isSameSender ? 4 : 12,
+                      height: isSameSender ? 0 : 4,
                     }}
                   />
                 );
