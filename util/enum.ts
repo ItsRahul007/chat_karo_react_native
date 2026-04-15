@@ -17,9 +17,11 @@ enum QueryKeys {
   userProfile = "userProfile",
   privateChats = "privateChats",
   communityChats = "communityChats",
+  communityMembers = "communityMembers",
   messages = "messages",
   chatProfile = "chatProfile",
   newCommunity = "newCommunity",
+  chatMedia = "chatMedia",
 }
 
 enum TableNames {

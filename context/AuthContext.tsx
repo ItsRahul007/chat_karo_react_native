@@ -63,7 +63,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
   }, [queryClient, router]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ["userProfile", session?.user?.id],
+    queryKey: [QueryKeys.userProfile, session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.email) return null;
       const { data, error } = await supabase

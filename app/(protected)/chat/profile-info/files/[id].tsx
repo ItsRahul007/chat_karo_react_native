@@ -1,20 +1,20 @@
 import MediaItem from "@/components/chat/MediaItem";
 import CommonTopBar from "@/components/common/CommonTopBar";
 import { getChatMediaById } from "@/controller/chat.controller";
+import { QueryKeys } from "@/util/enum";
 import { useQuery } from "@tanstack/react-query";
-import { I_Media } from "@/util/types/chat.types";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { FlatList, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const AlFiles = () => {
-  const { id, isCommunity, conversationId } = useLocalSearchParams();
-  
+  const { conversationId } = useLocalSearchParams();
+
   const { data: mediaFiles = [] } = useQuery({
-    queryKey: ["chatMedia", conversationId],
+    queryKey: [QueryKeys.chatMedia, conversationId],
     queryFn: () => getChatMediaById(conversationId as string),
-    enabled: !!conversationId
+    enabled: !!conversationId,
   });
 
   return (

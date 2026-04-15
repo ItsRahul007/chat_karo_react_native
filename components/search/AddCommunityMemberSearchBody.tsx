@@ -1,10 +1,11 @@
 import { AuthContext } from "@/context/AuthContext";
-import { searchPerson } from "@/controller/search.controller";
 import { addCommunityMembers } from "@/controller/chat.controller";
+import { searchPerson } from "@/controller/search.controller";
 import {
   gradientIconButtonIconSize,
   gradientIconButtonSize,
 } from "@/util/constants";
+import { QueryKeys } from "@/util/enum";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import { Entypo } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
@@ -55,7 +56,6 @@ const AddCommunityMemberSearchBody = ({
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-
   const handleSelectChange = (user: PersonCardProps) => {
     if (isUserSelected(user.id)) {
       const users = selectedUsers.filter((u) => u.id !== user.id);
@@ -76,7 +76,7 @@ const AddCommunityMemberSearchBody = ({
       const success = await addCommunityMembers(communityId, userIds);
       if (success) {
         queryClient.invalidateQueries({
-          queryKey: ["chatMembers", communityId],
+          queryKey: [QueryKeys.communityMembers, communityId],
         });
         router.back();
       }
@@ -90,7 +90,6 @@ const AddCommunityMemberSearchBody = ({
   const isUserSelected = (id: string): boolean => {
     return selectedUsers.some((user) => user.id === id);
   };
-
 
   return (
     <View className="flex-1">
@@ -155,7 +154,6 @@ const AddCommunityMemberSearchBody = ({
           className="absolute bottom-0 right-2"
           isLoading={isAdding}
         />
-
       ) : null}
     </View>
   );

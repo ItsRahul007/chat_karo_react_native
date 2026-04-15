@@ -19,6 +19,7 @@ import {
   gradientIconButtonIconSize,
   profileInfoIconSize,
 } from "@/util/constants";
+import { QueryKeys } from "@/util/enum";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { Toast } from "@/util/toast";
 import {
@@ -54,18 +55,18 @@ const ProfileInfo = () => {
   const iconColor = useIconColor();
 
   const { data: chatProfile, isLoading: isChatLoading } = useQuery({
-    queryKey: ["chatProfile", id],
+    queryKey: [QueryKeys.chatProfile, id],
     queryFn: () => getChatProfileById(id as string, isCommunity),
   });
 
   const { data: mediaFiles = [], isLoading: isMediaLoading } = useQuery({
-    queryKey: ["chatMedia", conversationId],
+    queryKey: [QueryKeys.chatMedia, conversationId],
     queryFn: () => getChatMediaById(conversationId as string),
     enabled: !!conversationId,
   });
 
   const { data: chatMembers = [] } = useQuery({
-    queryKey: ["chatMembers", conversationId],
+    queryKey: [QueryKeys.communityMembers, conversationId],
     queryFn: () => getChatMembersById(conversationId as string),
     enabled: !!conversationId && isCommunity,
   });
@@ -113,7 +114,7 @@ const ProfileInfo = () => {
     mutationFn: (payload: { groupName?: string; groupAbout?: string }) =>
       updateCommunityProfile(id as string, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chatProfile", id] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.chatProfile, id] });
     },
   });
 

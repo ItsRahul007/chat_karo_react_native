@@ -1,28 +1,39 @@
 import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
 import CommonBackButton from "@/components/common/CommonBackButton";
+import { AuthContext } from "@/context/AuthContext";
 import { getChatMembersById } from "@/controller/chat.controller";
-import { useQuery } from "@tanstack/react-query";
 import {
   gradientIconButtonIconSize,
   gradientIconButtonSize,
 } from "@/util/constants";
-import { SearchParams } from "@/util/enum";
+import { QueryKeys, SearchParams } from "@/util/enum";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { Entypo, Feather } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useContext, useMemo } from "react";
 import { FlatList, Image, Pressable, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const Members = () => {
   const { id: conversationId } = useLocalSearchParams();
-  const isUserAdmin = true;
+  const { user: currentUser } = useContext(AuthContext);
 
   const { data: chatMembers = [], refetch } = useQuery({
-    queryKey: ["chatMembers", conversationId],
+    queryKey: [QueryKeys.communityMembers, conversationId],
     queryFn: () => getChatMembersById(conversationId as string),
-    enabled: !!conversationId
+    enabled: !!conversationId,
   });
+
+  const isUserAdmin = useMemo(() => {
+    if (!currentUser || !chatMembers.length) return false;
+    const member = chatMembers.find(
+      (m) => m.id.toString() === currentUser.id.toString(),
+    );
+    return !!(member?.isAdmin || member?.isOwner);
+  }, [currentUser, chatMembers]);
+
+  console.log("isUserAdmin", isUserAdmin);
 
   const removeMember = (userId: string) => {
     // Implement API call to remove member, then refetch
