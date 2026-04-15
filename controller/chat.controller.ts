@@ -515,6 +515,7 @@ const getChatMembersById = async (conversationId: string) => {
         )
       `,
       )
+      .neq("isRemoved", true)
       .eq("conversationId", conversationId);
 
     if (error) throw error;

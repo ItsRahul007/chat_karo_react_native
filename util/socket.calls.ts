@@ -5,6 +5,7 @@ enum ListenMessages {
   NEW_MESSAGE = "new-message", // emitted to userId room when user is not in the active chat
   USER_TYPING = "user-typing",
   USER_STOP_TYPING = "user-stop-typing",
+  USER_REMOVED_FROM_COMMUNITY = "user-removed-from-community",
 }
 
 enum EmitMessages {
@@ -15,6 +16,7 @@ enum EmitMessages {
   STOP_TYPING = "stop-typing",
   DISCONNECT = "disconnect",
   REGISTER_PUSH_TOKEN = "register-push-token",
+  REMOVE_COMMUNITY_MEMBER = "remove-community-member",
 }
 
 export { EmitMessages, ListenMessages };

@@ -1,6 +1,7 @@
 import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
 import CommonBackButton from "@/components/common/CommonBackButton";
 import { AuthContext } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 import { getChatMembersById } from "@/controller/chat.controller";
 import {
   gradientIconButtonIconSize,
@@ -8,6 +9,8 @@ import {
 } from "@/util/constants";
 import { QueryKeys, SearchParams } from "@/util/enum";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
+import { EmitMessages } from "@/util/socket.calls";
+import { Toast } from "@/util/toast";
 import { Entypo, Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocalSearchParams } from "expo-router";
@@ -18,6 +21,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 const Members = () => {
   const { id: conversationId } = useLocalSearchParams();
   const { user: currentUser } = useContext(AuthContext);
+  const { socket } = useSocket();
 
   const { data: chatMembers = [], refetch } = useQuery({
     queryKey: [QueryKeys.communityMembers, conversationId],
@@ -33,11 +37,13 @@ const Members = () => {
     return !!(member?.isAdmin || member?.isOwner);
   }, [currentUser, chatMembers]);
 
-  console.log("isUserAdmin", isUserAdmin);
-
   const removeMember = (userId: string) => {
-    // Implement API call to remove member, then refetch
-    console.log("remove member", userId);
+    socket?.emit(EmitMessages.REMOVE_COMMUNITY_MEMBER, {
+      conversationId,
+      userId,
+    });
+
+    Toast.loading("Removing member...");
   };
 
   return (

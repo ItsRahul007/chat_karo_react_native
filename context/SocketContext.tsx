@@ -1,6 +1,7 @@
 import {
   handleInboxUpdate,
   handleReceiveMessage,
+  onUserRemovedFromCommunity,
 } from "@/controller/socket.controller";
 import { usePushNotification } from "@/custom-hooks/usePushNotification";
 import { Message } from "@/util/interfaces/types";
@@ -128,11 +129,9 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
       isCommunity: boolean;
     }) => {
       //* update the chat, don't increment unread count
-      console.log("📩 [SocketContext] RECEIVE_MESSAGE", message.id);
       handleReceiveMessage(queryClient, message);
       handleInboxUpdate({
         queryClient,
-        userId: user.id,
         message,
         isCommunity,
         incrementUnread: false,
@@ -149,20 +148,19 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
       isNewChat: boolean;
     }) => {
       //* update the chat, increment unread count
-      console.log(
-        "📩 [SocketContext] NEW_MESSAGE",
-        message.id,
-        "isCommunity",
-        isCommunity,
-      );
-
       handleInboxUpdate({
         queryClient,
-        userId: user.id,
         message,
         isCommunity,
         isNewChat,
       });
+    };
+
+    const onUserRemovedByAdmin = (data: {
+      success: boolean;
+      conversationId: string;
+    }) => {
+      onUserRemovedFromCommunity({ ...data, queryClient });
     };
 
     s.on(
@@ -170,6 +168,8 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
       onReceiveMessageWhileInsideAConversation,
     );
     s.on(ListenMessages.NEW_MESSAGE, onNewMessageWhileNotInConversation);
+
+    s.on(ListenMessages.USER_REMOVED_FROM_COMMUNITY, onUserRemovedByAdmin);
 
     // Future events can be registered here:
     // s.on(ListenMessages.USER_TYPING, onUserTyping);
@@ -181,6 +181,7 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
         onReceiveMessageWhileInsideAConversation,
       );
       s.off(ListenMessages.NEW_MESSAGE, onNewMessageWhileNotInConversation);
+      s.off(ListenMessages.USER_REMOVED_FROM_COMMUNITY, onUserRemovedByAdmin);
     };
   }, [isConnected, user?.id, queryClient]);
 

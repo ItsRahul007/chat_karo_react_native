@@ -52,6 +52,7 @@ interface Message {
   isRead: boolean;
   isDeleted: boolean;
   isEdited: boolean;
+  isSystemMessage: boolean;
   mentionMessageId: bigint | number | null;
   mentionMessage: Message | null;
   sender?: {

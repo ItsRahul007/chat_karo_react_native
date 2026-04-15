@@ -1,5 +1,6 @@
 import { QueryKeys } from "@/util/enum";
 import { Message } from "@/util/interfaces/types";
+import { Toast } from "@/util/toast";
 import { QueryClient } from "@tanstack/react-query";
 
 /**
@@ -34,14 +35,12 @@ export function handleReceiveMessage(
  */
 export function handleInboxUpdate({
   queryClient,
-  userId,
   message,
   incrementUnread = true,
   isCommunity = false,
   isNewChat = false,
 }: {
   queryClient: QueryClient;
-  userId: string | bigint;
   message: Message;
   incrementUnread?: boolean;
   isCommunity?: boolean;
@@ -80,3 +79,23 @@ export function handleInboxUpdate({
     };
   });
 }
+
+export const onUserRemovedFromCommunity = ({
+  success,
+  conversationId,
+  queryClient,
+}: {
+  success: boolean;
+  conversationId: string;
+  queryClient: QueryClient;
+}) => {
+  if (!success) {
+    Toast.error("Failed to remove");
+    return;
+  }
+
+  Toast.success("Removed successfully");
+  queryClient.refetchQueries({
+    queryKey: [QueryKeys.communityMembers, conversationId],
+  });
+};

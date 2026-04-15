@@ -27,6 +27,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     onReply,
     mentionMessage,
     mentionMessageId,
+    isSystemMessage,
     onReplyPress,
     highlighted,
     chatWithPersonName,
@@ -59,6 +60,18 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  if (isSystemMessage) {
+    return (
+      <View className="w-full items-center justify-center my-2 px-10">
+        <View className="bg-light-background-secondary dark:bg-dark-background-secondary px-3 py-1 rounded-full">
+          <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight text-xs text-center font-medium">
+            {message}
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   const [modalVisible, setModalVisible] = useState(false);
   const [messageLayout, setMessageLayout] = useState({
