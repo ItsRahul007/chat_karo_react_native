@@ -21,7 +21,12 @@ import {
 import { QueryKeys } from "@/util/enum";
 import { Message } from "@/util/interfaces/types";
 import { EmitMessages } from "@/util/socket.calls";
-import { Entypo, FontAwesome5, Ionicons } from "@expo/vector-icons";
+import {
+  Entypo,
+  FontAwesome5,
+  Ionicons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import {
   useInfiniteQuery,
   useQuery,
@@ -51,10 +56,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Chat = () => {
   const {
-    id: conversationId, // it can be new as well
+    id: rawId, // it can be new as well
     isCommunity,
-    chatWithId,
+    chatWithId: rawChatWithId,
   } = useLocalSearchParams();
+
+  const conversationId = Array.isArray(rawId) ? rawId[0] : rawId;
+  const chatWithId = Array.isArray(rawChatWithId)
+    ? rawChatWithId[0]
+    : rawChatWithId;
 
   const profileToFetchId: string =
     isCommunity !== "true"
@@ -85,9 +95,14 @@ const Chat = () => {
   const flatListRef = React.useRef<FlatList>(null);
 
   const { data: chat, isLoading: isChatProfileLoading } = useQuery({
-    queryKey: [QueryKeys.chatProfile, QueryKeys.chatProfile + profileToFetchId],
+    queryKey: [QueryKeys.chatProfile, profileToFetchId, conversationId],
     queryFn: () =>
-      getChatProfileById(profileToFetchId as string, isCommunity === "true"),
+      getChatProfileById(
+        profileToFetchId as string,
+        isCommunity === "true",
+        myId,
+        conversationId as string,
+      ),
   });
 
   const {
@@ -187,12 +202,14 @@ const Chat = () => {
       id: tempId,
       createdAt: new Date().toISOString(),
       senderId: myId,
-      conversationId: conversationId === "new" ? 0 : Number(conversationId),
+      conversationId:
+        conversationId === "new" ? 0 : Number(conversationId),
       message: trimmed,
       media: [],
       isRead: false,
       isDeleted: false,
       isEdited: false,
+      isSystemMessage: false,
       mentionMessageId: mentionMessageId ?? null,
       mentionMessage: replyingTo ?? null,
       sender: undefined,
@@ -353,12 +370,21 @@ const Chat = () => {
                       />
                     </View>
                     <View className="flex-1">
-                      <Text
-                        className="font-bold text-lg text-light-text-primary dark:text-dark-text-primary overflow-ellipsis"
-                        numberOfLines={1}
-                      >
-                        {chat?.name}
-                      </Text>
+                      <View className="flex-row items-center gap-x-1">
+                        <Text
+                          className="font-bold text-lg text-light-text-primary dark:text-dark-text-primary overflow-ellipsis max-w-[80%]"
+                          numberOfLines={1}
+                        >
+                          {chat?.name}
+                        </Text>
+                        {chat?.isMuted && (
+                          <MaterialCommunityIcons
+                            name="bell-off"
+                            size={16}
+                            color={placeholderColor}
+                          />
+                        )}
+                      </View>
                       <Text className="text-base text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
                         Online
                       </Text>

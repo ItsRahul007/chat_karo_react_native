@@ -332,14 +332,18 @@ const getChatById = async (
 const getChatProfileById = async (
   id: string,
   isGroup: boolean,
+  myId?: string | number | bigint,
+  conversationId?: string | number | bigint,
 ): Promise<{
   avatar: string;
   name: string;
   id: bigint;
   about?: string;
   email?: string;
+  isMuted?: boolean;
 } | null> => {
   try {
+    let profileData: any;
     if (isGroup) {
       const { data, error } = await supabase
         .from(TableNames.conversations)
@@ -349,7 +353,7 @@ const getChatProfileById = async (
 
       if (error) throw error;
 
-      return {
+      profileData = {
         avatar: data.groupImage,
         name: data.groupName,
         about: data.groupAbout,
@@ -364,7 +368,7 @@ const getChatProfileById = async (
 
       if (error) throw error;
 
-      return {
+      profileData = {
         avatar: data.avatar,
         name: `${data.firstName} ${data.lastName}`,
         about: data.about,
@@ -372,6 +376,25 @@ const getChatProfileById = async (
         id: data.id,
       };
     }
+
+    // Fetch mute status if myId and conversationId are provided
+    if (myId && (conversationId || (isGroup && id))) {
+      const convId = isGroup ? id : conversationId;
+      if (convId) {
+        const { data: participant, error: partError } = await supabase
+          .from(TableNames.participants)
+          .select("isMuted")
+          .eq("conversationId", convId)
+          .eq("userId", myId)
+          .single();
+
+        if (!partError && participant) {
+          profileData.isMuted = participant.isMuted;
+        }
+      }
+    }
+
+    return profileData;
   } catch (error) {
     console.error("Error fetching chat profile detail:", error);
     Toast.error("Error fetching chat profile detail");
@@ -630,6 +653,27 @@ const createCommunity = async ({
   }
 };
 
+const toggleMute = async (
+  conversationId: string | number | bigint,
+  userId: string | number | bigint,
+  isMuted: boolean,
+) => {
+  try {
+    const { error } = await supabase
+      .from(TableNames.participants)
+      .update({ isMuted })
+      .eq("conversationId", conversationId)
+      .eq("userId", userId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error("Error toggling mute:", error);
+    Toast.error("Failed to update notification settings");
+    return false;
+  }
+};
+
 export {
   addCommunityMembers,
   createCommunity,
@@ -643,4 +687,5 @@ export {
   sendMessage,
   startNewChat,
   updateLastReadTime,
+  toggleMute,
 };

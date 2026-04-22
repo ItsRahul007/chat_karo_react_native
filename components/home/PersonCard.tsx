@@ -2,6 +2,7 @@ import UnreadMessageCount from "@/components/home/UnreadMessageCount";
 import { useFormatedTime } from "@/util/common.functions";
 import { SingleChat } from "@/util/interfaces/types";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Link } from "expo-router";
 import React, { useState } from "react";
 import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
@@ -22,6 +23,7 @@ const PersonCard = ({
   chatWithId,
   onClick,
   isTyping = false,
+  isMuted,
 }: PersonCardProps) => {
   const [isProfileClicked, setIsProfileClicked] = useState<boolean>(false);
   const formatedMessageTime = useFormatedTime(lastMessage.createdAt);
@@ -49,12 +51,21 @@ const PersonCard = ({
           className="flex-1 flex-row items-start justify-between"
         >
           <View className="flex-1">
-            <Text
-              className="text-light-text-primary dark:text-dark-text-primary font-bold overflow-ellipsis"
-              numberOfLines={1}
-            >
-              {firstName + " " + lastName}
-            </Text>
+            <View className="flex-row items-center gap-x-1">
+              <Text
+                className="text-light-text-primary dark:text-dark-text-primary font-bold overflow-ellipsis max-w-[90%]"
+                numberOfLines={1}
+              >
+                {firstName + " " + lastName}
+              </Text>
+              {isMuted && (
+                <MaterialCommunityIcons
+                  name="bell-off"
+                  size={14}
+                  color="#8E8E93"
+                />
+              )}
+            </View>
             {isTyping ? (
               <Text className="text-gradientSecond font-semibold">
                 Typing...

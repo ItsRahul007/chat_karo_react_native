@@ -11,6 +11,7 @@ import {
   getChatMediaById,
   getChatMembersById,
   getChatProfileById,
+  toggleMute,
   updateCommunityProfile,
 } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
@@ -45,7 +46,16 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const ProfileInfo = () => {
-  const { id, isCommunity: community, conversationId } = useLocalSearchParams();
+  const {
+    id: rawId,
+    isCommunity: community,
+    conversationId: rawConversationId,
+  } = useLocalSearchParams();
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  const conversationId = Array.isArray(rawConversationId)
+    ? rawConversationId[0]
+    : rawConversationId;
+
   const isCommunity = community === "true";
   const theme = useColorScheme();
 
@@ -55,8 +65,14 @@ const ProfileInfo = () => {
   const iconColor = useIconColor();
 
   const { data: chatProfile, isLoading: isChatLoading } = useQuery({
-    queryKey: [QueryKeys.chatProfile, id],
-    queryFn: () => getChatProfileById(id as string, isCommunity),
+    queryKey: [QueryKeys.chatProfile, id, conversationId],
+    queryFn: () =>
+      getChatProfileById(
+        id as string,
+        isCommunity,
+        user?.id,
+        conversationId as string,
+      ),
   });
 
   const { data: mediaFiles = [], isLoading: isMediaLoading } = useQuery({
@@ -114,9 +130,29 @@ const ProfileInfo = () => {
     mutationFn: (payload: { groupName?: string; groupAbout?: string }) =>
       updateCommunityProfile(id as string, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.chatProfile, id] });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.chatProfile, id, conversationId],
+      });
     },
   });
+
+  const muteMutation = useMutation({
+    mutationFn: (isMuted: boolean) =>
+      toggleMute(conversationId as string, user?.id!, isMuted),
+    onSuccess: (_, isMuted) => {
+      queryClient.setQueryData(
+        [QueryKeys.chatProfile, id, conversationId],
+        (old: any) => (old ? { ...old, isMuted } : old),
+      );
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.privateChats] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.communityChats] });
+      Toast.success(`Notifications ${isMuted ? "muted" : "unmuted"}`);
+    },
+  });
+
+  const handleToggleMute = (value: boolean) => {
+    muteMutation.mutate(value);
+  };
 
   const handleEditName = () => {
     if (isEditingName) {
@@ -270,7 +306,10 @@ const ProfileInfo = () => {
                 }
                 title="Notification"
                 actionButton={
-                  <CustomIconSwitch value={true} onValueChange={() => {}} />
+                  <CustomIconSwitch
+                    value={!chatProfile?.isMuted}
+                    onValueChange={(val) => handleToggleMute(!val)}
+                  />
                 }
               />
               <Link

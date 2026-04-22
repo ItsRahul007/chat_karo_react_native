@@ -12,6 +12,7 @@ import {
 import AvatarGroup from "./AvatarGroup";
 import ShowAvatar from "./ShowAvatar";
 import UnreadMessageCount from "./UnreadMessageCount";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 interface CommunityCardProps extends SingleCommunityChat {
   isExpanded?: boolean;
@@ -27,6 +28,7 @@ const CommunityCard = ({
   conversationId,
   groupAvatars,
   onClick,
+  isMuted,
 }: CommunityCardProps) => {
   const [isProfileClicked, setIsProfileClicked] = useState<boolean>(false);
 
@@ -58,12 +60,21 @@ const CommunityCard = ({
           </TouchableWithoutFeedback>
           <View className="flex-1 flex-row justify-between items-center gap-x-3">
             <View className="flex-1">
-              <Text
-                className="font-semibold text-lg text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary overflow-ellipsis"
-                numberOfLines={1}
-              >
-                {firstName}
-              </Text>
+              <View className="flex-row items-center gap-x-1">
+                <Text
+                  className="font-semibold text-lg text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary overflow-ellipsis"
+                  numberOfLines={1}
+                >
+                  {firstName}
+                </Text>
+                {isMuted && (
+                  <MaterialCommunityIcons
+                    name="bell-off"
+                    size={14}
+                    color="#8E8E93"
+                  />
+                )}
+              </View>
               {isExpanded && lastMessage ? (
                 <MessageBox
                   messagedPersonName={lastMessage.senderName ?? "Unknown"}
