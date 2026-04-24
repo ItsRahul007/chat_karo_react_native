@@ -32,4 +32,10 @@ enum TableNames {
   inbox = "inbox",
 }
 
-export { FileTypes, QueryKeys, SearchParams, TableNames };
+enum BucketNames {
+  chatFiles = "chat-files",
+  profilePictures = "profile-pictures",
+  stories = "stories",
+}
+
+export { BucketNames, FileTypes, QueryKeys, SearchParams, TableNames };

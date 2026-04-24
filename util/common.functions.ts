@@ -1,6 +1,7 @@
 import { ColorTheme } from "@/constants/colors";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import { useColorScheme } from "react-native";
+import { BucketNames } from "./enum";
 import { supabase } from "./supabase";
 
 const generateThumbnail = async (
@@ -46,7 +47,7 @@ const getMimeType = (uri: string) => {
 
 const handleUploadFile = async (
   file: { uri: string; fileName?: string | null; mimeType?: string },
-  bucket: "chat-files" | "profile-pictures" | "stories",
+  bucket: BucketNames,
 ): Promise<{
   success: boolean;
   data?: string;

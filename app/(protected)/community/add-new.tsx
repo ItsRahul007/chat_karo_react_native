@@ -11,7 +11,7 @@ import {
   gradientIconButtonIconSize,
   gradientIconButtonSize,
 } from "@/util/constants";
-import { QueryKeys, SearchParams } from "@/util/enum";
+import { BucketNames, QueryKeys, SearchParams } from "@/util/enum";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import { Toast } from "@/util/toast";
 import { Entypo } from "@expo/vector-icons";
@@ -184,7 +184,7 @@ const AddNew = () => {
                   if (avatar) {
                     const { success, data } = await handleUploadFile(
                       avatar,
-                      "profile-pictures",
+                      BucketNames.profilePictures,
                     );
                     if (!success || !data) {
                       Toast.error("Failed to upload image");

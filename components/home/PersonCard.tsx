@@ -79,7 +79,9 @@ const PersonCard = ({
                 }`}
                 numberOfLines={1}
               >
-                {lastMessage.message}
+                {lastMessage.message?.trim().length > 0
+                  ? lastMessage.message
+                  : "Media"}
               </Text>
             )}
             {/* <Text

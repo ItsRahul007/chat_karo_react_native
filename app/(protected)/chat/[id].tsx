@@ -12,13 +12,13 @@ import {
   sendMessage,
   startNewChat,
 } from "@/controller/chat.controller";
-import { useIconColor } from "@/util/common.functions";
+import { handleUploadFile, useIconColor } from "@/util/common.functions";
 import {
   CHAT_PAGE_SIZE,
   chatTopBarIconSize,
   gradientColors,
 } from "@/util/constants";
-import { QueryKeys } from "@/util/enum";
+import { BucketNames, QueryKeys } from "@/util/enum";
 import { Message } from "@/util/interfaces/types";
 import { EmitMessages } from "@/util/socket.calls";
 import {
@@ -26,12 +26,14 @@ import {
   FontAwesome5,
   Ionicons,
   MaterialCommunityIcons,
+  MaterialIcons,
 } from "@expo/vector-icons";
 import {
   useInfiniteQuery,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useContext, useEffect, useMemo, useState } from "react";
@@ -43,6 +45,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   useColorScheme,
@@ -92,6 +95,11 @@ const Chat = () => {
   const [highlightedId, setHighlightedId] = useState<bigint | number | null>(
     null,
   );
+  const [selectedMedia, setSelectedMedia] = useState<
+    ImagePicker.ImagePickerAsset[]
+  >([]);
+  const [isUploading, setIsUploading] = useState(false);
+
   const flatListRef = React.useRef<FlatList>(null);
 
   const { data: chat, isLoading: isChatProfileLoading } = useQuery({
@@ -194,7 +202,27 @@ const Chat = () => {
 
   const handleSendMessage = async () => {
     const trimmed = value.trim();
-    if (!trimmed || !myId || !conversationId) return;
+    if ((!trimmed && selectedMedia.length === 0) || !myId || !conversationId)
+      return;
+
+    setIsUploading(true);
+    let uploadedMedia: any[] = [];
+
+    for (const media of selectedMedia) {
+      const uploadResult = await handleUploadFile(
+        { uri: media.uri, mimeType: media.mimeType, fileName: media.fileName },
+        BucketNames.chatFiles,
+      );
+      if (uploadResult.success && uploadResult.data) {
+        uploadedMedia.push({
+          url: uploadResult.data,
+          type: media.type === "video" ? "video" : "image",
+          fileName: media.fileName || undefined,
+          fileSize: media.fileSize || undefined,
+        });
+      }
+    }
+    setIsUploading(false);
 
     const mentionMessageId = replyingTo?.id ?? null;
     const tempId = Date.now();
@@ -202,10 +230,14 @@ const Chat = () => {
       id: tempId,
       createdAt: new Date().toISOString(),
       senderId: myId,
-      conversationId:
-        conversationId === "new" ? 0 : Number(conversationId),
+      conversationId: conversationId === "new" ? 0 : Number(conversationId),
       message: trimmed,
-      media: [],
+      media: selectedMedia.map((m) => ({
+        url: m.uri,
+        type: m.type === "video" ? "video" : "image",
+        fileName: m.fileName || undefined,
+        fileSize: m.fileSize || undefined,
+      })),
       isRead: false,
       isDeleted: false,
       isEdited: false,
@@ -230,6 +262,7 @@ const Chat = () => {
 
     onChangeText("");
     setReplyingTo(null);
+    setSelectedMedia([]);
 
     let result: any;
     let actualConversationId = conversationId;
@@ -238,6 +271,7 @@ const Chat = () => {
     if (conversationId === "new") {
       result = await startNewChat(myId, chatWithId as string, {
         message: trimmed,
+        media: uploadedMedia,
       });
 
       if (result && result[0]) {
@@ -252,6 +286,7 @@ const Chat = () => {
       result = await sendMessage(conversationId as string, myId, {
         message: trimmed,
         mentionMessageId,
+        media: uploadedMedia,
       });
     }
 
@@ -490,6 +525,38 @@ const Chat = () => {
           <View
             className={`bg-light-background-secondary dark:bg-dark-background-secondary w-[95%] mx-auto my-auto items-center px-2 py-2 h-auto rounded-3xl overflow-hidden`}
           >
+            {selectedMedia.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="flex-row mb-2 max-h-24 w-full"
+                contentContainerStyle={{ alignItems: "center", gap: 8 }}
+              >
+                {selectedMedia.map((item, index) => (
+                  <View key={index} className="relative">
+                    <Image
+                      source={{ uri: item.uri }}
+                      className="h-20 w-20 rounded-xl"
+                    />
+                    <Pressable
+                      onPress={() => {
+                        setSelectedMedia((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        );
+                      }}
+                      className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1"
+                    >
+                      <MaterialIcons name="close" size={12} color="white" />
+                    </Pressable>
+                    {item.type === "video" && (
+                      <View className="absolute inset-0 items-center justify-center pointer-events-none">
+                        <Ionicons name="play-circle" size={24} color="white" />
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            )}
             <Animated.View style={replyAnimatedStyle}>
               {replyingTo ? (
                 <ReplyMessage
@@ -512,8 +579,21 @@ const Chat = () => {
               ) : null}
             </Animated.View>
 
-            <View className="flex-row items-center">
-              <Pressable className="h-10 w-10 rounded-full overflow-hidden items-center justify-center">
+            <View className="flex-row items-center w-full">
+              <Pressable
+                className="h-10 w-10 rounded-full overflow-hidden items-center justify-center"
+                onPress={async () => {
+                  const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ["images", "videos"],
+                    allowsMultipleSelection: true,
+                    quality: 0.8,
+                  });
+
+                  if (!result.canceled) {
+                    setSelectedMedia((prev) => [...prev, ...result.assets]);
+                  }
+                }}
+              >
                 <LinearGradient
                   colors={gradientColors}
                   start={{ x: 0, y: 0 }}
@@ -544,14 +624,21 @@ const Chat = () => {
               />
               <Pressable
                 onPress={handleSendMessage}
-                disabled={value.trim().length === 0}
+                disabled={
+                  (value.trim().length === 0 && selectedMedia.length === 0) ||
+                  isUploading
+                }
                 className="disabled:opacity-50"
               >
-                <Ionicons
-                  name={"send"}
-                  size={chatTopBarIconSize}
-                  color={iconColor}
-                />
+                {isUploading ? (
+                  <ActivityIndicator color={iconColor} size={24} />
+                ) : (
+                  <Ionicons
+                    name={"send"}
+                    size={chatTopBarIconSize}
+                    color={iconColor}
+                  />
+                )}
               </Pressable>
             </View>
           </View>

@@ -6,6 +6,7 @@ import {
   updateUser as updateUserProfile,
 } from "@/controller/profile.controller";
 import { handleUploadFile } from "@/util/common.functions";
+import { BucketNames } from "@/util/enum";
 import { supabase } from "@/util/supabase";
 import { Toast } from "@/util/toast";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -72,7 +73,7 @@ const EditProfileScreen = () => {
     if (imageFile) {
       const { success, data } = await handleUploadFile(
         imageFile,
-        "profile-pictures",
+        BucketNames.profilePictures,
       );
       if (!success || !data) {
         Toast.error("Failed to upload image");
