@@ -19,8 +19,16 @@ export function handleReceiveMessage(
     if (!old) return old;
     const [firstPage, ...rest] = old.pages;
 
-    // Prevent duplicates
-    if (firstPage.some((m: Message) => m.id === message.id)) return old;
+    const messageIndex = firstPage.findIndex((m: Message) => m.id === message.id);
+    if (messageIndex !== -1) {
+      // Update existing message (e.g. for edits)
+      const newFirstPage = [...firstPage];
+      newFirstPage[messageIndex] = message;
+      return {
+        ...old,
+        pages: [newFirstPage, ...rest],
+      };
+    }
 
     return {
       ...old,

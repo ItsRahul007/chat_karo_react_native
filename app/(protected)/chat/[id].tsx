@@ -10,6 +10,7 @@ import {
   getChatById,
   getChatProfileById,
   sendMessage,
+  editMessage,
   startNewChat,
 } from "@/controller/chat.controller";
 import { handleUploadFile, useIconColor } from "@/util/common.functions";
@@ -92,6 +93,7 @@ const Chat = () => {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [value, onChangeText] = useState<string>("");
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [highlightedId, setHighlightedId] = useState<bigint | number | null>(
     null,
   );
@@ -148,10 +150,10 @@ const Chat = () => {
 
   const replyAnimatedStyle = useAnimatedStyle(() => {
     return {
-      height: withTiming(replyingTo ? 50 : 0, { duration: 300 }),
-      opacity: withTiming(replyingTo ? 1 : 0, { duration: 300 }),
+      height: withTiming(replyingTo || editingMessage ? 50 : 0, { duration: 300 }),
+      opacity: withTiming(replyingTo || editingMessage ? 1 : 0, { duration: 300 }),
     };
-  }, [replyingTo]);
+  }, [replyingTo, editingMessage]);
 
   useEffect(() => {
     const willOrDid = Platform.OS === "ios" ? "Will" : "Did";
@@ -183,6 +185,13 @@ const Chat = () => {
 
   const handleReply = (message: Message) => {
     setReplyingTo(message);
+    setEditingMessage(null);
+  };
+
+  const handleEdit = (message: Message) => {
+    setEditingMessage(message);
+    setReplyingTo(null);
+    onChangeText(message.message || "");
   };
 
   const handleReplyPress = (messageId: bigint | number) => {
@@ -225,50 +234,71 @@ const Chat = () => {
     setIsUploading(false);
 
     const mentionMessageId = replyingTo?.id ?? null;
-    const tempId = Date.now();
+    const tempId = editingMessage ? editingMessage.id : Date.now();
     const optimisticMessage: Message = {
       id: tempId,
-      createdAt: new Date().toISOString(),
+      createdAt: editingMessage ? editingMessage.createdAt : new Date().toISOString(),
       senderId: myId,
       conversationId: conversationId === "new" ? 0 : Number(conversationId),
       message: trimmed,
-      media: selectedMedia.map((m) => ({
+      media: editingMessage ? editingMessage.media : selectedMedia.map((m) => ({
         url: m.uri,
         type: m.type === "video" ? "video" : "image",
         fileName: m.fileName || undefined,
         fileSize: m.fileSize || undefined,
       })),
-      isRead: false,
-      isDeleted: false,
-      isEdited: false,
+      isRead: editingMessage ? editingMessage.isRead : false,
+      isDeleted: editingMessage ? editingMessage.isDeleted : false,
+      isEdited: editingMessage ? true : false,
       isSystemMessage: false,
-      mentionMessageId: mentionMessageId ?? null,
-      mentionMessage: replyingTo ?? null,
-      sender: undefined,
+      mentionMessageId: editingMessage ? editingMessage.mentionMessageId : (mentionMessageId ?? null),
+      mentionMessage: editingMessage ? editingMessage.mentionMessage : (replyingTo ?? null),
+      sender: editingMessage ? editingMessage.sender : undefined,
     };
 
-    // Optimistically insert at the front of page 0 (inverted list)
-    queryClient.setQueryData(
-      [QueryKeys.messages, conversationId],
-      (old: any) => {
-        if (!old) return { pages: [[]], pageParams: [0] };
-        const [firstPage, ...rest] = old.pages;
-        return {
-          ...old,
-          pages: [[optimisticMessage, ...firstPage], ...rest],
-        };
-      },
-    );
+    if (editingMessage) {
+      // Optimistically update
+      queryClient.setQueryData(
+        [QueryKeys.messages, conversationId],
+        (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: Message[]) =>
+              page.map((m: Message) =>
+                m.id === tempId ? optimisticMessage : m
+              )
+            ),
+          };
+        }
+      );
+    } else {
+      // Optimistically insert at the front of page 0 (inverted list)
+      queryClient.setQueryData(
+        [QueryKeys.messages, conversationId],
+        (old: any) => {
+          if (!old) return { pages: [[]], pageParams: [0] };
+          const [firstPage, ...rest] = old.pages;
+          return {
+            ...old,
+            pages: [[optimisticMessage, ...firstPage], ...rest],
+          };
+        },
+      );
+    }
 
     onChangeText("");
     setReplyingTo(null);
+    setEditingMessage(null);
     setSelectedMedia([]);
 
     let result: any;
     let actualConversationId = conversationId;
     let isNewChat = false;
 
-    if (conversationId === "new") {
+    if (editingMessage) {
+      result = await editMessage(editingMessage.id, trimmed);
+    } else if (conversationId === "new") {
       result = await startNewChat(myId, chatWithId as string, {
         message: trimmed,
         media: uploadedMedia,
@@ -296,7 +326,7 @@ const Chat = () => {
         mentionMessage: optimisticMessage.mentionMessage,
       };
 
-      // Replace the temp message
+      // Replace the temp message (or update the edited one)
       queryClient.setQueryData(
         [QueryKeys.messages, actualConversationId],
         (old: any) => {
@@ -467,6 +497,7 @@ const Chat = () => {
                   {...item}
                   isCommunity={isCommunity === "true"}
                   onReply={handleReply}
+                  onEdit={handleEdit}
                   onReplyPress={handleReplyPress}
                   highlighted={item.id === highlightedId}
                   chatWithPersonName={chat?.name}
@@ -576,6 +607,29 @@ const Chat = () => {
                           : chat?.name) || "Unknown"
                   }
                 />
+              ) : editingMessage ? (
+                <Pressable
+                  className="flex-row items-center w-full px-2 pt-1 pb-2 justify-between max-h-12"
+                  onPress={() => handleReplyPress(editingMessage.id)}
+                >
+                  <View className="flex-1">
+                    <Text
+                      className="text-orange-500 font-normal text-base text-ellipsis"
+                      numberOfLines={1}
+                    >
+                      Editing message
+                    </Text>
+                    <Text
+                      className="text-light-text-primary dark:text-dark-text-primary font-normal text-base text-ellipsis"
+                      numberOfLines={1}
+                    >
+                      {editingMessage.message || "Media"}
+                    </Text>
+                  </View>
+                  <Pressable onPress={() => { setEditingMessage(null); onChangeText(""); }}>
+                    <Entypo name="cross" size={24} color={iconColor} />
+                  </Pressable>
+                </Pressable>
               ) : null}
             </Animated.View>
 

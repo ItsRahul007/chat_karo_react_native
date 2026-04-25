@@ -10,6 +10,7 @@ import SwipeToReply from "./SwipeToReply";
 interface ChatMessageProps extends Message {
   isCommunity?: boolean;
   onReply?: (message: Message) => void;
+  onEdit?: (message: Message) => void;
   onReplyPress?: (messageId: bigint | number) => void;
   highlighted?: boolean;
   chatWithPersonName?: string; //? name of the person we are chatting with (one-on-one only)
@@ -25,6 +26,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     sender,
     isCommunity,
     onReply,
+    onEdit,
     mentionMessage,
     mentionMessageId,
     isSystemMessage,
@@ -88,9 +90,13 @@ const ChatMessage = (msgData: ChatMessageProps) => {
   };
 
   const handleReply = () => {
-    // TODO: Implement reply functionality
     setModalVisible(false);
     onReply?.(msgData);
+  };
+
+  const handleEdit = () => {
+    setModalVisible(false);
+    onEdit?.(msgData);
   };
 
   const handleDelete = () => {
@@ -231,6 +237,9 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                       includeFontPadding: false,
                     }}
                   >
+                    {msgData.isEdited && (
+                      <Text className="italic">Edited </Text>
+                    )}
                     {formatedTimestamp}
                   </Text>
                 </Text>
@@ -249,6 +258,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                 bottom: 6,
               }}
             >
+              {msgData.isEdited && <Text className="italic">Edited </Text>}
               {formatedTimestamp}
             </Text>
           </View>
@@ -263,6 +273,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
         message={message}
         formatedTimestamp={formatedTimestamp}
         handleCopy={handleCopy}
+        handleEdit={handleEdit}
         handleDelete={handleDelete}
         messageLayout={messageLayout}
       />

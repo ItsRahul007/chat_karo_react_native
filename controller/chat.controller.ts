@@ -443,6 +443,27 @@ const sendMessage = async (
   }
 };
 
+const editMessage = async (
+  messageId: bigint | number | string,
+  newMessage: string,
+) => {
+  try {
+    const { data, error } = await supabase
+      .from(TableNames.messages)
+      .update({ message: newMessage, isEdited: true })
+      .eq("id", messageId)
+      .select("*");
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error("Error editing message:", error);
+    Toast.error("Error editing message");
+    return null;
+  }
+};
+
 const startNewChat = async (
   myId: bigint | number | string,
   chatWithId: bigint | number | string,
@@ -685,6 +706,7 @@ export {
   getPrivateChats,
   saveMediaIntoDevice,
   sendMessage,
+  editMessage,
   startNewChat,
   updateLastReadTime,
   toggleMute,

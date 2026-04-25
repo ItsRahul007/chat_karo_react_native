@@ -10,6 +10,7 @@ interface MessageOptionsModalProps {
   message?: string;
   formatedTimestamp: string;
   handleCopy: () => void;
+  handleEdit: () => void;
   handleDelete: () => void;
   messageLayout: {
     x: number;
@@ -27,6 +28,7 @@ const MessageOptionsModal = ({
   message,
   formatedTimestamp,
   handleCopy,
+  handleEdit,
   handleDelete,
   messageLayout,
 }: MessageOptionsModalProps) => {
@@ -147,6 +149,17 @@ const MessageOptionsModal = ({
               Copy
             </Text>
           </Pressable>
+
+          {isMyMessage && (
+            <Pressable
+              onPress={handleEdit}
+              className="px-5 py-3 border-b border-light-background-secondary dark:border-dark-background-secondary active:bg-light-background-secondary dark:active:bg-dark-background-secondary"
+            >
+              <Text className="text-light-text-primary dark:text-dark-text-primary text-base">
+                Edit
+              </Text>
+            </Pressable>
+          )}
 
           {isMyMessage && (
             <Pressable
