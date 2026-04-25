@@ -19,7 +19,9 @@ export function handleReceiveMessage(
     if (!old) return old;
     const [firstPage, ...rest] = old.pages;
 
-    const messageIndex = firstPage.findIndex((m: Message) => m.id === message.id);
+    const messageIndex = firstPage.findIndex(
+      (m: Message) => m.id === message.id,
+    );
     if (messageIndex !== -1) {
       // Update existing message (e.g. for edits)
       const newFirstPage = [...firstPage];
@@ -67,6 +69,8 @@ export function handleInboxUpdate({
     return;
   }
 
+  const isEditedMessage = message.isEdited;
+
   queryClient.setQueryData([firstKey], (old: any) => {
     if (!old) return old;
     return {
@@ -78,7 +82,7 @@ export function handleInboxUpdate({
                 ...chat,
                 lastMessage: message,
                 unreadMessageCount: incrementUnread
-                  ? (chat.unreadMessageCount || 0) + 1
+                  ? (chat.unreadMessageCount || 0) + (isEditedMessage ? 0 : 1)
                   : chat.unreadMessageCount,
               }
             : chat,

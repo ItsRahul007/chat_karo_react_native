@@ -276,7 +276,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                           includeFontPadding: false,
                         }}
                       >
-                        {msgData.isEdited && (
+                        {msgData.isEdited && !msgData.isDeleted && (
                           <Text className="italic">Edited </Text>
                         )}
                         {formatedTimestamp}
@@ -299,7 +299,9 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                 bottom: 6,
               }}
             >
-              {msgData.isEdited && <Text className="italic">Edited </Text>}
+              {msgData.isEdited && !msgData.isDeleted && (
+                <Text className="italic">Edited </Text>
+              )}
               {formatedTimestamp}
             </Text>
           </View>

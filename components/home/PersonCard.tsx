@@ -28,6 +28,12 @@ const PersonCard = ({
   const [isProfileClicked, setIsProfileClicked] = useState<boolean>(false);
   const formatedMessageTime = useFormatedTime(lastMessage.createdAt);
 
+  const lastDisplayMessage = lastMessage.isDeleted
+    ? "Message deleted"
+    : lastMessage.message?.trim().length > 0
+      ? lastMessage.message
+      : "Media";
+
   return (
     <View className="w-full flex-row items-center justify-start gap-x-4">
       <ShowAvatar
@@ -74,14 +80,16 @@ const PersonCard = ({
               <Text
                 className={`overflow-ellipsis ${
                   unreadMessageCount && unreadMessageCount > 0
-                    ? "text-light-text-secondaryDark dark:text-dark-text-secondaryDark"
-                    : "text-light-text-secondaryLight dark:text-dark-text-secondaryLight"
+                    ? `text-light-text-secondaryDark dark:text-dark-text-secondaryDark ${
+                        lastMessage.isDeleted ? "italic" : ""
+                      }`
+                    : `text-light-text-secondaryLight dark:text-dark-text-secondaryLight ${
+                        lastMessage.isDeleted ? "italic" : ""
+                      }`
                 }`}
                 numberOfLines={1}
               >
-                {lastMessage.message?.trim().length > 0
-                  ? lastMessage.message
-                  : "Media"}
+                {lastDisplayMessage}
               </Text>
             )}
             {/* <Text
