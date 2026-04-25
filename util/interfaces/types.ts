@@ -22,7 +22,6 @@ interface ConversationParticipant {
   isBlocked: boolean;
   isPinned: boolean;
   isOwner: boolean;
-  isRemoved: boolean;
 }
 
 interface Conversation {
@@ -75,7 +74,6 @@ type SingleChat = {
   isPinned: boolean;
   isMuted: boolean;
   isBlocked: boolean;
-  isRemoved: boolean;
   onClick?: () => void;
 };
 
@@ -92,7 +90,6 @@ type SingleCommunityChat = {
   isBlocked: boolean;
   isOwner: boolean;
   isAdmin: boolean;
-  isRemoved: boolean;
 };
 
 export type {
