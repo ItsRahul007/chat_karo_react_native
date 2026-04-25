@@ -1,5 +1,6 @@
 import { AuthContext } from "@/context/AuthContext";
 import { Message } from "@/util/interfaces/types";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import React, { useContext, useRef, useState } from "react";
 import { Animated, Image, Pressable, Text, View } from "react-native";
@@ -11,6 +12,7 @@ interface ChatMessageProps extends Message {
   isCommunity?: boolean;
   onReply?: (message: Message) => void;
   onEdit?: (message: Message) => void;
+  onDelete?: (message: Message) => void;
   onReplyPress?: (messageId: bigint | number) => void;
   highlighted?: boolean;
   chatWithPersonName?: string; //? name of the person we are chatting with (one-on-one only)
@@ -27,6 +29,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
     isCommunity,
     onReply,
     onEdit,
+    onDelete,
     mentionMessage,
     mentionMessageId,
     isSystemMessage,
@@ -100,8 +103,8 @@ const ChatMessage = (msgData: ChatMessageProps) => {
   };
 
   const handleDelete = () => {
-    // TODO: Implement delete functionality
     setModalVisible(false);
+    onDelete?.(msgData);
   };
 
   const handleLongPress = () => {
@@ -162,68 +165,18 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                 pointerEvents: "none",
               }}
             />
-            {mentionMessage && mentionMessageId ? (
-              <Pressable
-                onPress={() => onReplyPress?.(mentionMessageId)}
-                className={`m-1 p-2 rounded-lg border-l-4 border-l-orange-500 ${
-                  isMyMessage ? "bg-black/20" : "bg-black/5 dark:bg-white/10"
-                }`}
-              >
+
+            {msgData.isDeleted ? (
+              <View className="px-3 py-2">
                 <Text
-                  className={`font-bold text-xs text-ellipsis ${
-                    isMyMessage ? "text-white/90" : "text-orange-500"
-                  }`}
-                  numberOfLines={1}
-                >
-                  {mentionMessage.senderId == user?.id
-                    ? "You"
-                    : !isCommunity
-                      ? chatWithPersonName!
-                      : mentionMessage.sender?.firstName +
-                        " " +
-                        mentionMessage.sender?.lastName}
-                </Text>
-                <Text
-                  numberOfLines={1}
-                  className={`text-xs text-ellipsis ${
+                  className={`italic text-sm ${
                     isMyMessage
-                      ? "text-white/80"
-                      : "text-light-text-secondaryLight dark:text-dark-text-secondaryLight"
+                      ? "text-white/70"
+                      : "text-black/50 dark:text-white/50"
                   }`}
                 >
-                  {mentionMessage.message || "Media"}
-                </Text>
-              </Pressable>
-            ) : null}
-
-            {isCommunity &&
-            !isMyMessage &&
-            sender?.firstName &&
-            sender?.lastName &&
-            !isSameSenderAsNext ? (
-              <Text
-                className={
-                  "text-orange-500 font-bold px-3 pt-2 text-sm " +
-                  (media ? "pb-2" : "")
-                }
-              >
-                {messageSenderName}
-              </Text>
-            ) : null}
-
-            <MediaGrid media={media} />
-
-            {/* Only apply padding if there is text or to maintain spacing for timestamp if no text */}
-            <View
-              className={`${message ? "px-3 py-2 " + (!isSameSenderAsNext && isCommunity && !isMyMessage ? "pt-0" : "") : "pb-6"}`}
-            >
-              {message && (
-                <Text
-                  className={`${
-                    isMyMessage ? "text-white" : "text-black dark:text-white"
-                  } text-base`}
-                >
-                  {message}
+                  <MaterialCommunityIcons name="cancel" size={12} /> This
+                  message was deleted
                   {"   "}
                   <Text
                     className={
@@ -237,14 +190,101 @@ const ChatMessage = (msgData: ChatMessageProps) => {
                       includeFontPadding: false,
                     }}
                   >
-                    {msgData.isEdited && (
-                      <Text className="italic">Edited </Text>
-                    )}
                     {formatedTimestamp}
                   </Text>
                 </Text>
-              )}
-            </View>
+              </View>
+            ) : (
+              <>
+                {mentionMessage && mentionMessageId ? (
+                  <Pressable
+                    onPress={() => onReplyPress?.(mentionMessageId)}
+                    className={`m-1 p-2 rounded-lg border-l-4 border-l-orange-500 ${
+                      isMyMessage
+                        ? "bg-black/20"
+                        : "bg-black/5 dark:bg-white/10"
+                    }`}
+                  >
+                    <Text
+                      className={`font-bold text-xs text-ellipsis ${
+                        isMyMessage ? "text-white/90" : "text-orange-500"
+                      }`}
+                      numberOfLines={1}
+                    >
+                      {mentionMessage.senderId == user?.id
+                        ? "You"
+                        : !isCommunity
+                          ? chatWithPersonName!
+                          : mentionMessage.sender?.firstName +
+                            " " +
+                            mentionMessage.sender?.lastName}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      className={`text-xs text-ellipsis ${
+                        isMyMessage
+                          ? "text-white/80"
+                          : "text-light-text-secondaryLight dark:text-dark-text-secondaryLight"
+                      }`}
+                    >
+                      {mentionMessage.message || "Media"}
+                    </Text>
+                  </Pressable>
+                ) : null}
+
+                {isCommunity &&
+                !isMyMessage &&
+                sender?.firstName &&
+                sender?.lastName &&
+                !isSameSenderAsNext ? (
+                  <Text
+                    className={
+                      "text-orange-500 font-bold px-3 pt-2 text-sm " +
+                      (media ? "pb-2" : "")
+                    }
+                  >
+                    {messageSenderName}
+                  </Text>
+                ) : null}
+
+                <MediaGrid media={media} />
+
+                {/* Only apply padding if there is text or to maintain spacing for timestamp if no text */}
+                <View
+                  className={`${message ? "px-3 py-2 " + (!isSameSenderAsNext && isCommunity && !isMyMessage ? "pt-0" : "") : "pb-6"}`}
+                >
+                  {message && (
+                    <Text
+                      className={`${
+                        isMyMessage
+                          ? "text-white"
+                          : "text-black dark:text-white"
+                      } text-base`}
+                    >
+                      {message}
+                      {"   "}
+                      <Text
+                        className={
+                          isMyMessage
+                            ? "text-gradientSecond"
+                            : "text-light-background-secondary dark:text-dark-background-secondary"
+                        }
+                        style={{
+                          fontSize: 10,
+                          opacity: 0,
+                          includeFontPadding: false,
+                        }}
+                      >
+                        {msgData.isEdited && (
+                          <Text className="italic">Edited </Text>
+                        )}
+                        {formatedTimestamp}
+                      </Text>
+                    </Text>
+                  )}
+                </View>
+              </>
+            )}
 
             <Text
               className={`text-[10px] ${
@@ -265,18 +305,20 @@ const ChatMessage = (msgData: ChatMessageProps) => {
         </Pressable>
       </SwipeToReply>
 
-      <MessageOptionsModal
-        modalVisible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-        isMyMessage={isMyMessage}
-        media={media}
-        message={message}
-        formatedTimestamp={formatedTimestamp}
-        handleCopy={handleCopy}
-        handleEdit={handleEdit}
-        handleDelete={handleDelete}
-        messageLayout={messageLayout}
-      />
+      {!msgData.isDeleted && (
+        <MessageOptionsModal
+          modalVisible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+          isMyMessage={isMyMessage}
+          media={media}
+          message={message}
+          formatedTimestamp={formatedTimestamp}
+          handleCopy={handleCopy}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+          messageLayout={messageLayout}
+        />
+      )}
     </>
   );
 };

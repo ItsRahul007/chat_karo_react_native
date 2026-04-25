@@ -464,6 +464,29 @@ const editMessage = async (
   }
 };
 
+const deleteMessage = async (messageId: bigint | number | string) => {
+  try {
+    const { data, error } = await supabase
+      .from(TableNames.messages)
+      .update({
+        isDeleted: true,
+        message: null,
+        media: null,
+        mentionMessageId: null,
+      })
+      .eq("id", messageId)
+      .select("*");
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    Toast.error("Error deleting message");
+    return null;
+  }
+};
+
 const startNewChat = async (
   myId: bigint | number | string,
   chatWithId: bigint | number | string,
@@ -698,6 +721,8 @@ const toggleMute = async (
 export {
   addCommunityMembers,
   createCommunity,
+  deleteMessage,
+  editMessage,
   getChatById,
   getChatMediaById,
   getChatMembersById,
@@ -706,8 +731,7 @@ export {
   getPrivateChats,
   saveMediaIntoDevice,
   sendMessage,
-  editMessage,
   startNewChat,
-  updateLastReadTime,
   toggleMute,
+  updateLastReadTime,
 };

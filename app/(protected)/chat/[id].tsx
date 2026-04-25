@@ -11,6 +11,7 @@ import {
   getChatProfileById,
   sendMessage,
   editMessage,
+  deleteMessage,
   startNewChat,
 } from "@/controller/chat.controller";
 import { handleUploadFile, useIconColor } from "@/util/common.functions";
@@ -192,6 +193,36 @@ const Chat = () => {
     setEditingMessage(message);
     setReplyingTo(null);
     onChangeText(message.message || "");
+  };
+
+  const handleDelete = async (message: Message) => {
+    // Optimistic update
+    queryClient.setQueryData(
+      [QueryKeys.messages, conversationId],
+      (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: Message[]) =>
+            page.map((m: Message) =>
+              m.id === message.id ? { ...m, isDeleted: true, message: null, media: null } : m
+            )
+          ),
+        };
+      }
+    );
+    const result = await deleteMessage(message.id);
+    if (!result) {
+      // Revert if failed (simple invalidate is fine)
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.messages, conversationId] });
+    } else if (result[0]) {
+      socket?.emit(EmitMessages.SEND_MESSAGE, {
+        message: result[0],
+        receiverId: chatWithId,
+        isCommunity: isCommunity === "true",
+        isNewChat: false,
+      });
+    }
   };
 
   const handleReplyPress = (messageId: bigint | number) => {
@@ -498,6 +529,7 @@ const Chat = () => {
                   isCommunity={isCommunity === "true"}
                   onReply={handleReply}
                   onEdit={handleEdit}
+                  onDelete={handleDelete}
                   onReplyPress={handleReplyPress}
                   highlighted={item.id === highlightedId}
                   chatWithPersonName={chat?.name}
