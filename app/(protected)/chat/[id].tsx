@@ -7,11 +7,11 @@ import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import {
+  deleteMessage,
+  editMessage,
   getChatById,
   getChatProfileById,
   sendMessage,
-  editMessage,
-  deleteMessage,
   startNewChat,
 } from "@/controller/chat.controller";
 import { handleUploadFile, useIconColor } from "@/util/common.functions";
@@ -104,6 +104,7 @@ const Chat = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   const flatListRef = React.useRef<FlatList>(null);
+  const textInputRef = React.useRef<TextInput>(null);
 
   const { data: chat, isLoading: isChatProfileLoading } = useQuery({
     queryKey: [QueryKeys.chatProfile, profileToFetchId, conversationId],
@@ -151,8 +152,12 @@ const Chat = () => {
 
   const replyAnimatedStyle = useAnimatedStyle(() => {
     return {
-      height: withTiming(replyingTo || editingMessage ? 50 : 0, { duration: 300 }),
-      opacity: withTiming(replyingTo || editingMessage ? 1 : 0, { duration: 300 }),
+      height: withTiming(replyingTo || editingMessage ? 50 : 0, {
+        duration: 300,
+      }),
+      opacity: withTiming(replyingTo || editingMessage ? 1 : 0, {
+        duration: 300,
+      }),
     };
   }, [replyingTo, editingMessage]);
 
@@ -162,8 +167,12 @@ const Chat = () => {
     const showListener = Keyboard.addListener(`keyboard${willOrDid}Show`, () =>
       setIsKeyboardOpen(true),
     );
-    const hideListener = Keyboard.addListener(`keyboard${willOrDid}Hide`, () =>
-      setIsKeyboardOpen(false),
+    const hideListener = Keyboard.addListener(
+      `keyboard${willOrDid}Hide`,
+      () => {
+        setIsKeyboardOpen(false);
+        textInputRef.current?.blur();
+      },
     );
 
     return () => {
@@ -187,12 +196,14 @@ const Chat = () => {
   const handleReply = (message: Message) => {
     setReplyingTo(message);
     setEditingMessage(null);
+    textInputRef.current?.focus();
   };
 
   const handleEdit = (message: Message) => {
     setEditingMessage(message);
     setReplyingTo(null);
     onChangeText(message.message || "");
+    textInputRef.current?.focus();
   };
 
   const handleDelete = async (message: Message) => {
@@ -205,16 +216,20 @@ const Chat = () => {
           ...old,
           pages: old.pages.map((page: Message[]) =>
             page.map((m: Message) =>
-              m.id === message.id ? { ...m, isDeleted: true, message: null, media: null } : m
-            )
+              m.id === message.id
+                ? { ...m, isDeleted: true, message: null, media: null }
+                : m,
+            ),
           ),
         };
-      }
+      },
     );
     const result = await deleteMessage(message.id);
     if (!result) {
       // Revert if failed (simple invalidate is fine)
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.messages, conversationId] });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.messages, conversationId],
+      });
     } else if (result[0]) {
       socket?.emit(EmitMessages.SEND_MESSAGE, {
         message: result[0],
@@ -268,22 +283,30 @@ const Chat = () => {
     const tempId = editingMessage ? editingMessage.id : Date.now();
     const optimisticMessage: Message = {
       id: tempId,
-      createdAt: editingMessage ? editingMessage.createdAt : new Date().toISOString(),
+      createdAt: editingMessage
+        ? editingMessage.createdAt
+        : new Date().toISOString(),
       senderId: myId,
       conversationId: conversationId === "new" ? 0 : Number(conversationId),
       message: trimmed,
-      media: editingMessage ? editingMessage.media : selectedMedia.map((m) => ({
-        url: m.uri,
-        type: m.type === "video" ? "video" : "image",
-        fileName: m.fileName || undefined,
-        fileSize: m.fileSize || undefined,
-      })),
+      media: editingMessage
+        ? editingMessage.media
+        : selectedMedia.map((m) => ({
+            url: m.uri,
+            type: m.type === "video" ? "video" : "image",
+            fileName: m.fileName || undefined,
+            fileSize: m.fileSize || undefined,
+          })),
       isRead: editingMessage ? editingMessage.isRead : false,
       isDeleted: editingMessage ? editingMessage.isDeleted : false,
       isEdited: editingMessage ? true : false,
       isSystemMessage: false,
-      mentionMessageId: editingMessage ? editingMessage.mentionMessageId : (mentionMessageId ?? null),
-      mentionMessage: editingMessage ? editingMessage.mentionMessage : (replyingTo ?? null),
+      mentionMessageId: editingMessage
+        ? editingMessage.mentionMessageId
+        : (mentionMessageId ?? null),
+      mentionMessage: editingMessage
+        ? editingMessage.mentionMessage
+        : (replyingTo ?? null),
       sender: editingMessage ? editingMessage.sender : undefined,
     };
 
@@ -297,11 +320,11 @@ const Chat = () => {
             ...old,
             pages: old.pages.map((page: Message[]) =>
               page.map((m: Message) =>
-                m.id === tempId ? optimisticMessage : m
-              )
+                m.id === tempId ? optimisticMessage : m,
+              ),
             ),
           };
-        }
+        },
       );
     } else {
       // Optimistically insert at the front of page 0 (inverted list)
@@ -658,7 +681,12 @@ const Chat = () => {
                       {editingMessage.message || "Media"}
                     </Text>
                   </View>
-                  <Pressable onPress={() => { setEditingMessage(null); onChangeText(""); }}>
+                  <Pressable
+                    onPress={() => {
+                      setEditingMessage(null);
+                      onChangeText("");
+                    }}
+                  >
                     <Entypo name="cross" size={24} color={iconColor} />
                   </Pressable>
                 </Pressable>
@@ -695,6 +723,7 @@ const Chat = () => {
                 </LinearGradient>
               </Pressable>
               <TextInput
+                ref={textInputRef}
                 multiline
                 editable
                 numberOfLines={3}

@@ -108,6 +108,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
   };
 
   const handleLongPress = () => {
+    if (msgData.isDeleted) return;
     messageRef.current?.measure((_, __, width, height, pageX, pageY) => {
       setMessageLayout({ x: pageX, y: pageY, width, height });
       setModalVisible(true);
@@ -123,7 +124,7 @@ const ChatMessage = (msgData: ChatMessageProps) => {
 
   return (
     <>
-      <SwipeToReply onReply={handleReply}>
+      <SwipeToReply onReply={handleReply} disabled={msgData.isDeleted}>
         <Pressable
           onLongPress={handleLongPress}
           className={`w-full flex-row ${

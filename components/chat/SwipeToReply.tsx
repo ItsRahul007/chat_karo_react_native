@@ -15,13 +15,15 @@ import Animated, {
 interface SwipeToReplyProps {
   children: React.ReactNode;
   onReply: () => void;
+  disabled?: boolean;
 }
 
-const SwipeToReply = ({ children, onReply }: SwipeToReplyProps) => {
+const SwipeToReply = ({ children, onReply, disabled = false }: SwipeToReplyProps) => {
   const translateX = useSharedValue(0);
   const hasTriggered = useSharedValue(false);
 
   const gesture = Gesture.Pan()
+    .enabled(!disabled)
     .activeOffsetX([-10, 10]) // Prevents vertical scroll interference
     .onUpdate((event) => {
       // Limit the swipe distance (e.g., max 80px)

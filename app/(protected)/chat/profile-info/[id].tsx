@@ -146,7 +146,6 @@ const ProfileInfo = () => {
       );
       queryClient.invalidateQueries({ queryKey: [QueryKeys.privateChats] });
       queryClient.invalidateQueries({ queryKey: [QueryKeys.communityChats] });
-      Toast.success(`Notifications ${isMuted ? "muted" : "unmuted"}`);
     },
   });
 

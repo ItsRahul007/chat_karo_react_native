@@ -44,8 +44,6 @@ const MediaGrid = ({
         return;
       }
 
-      console.log("data", data);
-
       const newMedia: MediaAttachment[] = media.map((item, index) => {
         return {
           ...item,
