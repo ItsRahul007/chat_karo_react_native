@@ -1,14 +1,15 @@
 import SocketProvider from "@/context/SocketContext";
 import { usePushNotification } from "@/custom-hooks/usePushNotification";
-import * as Device from "expo-device";
+import { useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 export default function ProtectedLayout() {
-  usePushNotification();
+  const queryClient = useQueryClient();
+
+  usePushNotification(queryClient);
 
   return (
-
     <>
       <SocketProvider>
         <Stack screenOptions={{ headerShown: false }}>

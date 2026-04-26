@@ -1,15 +1,20 @@
+import { QueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
+import { QueryKeys } from "@/util/enum";
 
 interface I_PushNotification {
   notification?: Notifications.Notification;
   expoPushToken?: Notifications.ExpoPushToken;
 }
 
-const usePushNotification = (): I_PushNotification => {
+const usePushNotification = (queryClient: QueryClient): I_PushNotification => {
+  const router = useRouter();
+
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldPlaySound: true,
@@ -92,7 +97,34 @@ const usePushNotification = (): I_PushNotification => {
 
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log(response);
+        console.log("Notification Response Received:", response);
+        const data = response.notification.request.content.data;
+
+        if (data?.conversationId) {
+          // Reset unread count to 0 in cache when clicking on a notification
+          const updateUnread = (old: any) => {
+            if (!old) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page: any[]) =>
+                page.map((chat: any) =>
+                  chat.conversationId?.toString() === data.conversationId?.toString()
+                    ? { ...chat, unreadMessageCount: 0 }
+                    : chat
+                )
+              ),
+            };
+          };
+
+          queryClient.setQueryData([QueryKeys.privateChats], updateUnread);
+          queryClient.setQueryData([QueryKeys.communityChats], updateUnread);
+
+          router.push(
+            `/chat/${data.conversationId}?chatWithId=${data.chatWithId}` as any,
+          );
+        } else if (data?.url) {
+          router.push(data.url as any);
+        }
       });
 
     return () => {

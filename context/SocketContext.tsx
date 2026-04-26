@@ -34,7 +34,7 @@ export const useSocket = () => useContext(SocketContext);
 
 // const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_SERVER_URL!;
 // use this command to get the ip: ipconfig getifaddr en0
-const SOCKET_URL = "http://192.168.0.108:3001";
+const SOCKET_URL = "http://192.168.0.102:3001";
 
 const SocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn, user } = useContext(AuthContext);
@@ -186,7 +186,7 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
   }, [isConnected, user?.id, queryClient]);
 
   // ─── Push token registration ─────────────────────────────────────
-  const { expoPushToken } = usePushNotification();
+  const { expoPushToken } = usePushNotification(queryClient);
 
   useEffect(() => {
     if (isConnected && socketRef.current && expoPushToken?.data) {

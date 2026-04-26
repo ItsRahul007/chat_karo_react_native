@@ -1,0 +1,9 @@
+- [ ] when user is removed from community by admin then it should not be visible in the community list
+- [x] implement mute (notification off) feature
+- [x] implement send media files on chat
+- [x] implement edit message feature
+- [x] implement delete message feature
+- [x] when we click on notification we should redirect to that chat screen
+- [ ] bug: if we write something fast and send it then it doesn't take all the string, therefore after clicking on send button the message stays incompleted
+- [ ] bug: when clicking on any message notification then we redirect to that chat page but when I'm hitting back button I need to back twice
+- [ ]
