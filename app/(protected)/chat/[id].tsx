@@ -43,8 +43,6 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-  Keyboard,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -53,7 +51,8 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import Animated, {
+import ReanimatedAnimated, {
+  useAnimatedKeyboard,
   useAnimatedStyle,
   withTiming,
 } from "react-native-reanimated";
@@ -91,7 +90,8 @@ const Chat = () => {
       ? ColorTheme.light.text.secondaryLight
       : ColorTheme.dark.text.secondaryLight;
 
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  // UI-thread keyboard tracking — zero JS-thread involvement
+  const keyboard = useAnimatedKeyboard();
   const [value, onChangeText] = useState<string>("");
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
@@ -105,6 +105,7 @@ const Chat = () => {
 
   const flatListRef = React.useRef<FlatList>(null);
   const textInputRef = React.useRef<TextInput>(null);
+  const textRef = React.useRef<string>("");
 
   const { data: chat, isLoading: isChatProfileLoading } = useQuery({
     queryKey: [QueryKeys.chatProfile, profileToFetchId, conversationId],
@@ -161,25 +162,11 @@ const Chat = () => {
     };
   }, [replyingTo, editingMessage]);
 
-  useEffect(() => {
-    const willOrDid = Platform.OS === "ios" ? "Will" : "Did";
-
-    const showListener = Keyboard.addListener(`keyboard${willOrDid}Show`, () =>
-      setIsKeyboardOpen(true),
-    );
-    const hideListener = Keyboard.addListener(
-      `keyboard${willOrDid}Hide`,
-      () => {
-        setIsKeyboardOpen(false);
-        textInputRef.current?.blur();
-      },
-    );
-
-    return () => {
-      showListener.remove();
-      hideListener.remove();
-    };
-  }, []);
+  // Animated style for the input container — driven by the UI thread, no JS bridge
+  const inputContainerAnimStyle = useAnimatedStyle(() => ({
+    marginBottom: keyboard.height.value,
+    paddingBottom: keyboard.height.value > 0 ? 4 : insects.bottom || 20,
+  }));
 
   useEffect(() => {
     if (!socket || !conversationId) return;
@@ -203,6 +190,7 @@ const Chat = () => {
     setEditingMessage(message);
     setReplyingTo(null);
     onChangeText(message.message || "");
+    textRef.current = message.message || "";
     textInputRef.current?.focus();
   };
 
@@ -256,7 +244,7 @@ const Chat = () => {
   };
 
   const handleSendMessage = async () => {
-    const trimmed = value.trim();
+    const trimmed = textRef.current.trim();
     if ((!trimmed && selectedMedia.length === 0) || !myId || !conversationId)
       return;
 
@@ -342,6 +330,7 @@ const Chat = () => {
     }
 
     onChangeText("");
+    textRef.current = "";
     setReplyingTo(null);
     setEditingMessage(null);
     setSelectedMedia([]);
@@ -457,13 +446,9 @@ const Chat = () => {
       className="flex-1 bg-light-background-secondary dark:bg-dark-background-secondary"
       style={{ paddingTop: insects.top }}
     >
-      <KeyboardAvoidingView
-        behavior="padding"
+      <View
         className="bg-light-background-primary dark:bg-dark-background-primary"
         style={{ flex: 1 }}
-        keyboardVerticalOffset={
-          Platform.OS === "ios" ? 10 : !isKeyboardOpen ? 0 : -40
-        }
       >
         {/* header component */}
         <View className="bg-light-background-primary dark:bg-dark-background-primary h-24 w-full">
@@ -603,10 +588,16 @@ const Chat = () => {
         </View>
 
         {/* the input box for sending messages */}
-        <View
-          className={`w-full items-center justify-center bg-light-background-primary dark:bg-dark-background-primary ${
-            isKeyboardOpen ? "" : "pb-5"
-          }`}
+        <ReanimatedAnimated.View
+          style={[
+            {
+              width: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "transparent",
+            },
+            inputContainerAnimStyle,
+          ]}
         >
           <View
             className={`bg-light-background-secondary dark:bg-dark-background-secondary w-[95%] mx-auto my-auto items-center px-2 py-2 h-auto rounded-3xl overflow-hidden`}
@@ -643,7 +634,7 @@ const Chat = () => {
                 ))}
               </ScrollView>
             )}
-            <Animated.View style={replyAnimatedStyle}>
+            <ReanimatedAnimated.View style={replyAnimatedStyle}>
               {replyingTo ? (
                 <ReplyMessage
                   message={replyingTo}
@@ -685,13 +676,14 @@ const Chat = () => {
                     onPress={() => {
                       setEditingMessage(null);
                       onChangeText("");
+                      textRef.current = "";
                     }}
                   >
                     <Entypo name="cross" size={24} color={iconColor} />
                   </Pressable>
                 </Pressable>
               ) : null}
-            </Animated.View>
+            </ReanimatedAnimated.View>
 
             <View className="flex-row items-center w-full">
               <Pressable
@@ -730,7 +722,10 @@ const Chat = () => {
                 placeholder="Type something..."
                 placeholderTextColor={placeholderColor}
                 className="ml-2 flex-1 text-light-text-primary dark:text-dark-text-primary font-normal text-lg"
-                onChangeText={(text) => onChangeText(text)}
+                onChangeText={(text) => {
+                  onChangeText(text);
+                  textRef.current = text;
+                }}
                 value={value}
                 style={{
                   textAlignVertical: "center",
@@ -757,8 +752,8 @@ const Chat = () => {
               </Pressable>
             </View>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </ReanimatedAnimated.View>
+      </View>
     </View>
   );
 };

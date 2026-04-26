@@ -1,3 +1,4 @@
+import { QueryKeys } from "@/util/enum";
 import { QueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
@@ -5,7 +6,6 @@ import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
-import { QueryKeys } from "@/util/enum";
 
 interface I_PushNotification {
   notification?: Notifications.Notification;
@@ -97,7 +97,6 @@ const usePushNotification = (queryClient: QueryClient): I_PushNotification => {
 
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("Notification Response Received:", response);
         const data = response.notification.request.content.data;
 
         if (data?.conversationId) {
@@ -108,10 +107,11 @@ const usePushNotification = (queryClient: QueryClient): I_PushNotification => {
               ...old,
               pages: old.pages.map((page: any[]) =>
                 page.map((chat: any) =>
-                  chat.conversationId?.toString() === data.conversationId?.toString()
+                  chat.conversationId?.toString() ===
+                  data.conversationId?.toString()
                     ? { ...chat, unreadMessageCount: 0 }
-                    : chat
-                )
+                    : chat,
+                ),
               ),
             };
           };
@@ -119,11 +119,11 @@ const usePushNotification = (queryClient: QueryClient): I_PushNotification => {
           queryClient.setQueryData([QueryKeys.privateChats], updateUnread);
           queryClient.setQueryData([QueryKeys.communityChats], updateUnread);
 
-          router.push(
+          router.navigate(
             `/chat/${data.conversationId}?chatWithId=${data.chatWithId}` as any,
           );
         } else if (data?.url) {
-          router.push(data.url as any);
+          router.navigate(data.url as any);
         }
       });
 
