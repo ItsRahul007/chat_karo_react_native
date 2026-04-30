@@ -8,3 +8,8 @@
 - [x] bug: in /chat/[id].tsx if the keyboard is opened and I go to emoji section in the keyboard then the height of the keyboard increases therefore the input is hiding
 - [x] bug: after updating the community name, the title in the chat list screen is not updating, we can update it in queryClient
 - [x] bug: community image not updating
+- [x] feat: show the owner, then admins then members in profile info screen and member list screen
+- [x] feat: give permission to the owner to remove the admin & also remove admin permission from owner
+- [x] feat: give a option to make someone admin
+- [ ] feat: implement the blocking system in both personal chat and community chat
+- [ ] feat: remove the user from community and if he is admin then remove his admin permission also

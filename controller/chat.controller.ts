@@ -582,7 +582,9 @@ const getChatMembersById = async (conversationId: string) => {
         )
       `,
       )
-      .eq("conversationId", conversationId);
+      .eq("conversationId", conversationId)
+      .order("isOwner", { ascending: false })
+      .order("isAdmin", { ascending: false });
 
     if (error) throw error;
 

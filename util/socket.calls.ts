@@ -17,6 +17,8 @@ enum EmitMessages {
   DISCONNECT = "disconnect",
   REGISTER_PUSH_TOKEN = "register-push-token",
   REMOVE_COMMUNITY_MEMBER = "remove-community-member",
+  MAKE_ADMIN = "make-admin",
+  DISMISS_ADMIN = "dismiss-admin",
 }
 
 export { EmitMessages, ListenMessages };

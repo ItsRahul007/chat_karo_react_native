@@ -15,13 +15,12 @@ import {
   updateCommunityProfile,
 } from "@/controller/chat.controller";
 import { handleUploadFile, useIconColor } from "@/util/common.functions";
-import { BucketNames } from "@/util/enum";
 import {
   chatTopBarIconSize,
   gradientIconButtonIconSize,
   profileInfoIconSize,
 } from "@/util/constants";
-import { QueryKeys } from "@/util/enum";
+import { BucketNames, QueryKeys } from "@/util/enum";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { Toast } from "@/util/toast";
 import {
@@ -146,8 +145,11 @@ const ProfileInfo = () => {
   };
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { groupName?: string; groupAbout?: string; groupImage?: string }) =>
-      updateCommunityProfile(id as string, payload),
+    mutationFn: (payload: {
+      groupName?: string;
+      groupAbout?: string;
+      groupImage?: string;
+    }) => updateCommunityProfile(id as string, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.chatProfile, id, conversationId],
@@ -435,14 +437,12 @@ const ProfileInfo = () => {
                           >
                             {name}
                           </Text>
-                          {isAdmin || isOwner ? (
-                            <Text
-                              className="text-sm text-light-text-secondaryDark dark:text-dark-text-secondaryDark font-medium text-ellipsis"
-                              numberOfLines={1}
-                            >
-                              {isAdmin ? "Admin" : "Owner"}
-                            </Text>
-                          ) : null}
+                          <Text
+                            className="text-sm text-light-text-secondaryDark dark:text-dark-text-secondaryDark font-medium text-ellipsis"
+                            numberOfLines={1}
+                          >
+                            {isOwner ? "Owner" : isAdmin ? "Admin" : "Member"}
+                          </Text>
                         </View>
                       </View>
                     );

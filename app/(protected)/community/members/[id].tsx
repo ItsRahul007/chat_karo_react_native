@@ -1,8 +1,11 @@
 import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
 import CommonBackButton from "@/components/common/CommonBackButton";
+import MemberActionsModal from "@/components/community/MemberActionsModal";
+import MemberItem from "@/components/community/MemberItem";
 import { AuthContext } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import { getChatMembersById } from "@/controller/chat.controller";
+import { useIconColor } from "@/util/common.functions";
 import {
   gradientIconButtonIconSize,
   gradientIconButtonSize,
@@ -11,31 +14,63 @@ import { QueryKeys, SearchParams } from "@/util/enum";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { EmitMessages } from "@/util/socket.calls";
 import { Toast } from "@/util/toast";
-import { Entypo, Feather } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { Entypo } from "@expo/vector-icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocalSearchParams } from "expo-router";
-import React, { useContext, useMemo } from "react";
-import { FlatList, Image, Pressable, Text, View } from "react-native";
+import React, { useContext, useMemo, useState } from "react";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const Members = () => {
   const { id: conversationId } = useLocalSearchParams();
   const { user: currentUser } = useContext(AuthContext);
   const { socket } = useSocket();
+  const iconColor = useIconColor();
+  const queryClient = useQueryClient();
 
-  const { data: chatMembers = [], refetch } = useQuery({
+  const [showModal, setShowModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<SingleUser | null>(null);
+
+  const {
+    data: chatMembers = [],
+    refetch,
+    isLoading,
+  } = useQuery({
     queryKey: [QueryKeys.communityMembers, conversationId],
     queryFn: () => getChatMembersById(conversationId as string),
     enabled: !!conversationId,
   });
 
-  const isUserAdmin = useMemo(() => {
-    if (!currentUser || !chatMembers.length) return false;
+  const { isUserAdmin, isUserOwner } = useMemo(() => {
+    if (!currentUser || !chatMembers.length)
+      return { isUserAdmin: false, isUserOwner: false };
     const member = chatMembers.find(
       (m) => m.id.toString() === currentUser.id.toString(),
     );
-    return !!(member?.isAdmin || member?.isOwner);
+    return {
+      isUserAdmin: !!(member?.isAdmin || member?.isOwner),
+      isUserOwner: !!member?.isOwner,
+    };
   }, [currentUser, chatMembers]);
+
+  const updateMemberAdminStatusLocal = (userId: string, isAdmin: boolean) => {
+    queryClient.setQueryData(
+      [QueryKeys.communityMembers, conversationId],
+      (old: SingleUser[] | undefined) => {
+        if (!old) return old;
+        const updated = old.map((member) =>
+          member.id.toString() === userId.toString()
+            ? { ...member, isAdmin }
+            : member,
+        );
+        // Sort locally to maintain Owner -> Admin -> Member order
+        return [...updated].sort((a, b) => {
+          const rank = (m: SingleUser) => (m.isOwner ? 0 : m.isAdmin ? 1 : 2);
+          return rank(a) - rank(b);
+        });
+      },
+    );
+  };
 
   const removeMember = (userId: string) => {
     socket?.emit(EmitMessages.REMOVE_COMMUNITY_MEMBER, {
@@ -43,7 +78,46 @@ const Members = () => {
       userId,
     });
 
+    // Optimistically remove from local list
+    queryClient.setQueryData(
+      [QueryKeys.communityMembers, conversationId],
+      (old: SingleUser[] | undefined) => {
+        if (!old) return old;
+        return old.filter((m) => m.id.toString() !== userId.toString());
+      },
+    );
+
     Toast.loading("Removing member...");
+    setShowModal(false);
+  };
+
+  const makeAdmin = (userId: string) => {
+    socket?.emit(EmitMessages.MAKE_ADMIN, {
+      conversationId,
+      userId,
+    });
+    updateMemberAdminStatusLocal(userId, true);
+    setShowModal(false);
+  };
+
+  const dismissAdmin = (userId: string) => {
+    socket?.emit(EmitMessages.DISMISS_ADMIN, {
+      conversationId,
+      userId,
+    });
+    updateMemberAdminStatusLocal(userId, false);
+    setShowModal(false);
+  };
+
+  const handleLongPress = (user: SingleUser) => {
+    // Don't show options for current user
+    if (user.id.toString() === currentUser?.id.toString()) return;
+
+    // Only Admins and Owners can see options
+    if (!isUserAdmin) return;
+
+    setSelectedUser(user);
+    setShowModal(true);
   };
 
   return (
@@ -56,25 +130,30 @@ const Members = () => {
           </Text>
         </View>
 
-        <FlatList
-          data={chatMembers}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 16, gap: 16 }}
-          renderItem={({ item }) => (
-            <MemberItem
-              user={item}
-              isAdmin={isUserAdmin}
-              onRemove={() => removeMember(item.id)}
-            />
-          )}
-          ListEmptyComponent={
-            <View className="items-center justify-center mt-10">
-              <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
-                No members found
-              </Text>
-            </View>
-          }
-        />
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator color={iconColor} />
+          </View>
+        ) : (
+          <FlatList
+            data={chatMembers}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ padding: 16, gap: 16 }}
+            renderItem={({ item }) => (
+              <MemberItem
+                user={item}
+                onLongPress={() => handleLongPress(item)}
+              />
+            )}
+            ListEmptyComponent={
+              <View className="items-center justify-center mt-10">
+                <Text className="text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
+                  No members found
+                </Text>
+              </View>
+            }
+          />
+        )}
 
         {isUserAdmin && (
           <Link
@@ -95,48 +174,20 @@ const Members = () => {
             />
           </Link>
         )}
+
+        {/* Member Actions Modal */}
+        <MemberActionsModal
+          visible={showModal}
+          onClose={() => setShowModal(false)}
+          selectedUser={selectedUser}
+          isUserOwner={isUserOwner}
+          isUserAdmin={isUserAdmin}
+          onMakeAdmin={makeAdmin}
+          onDismissAdmin={dismissAdmin}
+          onRemoveMember={removeMember}
+        />
       </SafeAreaView>
     </SafeAreaProvider>
-  );
-};
-
-const MemberItem = ({
-  user,
-  isAdmin,
-  onRemove,
-}: {
-  user: SingleUser;
-  isAdmin: boolean;
-  onRemove: () => void;
-}) => {
-  return (
-    <View className="flex-row items-center justify-between">
-      <View className="flex-row items-center gap-x-3 flex-1">
-        <Image
-          source={{ uri: user.avatar }}
-          className="w-12 h-12 rounded-full bg-gray-300"
-        />
-        <View className="flex-1">
-          <Text
-            className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary"
-            numberOfLines={1}
-          >
-            {user.name}
-          </Text>
-          {user.isAdmin || user.isOwner ? (
-            <Text className="text-sm text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
-              {user.isOwner ? "Owner" : "Admin"}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-
-      {isAdmin && !user.isOwner && (
-        <Pressable onPress={onRemove} className="p-2">
-          <Feather name="trash-2" size={20} color="red" />
-        </Pressable>
-      )}
-    </View>
   );
 };
 
