@@ -212,7 +212,9 @@ const Chat = () => {
         };
       },
     );
+
     const result = await deleteMessage(message.id);
+
     if (!result) {
       // Revert if failed (simple invalidate is fine)
       queryClient.invalidateQueries({
@@ -553,7 +555,7 @@ const Chat = () => {
                   />
                 );
               }}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.id.toString()}
               contentContainerStyle={{ paddingVertical: 10, flexGrow: 1 }}
               showsVerticalScrollIndicator={false}
               inverted

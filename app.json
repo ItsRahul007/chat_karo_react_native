@@ -29,7 +29,8 @@
         "android.permission.READ_MEDIA_IMAGES"
       ],
       "package": "com.rahulghosh.chatkaro",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "output": "static",

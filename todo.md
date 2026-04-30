@@ -5,4 +5,6 @@
 - [x] when we click on notification we should redirect to that chat screen
 - [x] bug: if we write something fast and send it then it doesn't take all the string, therefore after clicking on send button the message stays incompleted (happens in chat/[id].tsx)
 - [x] bug: when clicking on any message notification then we redirect to that chat page but when I'm hitting back button I need to back twice
-- [ ] bug: in /chat/[id].tsx if the keyboard is opened and I go to emoji section in the keyboard then the height of the keyboard increases therefore the input is hiding
+- [x] bug: in /chat/[id].tsx if the keyboard is opened and I go to emoji section in the keyboard then the height of the keyboard increases therefore the input is hiding
+- [x] bug: after updating the community name, the title in the chat list screen is not updating, we can update it in queryClient
+- [x] bug: community image not updating

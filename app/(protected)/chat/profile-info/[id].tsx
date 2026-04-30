@@ -14,7 +14,8 @@ import {
   toggleMute,
   updateCommunityProfile,
 } from "@/controller/chat.controller";
-import { useIconColor } from "@/util/common.functions";
+import { handleUploadFile, useIconColor } from "@/util/common.functions";
+import { BucketNames } from "@/util/enum";
 import {
   chatTopBarIconSize,
   gradientIconButtonIconSize,
@@ -34,6 +35,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Link, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Pressable,
@@ -100,6 +102,7 @@ const ProfileInfo = () => {
     chatProfile?.about || "Hey bro! Chat karo",
   );
   const [avatar, setAvatar] = useState(chatProfile?.avatar || "");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingAbout, setIsEditingAbout] = useState(false);
 
@@ -119,7 +122,23 @@ const ProfileInfo = () => {
       });
 
       if (!result.canceled) {
-        setAvatar(result.assets[0].uri);
+        const asset = result.assets[0];
+        setAvatar(asset.uri); // optimistic local preview
+        setIsUploadingImage(true);
+        try {
+          const { success, data: uploadedUrl } = await handleUploadFile(
+            asset,
+            BucketNames.profilePictures,
+          );
+          if (!success || !uploadedUrl) {
+            Toast.error("Failed to upload image");
+            setAvatar(chatProfile?.avatar || ""); // revert on failure
+            return;
+          }
+          updateMutation.mutate({ groupImage: uploadedUrl });
+        } finally {
+          setIsUploadingImage(false);
+        }
       }
     } catch (error) {
       Toast.error("Failed to pick image");
@@ -127,11 +146,14 @@ const ProfileInfo = () => {
   };
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { groupName?: string; groupAbout?: string }) =>
+    mutationFn: (payload: { groupName?: string; groupAbout?: string; groupImage?: string }) =>
       updateCommunityProfile(id as string, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.chatProfile, id, conversationId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.communityChats],
       });
     },
   });
@@ -195,13 +217,18 @@ const ProfileInfo = () => {
                 {isUserAdmin && isCommunity && !isChatLoading ? (
                   <Pressable
                     onPress={pickImage}
+                    disabled={isUploadingImage}
                     className="absolute bottom-5 right-5 h-12 w-12 bg-black/50 items-center justify-center rounded-full"
                   >
-                    <Feather
-                      name="camera"
-                      size={chatTopBarIconSize}
-                      color="white"
-                    />
+                    {isUploadingImage ? (
+                      <ActivityIndicator color="white" size="small" />
+                    ) : (
+                      <Feather
+                        name="camera"
+                        size={chatTopBarIconSize}
+                        color="white"
+                      />
+                    )}
                   </Pressable>
                 ) : null}
 
