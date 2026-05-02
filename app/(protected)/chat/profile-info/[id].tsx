@@ -1,5 +1,6 @@
 import MediaItem from "@/components/chat/MediaItem";
 import InfoBox from "@/components/chat/profile-info/InfoBox";
+import MembersList from "@/components/chat/profile-info/MembersList";
 import Options from "@/components/chat/profile-info/Options";
 import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
 import CommonBackButton from "@/components/common/CommonBackButton";
@@ -78,9 +79,10 @@ const ProfileInfo = () => {
 
   const { data: mediaFiles = [], isLoading: isMediaLoading } = useQuery({
     queryKey: [QueryKeys.chatMedia, conversationId],
-    queryFn: () => getChatMediaById(conversationId as string),
+    queryFn: () => getChatMediaById(conversationId as string, 0, 10),
     enabled: !!conversationId,
   });
+
 
   const { data: chatMembers = [] } = useQuery({
     queryKey: [QueryKeys.communityMembers, conversationId],
@@ -403,51 +405,13 @@ const ProfileInfo = () => {
                 </View>
               ) : null}
 
+              {/* members list */}
               {isCommunity && chatMembers && chatMembers.length > 0 ? (
-                <View className="mt-6 px-6 gap-y-4 pb-10">
-                  <View className="items-center justify-between flex-row">
-                    <Text className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                      Members
-                    </Text>
-                    <Link asChild href={`/community/members/${id}`}>
-                      <Pressable className="text-3xl font-bold text-light-text-primary dark:text-dark-text-primary">
-                        <Entypo
-                          name="chevron-right"
-                          size={chatTopBarIconSize}
-                          color={iconColor}
-                        />
-                      </Pressable>
-                    </Link>
-                  </View>
-                  {chatMembers.map((user: SingleUser, index: number) => {
-                    const { name, avatar, id, isAdmin, isOwner } = user;
-                    return (
-                      <View
-                        key={id || index}
-                        className="flex-row items-center gap-x-4 mb-0.5"
-                      >
-                        <Image
-                          source={{ uri: avatar }}
-                          className="w-12 h-12 rounded-full"
-                        />
-                        <View>
-                          <Text
-                            className="text-lg text-light-text-primary dark:text-dark-text-primary font-medium text-ellipsis"
-                            numberOfLines={1}
-                          >
-                            {name}
-                          </Text>
-                          <Text
-                            className="text-sm text-light-text-secondaryDark dark:text-dark-text-secondaryDark font-medium text-ellipsis"
-                            numberOfLines={1}
-                          >
-                            {isOwner ? "Owner" : isAdmin ? "Admin" : "Member"}
-                          </Text>
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
+                <MembersList
+                  id={id as string}
+                  chatMembers={chatMembers}
+                  iconColor={iconColor}
+                />
               ) : null}
             </View>
           </ScrollView>

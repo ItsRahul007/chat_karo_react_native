@@ -11,5 +11,5 @@
 - [x] feat: show the owner, then admins then members in profile info screen and member list screen
 - [x] feat: give permission to the owner to remove the admin & also remove admin permission from owner
 - [x] feat: give a option to make someone admin
+- [x] bug: in files list the images are not showing (need to make supabase media api working properly)
 - [ ] feat: implement the blocking system in both personal chat and community chat
-- [ ] feat: remove the user from community and if he is admin then remove his admin permission also

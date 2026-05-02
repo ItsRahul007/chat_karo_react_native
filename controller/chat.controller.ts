@@ -1,5 +1,5 @@
 import { CHAT_PAGE_SIZE } from "@/util/constants";
-import { TableNames } from "@/util/enum";
+import { BucketNames, TableNames } from "@/util/enum";
 import {
   MediaAttachment,
   Message,
@@ -601,19 +601,51 @@ const getChatMembersById = async (conversationId: string) => {
   }
 };
 
-const getChatMediaById = async (conversationId: string) => {
+const getChatMediaById = async (
+  conversationId: string,
+  page: number = 0,
+  pageSize: number = CHAT_PAGE_SIZE,
+) => {
   try {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
     const { data, error } = await supabase
       .from(TableNames.messages)
       .select("media")
       .eq("conversationId", conversationId)
-      .not("media", "is", null);
+      .not("media", "is", null)
+      .order("createdAt", { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
 
+    // const { data, error: supabaseError } = await supabase.storage
+    //     .from(BucketNames.chatFiles)
+    //     .createSignedUrls(paths, 60 * 60 * 12);
+
     // Each message has media: MediaAttachment[]
-    // we want to return a flat array
-    return data.flatMap((m: any) => m.media || []);
+    const medias = data.flatMap((m: any) => {
+      return (m.media as MediaAttachment[]) || [];
+    });
+
+    const urls = medias.map((m) => {
+      const path = m.url.split("/");
+      return path[path.length - 1];
+    });
+
+    const { data: signedUrls, error: signedUrlsError } = await supabase.storage
+      .from(BucketNames.chatFiles)
+      .createSignedUrls(urls, 60 * 60 * 12);
+
+    if (signedUrlsError) throw signedUrlsError;
+
+    const newMedias: MediaAttachment[] = medias.map((m, index) => ({
+      ...m,
+      url: signedUrls?.[index]?.signedUrl || m.url,
+    }));
+
+    return newMedias;
   } catch (error) {
     console.error("Error fetching chat media:", error);
     return [];
