@@ -6,6 +6,7 @@ enum ListenMessages {
   USER_TYPING = "user-typing",
   USER_STOP_TYPING = "user-stop-typing",
   USER_REMOVED_FROM_COMMUNITY = "user-removed-from-community",
+  RECEIVE_USER_STATUS = "receive-user-status",
 }
 
 enum EmitMessages {
@@ -19,6 +20,7 @@ enum EmitMessages {
   REMOVE_COMMUNITY_MEMBER = "remove-community-member",
   MAKE_ADMIN = "make-admin",
   DISMISS_ADMIN = "dismiss-admin",
+  GET_USER_STATUS = "get-user-status",
 }
 
 export { EmitMessages, ListenMessages };

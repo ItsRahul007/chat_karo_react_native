@@ -14,7 +14,11 @@ import {
   sendMessage,
   startNewChat,
 } from "@/controller/chat.controller";
-import { handleUploadFile, useIconColor } from "@/util/common.functions";
+import {
+  handleUploadFile,
+  useFormatedTime,
+  useIconColor,
+} from "@/util/common.functions";
 import {
   CHAT_PAGE_SIZE,
   chatTopBarIconSize,
@@ -22,7 +26,7 @@ import {
 } from "@/util/constants";
 import { BucketNames, QueryKeys } from "@/util/enum";
 import { Message } from "@/util/interfaces/types";
-import { EmitMessages } from "@/util/socket.calls";
+import { EmitMessages, ListenMessages } from "@/util/socket.calls";
 import {
   Entypo,
   FontAwesome5,
@@ -102,6 +106,8 @@ const Chat = () => {
     ImagePicker.ImagePickerAsset[]
   >([]);
   const [isUploading, setIsUploading] = useState(false);
+  // it can be Online, Offline, or last seen
+  const [chatWithStatus, setChatWithStatus] = useState<string>("");
 
   const flatListRef = React.useRef<FlatList>(null);
   const textInputRef = React.useRef<TextInput>(null);
@@ -173,6 +179,22 @@ const Chat = () => {
 
     // Join the room for this conversation
     socket.emit(EmitMessages.JOIN_ROOM, conversationId);
+    // Get user status
+
+    if (!isCommunity && chatWithId) {
+      socket.emit(EmitMessages.GET_USER_STATUS, chatWithId);
+      // Listen for user status
+      socket.on(ListenMessages.RECEIVE_USER_STATUS, (data: any) => {
+        if (data.userId === chatWithId) {
+          const status =
+            data.userStatus === "Online"
+              ? "Online"
+              : useFormatedTime(data.userStatus);
+
+          setChatWithStatus(status);
+        }
+      });
+    }
 
     return () => {
       // Leave the room when navigating away
@@ -492,7 +514,7 @@ const Chat = () => {
                         )}
                       </View>
                       <Text className="text-base text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
-                        Online
+                        {chatWithStatus}
                       </Text>
                     </View>
                   </View>

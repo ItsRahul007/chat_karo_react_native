@@ -87,7 +87,7 @@ const handleUploadFile = async (
   }
 };
 
-const useFormatedTime = (date: string) => {
+const useFormatedTime = (date: string): string => {
   const formatedDate = new Date(date).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",

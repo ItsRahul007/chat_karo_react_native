@@ -1,4 +1,5 @@
 import { SingleCommunityChat } from "@/util/interfaces/types";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Link } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -12,7 +13,6 @@ import {
 import AvatarGroup from "./AvatarGroup";
 import ShowAvatar from "./ShowAvatar";
 import UnreadMessageCount from "./UnreadMessageCount";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 interface CommunityCardProps extends SingleCommunityChat {
   isExpanded?: boolean;
@@ -78,7 +78,13 @@ const CommunityCard = ({
               {isExpanded && lastMessage ? (
                 <MessageBox
                   messagedPersonName={lastMessage.senderName ?? "Unknown"}
-                  lastMessage={lastMessage.message}
+                  lastMessage={
+                    lastMessage.message.length
+                      ? lastMessage.message
+                      : lastMessage.media.length
+                        ? "Media"
+                        : "Sticker"
+                  }
                 />
               ) : isExpanded ? (
                 <Text className="text-light-comunityCard-textSecondary dark:text-light-comunityCard-textSecondary italic">
@@ -95,14 +101,19 @@ const CommunityCard = ({
         {!isExpanded && lastMessage ? (
           <MessageBox
             messagedPersonName={lastMessage.senderName ?? "Unknown"}
-            lastMessage={lastMessage.message}
+            lastMessage={
+              lastMessage.message.length
+                ? lastMessage.message
+                : lastMessage.media.length
+                  ? "Media"
+                  : "Sticker"
+            }
           />
         ) : !isExpanded ? (
           <Text className="text-light-comunityCard-textSecondary dark:text-light-comunityCard-textSecondary italic">
             No messages yet
           </Text>
         ) : null}
-
 
         <View className="flex-row items-center justify-start">
           <AvatarGroup users={groupAvatars} />

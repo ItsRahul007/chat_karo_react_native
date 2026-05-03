@@ -629,6 +629,8 @@ const getChatMediaById = async (
       return (m.media as MediaAttachment[]) || [];
     });
 
+    if (!medias.length) return [];
+
     const urls = medias.map((m) => {
       const path = m.url.split("/");
       return path[path.length - 1];

@@ -13,3 +13,5 @@
 - [x] feat: give a option to make someone admin
 - [x] bug: in files list the images are not showing (need to make supabase media api working properly)
 - [ ] feat: implement the blocking system in both personal chat and community chat
+- [ ] feat: implement the sent gif feature
+- [x] feat: get the user status (online, offline, typing, last seen)
