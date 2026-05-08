@@ -36,7 +36,7 @@ interface Conversation {
 
 interface MediaAttachment {
   url: string;
-  type: "image" | "video" | "file" | "audio" | "pdf";
+  type: "image" | "video" | "file" | "audio" | "pdf" | "gif";
   fileSize?: number;
   fileName?: string;
 }

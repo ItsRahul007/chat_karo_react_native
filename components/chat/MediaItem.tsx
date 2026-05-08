@@ -4,6 +4,7 @@ import { generateThumbnail, useIconColor } from "@/util/common.functions";
 import { MediaAttachment } from "@/util/interfaces/types";
 import { Toast } from "@/util/toast";
 import { AntDesign, Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { Image as ExpoImage } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useState } from "react";
 import {
@@ -42,6 +43,11 @@ const MediaItem = ({
       if (!isForChat) {
         setShowPreview(true);
       }
+      return;
+    }
+
+    if (type === "gif") {
+      setShowPreview(true);
       return;
     }
 
@@ -117,6 +123,16 @@ const MediaItem = ({
               />
             )}
 
+            {type === "gif" && (
+              <ExpoImage
+                source={{ uri: url }}
+                style={{ width: "100%", height: "100%" }}
+                contentFit="contain"
+                autoplay
+                cachePolicy="memory-disk"
+              />
+            )}
+
             {type === "video" && (
               <VideoView
                 style={{ width: "100%", height: "100%" }}
@@ -157,6 +173,36 @@ const RenderContent = ({
 }) => {
   const containerStyle =
     containerClassName || "h-24 w-24 items-center justify-center";
+
+  if (mediaType === "gif") {
+    return (
+      <View className={containerStyle}>
+        <ExpoImage
+          source={{ uri: mediaUrl }}
+          style={{ width: "100%", height: "100%", borderRadius: 12 }}
+          contentFit="cover"
+          autoplay
+          cachePolicy="memory-disk"
+        />
+        {/* GIF badge */}
+        <View
+          style={{
+            position: "absolute",
+            bottom: 4,
+            left: 4,
+            backgroundColor: "rgba(0,0,0,0.55)",
+            borderRadius: 4,
+            paddingHorizontal: 4,
+            paddingVertical: 1,
+          }}
+        >
+          <Text style={{ color: "white", fontSize: 9, fontWeight: "700" }}>
+            GIF
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   if (mediaType === "image") {
     return (

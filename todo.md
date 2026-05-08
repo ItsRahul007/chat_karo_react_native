@@ -12,6 +12,6 @@
 - [x] feat: give permission to the owner to remove the admin & also remove admin permission from owner
 - [x] feat: give a option to make someone admin
 - [x] bug: in files list the images are not showing (need to make supabase media api working properly)
+- [x] feat: get the user status (online, offline, typing, last seen)
 - [ ] feat: implement the blocking system in both personal chat and community chat
 - [ ] feat: implement the sent gif feature
-- [x] feat: get the user status (online, offline, typing, last seen)

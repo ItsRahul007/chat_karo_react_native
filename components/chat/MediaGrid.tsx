@@ -24,10 +24,22 @@ const MediaGrid = ({
         return;
       }
 
+      // GIFs are external URLs — no Supabase signed URL needed
+      const gifOnlyMedia = media.every((m) => m.type === "gif");
+      if (gifOnlyMedia) {
+        setUpdatedMedia(media);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       setError(false);
 
-      const paths = media.map((item) => {
+      // Only request signed URLs for non-GIF media
+      const nonGifMedia = media.filter((m) => m.type !== "gif");
+      const gifMedia = media.filter((m) => m.type === "gif");
+
+      const paths = nonGifMedia.map((item) => {
         const pathArray = item.url.split("/");
         const fileName = pathArray[pathArray.length - 1];
         return fileName;
@@ -44,14 +56,21 @@ const MediaGrid = ({
         return;
       }
 
-      const newMedia: MediaAttachment[] = media.map((item, index) => {
-        return {
+      const newNonGifMedia: MediaAttachment[] = nonGifMedia.map(
+        (item, index) => ({
           ...item,
           url: data?.[index]?.signedUrl || item.url,
-        };
+        }),
+      );
+
+      // Preserve original order: merge signed non-gif + gif media
+      let nonGifIdx = 0;
+      const merged: MediaAttachment[] = media.map((item) => {
+        if (item.type === "gif") return item;
+        return newNonGifMedia[nonGifIdx++];
       });
 
-      setUpdatedMedia(newMedia);
+      setUpdatedMedia(merged);
       setIsLoading(false);
     };
 

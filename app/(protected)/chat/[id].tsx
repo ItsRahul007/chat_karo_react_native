@@ -1,3 +1,4 @@
+import ChatInput from "@/components/chat/ChatInput";
 import ChatMessage from "@/components/chat/ChatMessage";
 import CommonBackButton from "@/components/common/CommonBackButton";
 import GredientIcon from "@/components/common/GredientIcon";
@@ -8,58 +9,30 @@ import { AuthContext } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import {
   deleteMessage,
-  editMessage,
   getChatById,
   getChatProfileById,
-  sendMessage,
-  startNewChat,
 } from "@/controller/chat.controller";
-import {
-  handleUploadFile,
-  useFormatedTime,
-  useIconColor,
-} from "@/util/common.functions";
-import {
-  CHAT_PAGE_SIZE,
-  chatTopBarIconSize,
-  gradientColors,
-} from "@/util/constants";
-import { BucketNames, QueryKeys } from "@/util/enum";
+import { useFormatedTime, useIconColor } from "@/util/common.functions";
+import { CHAT_PAGE_SIZE, chatTopBarIconSize } from "@/util/constants";
+import { QueryKeys } from "@/util/enum";
 import { Message } from "@/util/interfaces/types";
 import { EmitMessages, ListenMessages } from "@/util/socket.calls";
-import {
-  Entypo,
-  FontAwesome5,
-  Ionicons,
-  MaterialCommunityIcons,
-  MaterialIcons,
-} from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
   useInfiniteQuery,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import * as ImagePicker from "expo-image-picker";
-import { LinearGradient } from "expo-linear-gradient";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { Link, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
-  Platform,
-  Pressable,
-  ScrollView,
   Text,
-  TextInput,
   useColorScheme,
   View,
 } from "react-native";
-import ReanimatedAnimated, {
-  useAnimatedKeyboard,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Chat = () => {
@@ -87,31 +60,21 @@ const Chat = () => {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
   const iconColor = useIconColor();
-  const router = useRouter();
 
   const placeholderColor =
     theme === "light"
       ? ColorTheme.light.text.secondaryLight
       : ColorTheme.dark.text.secondaryLight;
 
-  // UI-thread keyboard tracking — zero JS-thread involvement
-  const keyboard = useAnimatedKeyboard();
-  const [value, onChangeText] = useState<string>("");
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [highlightedId, setHighlightedId] = useState<bigint | number | null>(
     null,
   );
-  const [selectedMedia, setSelectedMedia] = useState<
-    ImagePicker.ImagePickerAsset[]
-  >([]);
-  const [isUploading, setIsUploading] = useState(false);
   // it can be Online, Offline, or last seen
   const [chatWithStatus, setChatWithStatus] = useState<string>("");
 
   const flatListRef = React.useRef<FlatList>(null);
-  const textInputRef = React.useRef<TextInput>(null);
-  const textRef = React.useRef<string>("");
 
   const { data: chat, isLoading: isChatProfileLoading } = useQuery({
     queryKey: [QueryKeys.chatProfile, profileToFetchId, conversationId],
@@ -157,23 +120,6 @@ const Chat = () => {
     }));
   }, [messagesData]);
 
-  const replyAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      height: withTiming(replyingTo || editingMessage ? 50 : 0, {
-        duration: 300,
-      }),
-      opacity: withTiming(replyingTo || editingMessage ? 1 : 0, {
-        duration: 300,
-      }),
-    };
-  }, [replyingTo, editingMessage]);
-
-  // Animated style for the input container — driven by the UI thread, no JS bridge
-  const inputContainerAnimStyle = useAnimatedStyle(() => ({
-    marginBottom: keyboard.height.value,
-    paddingBottom: keyboard.height.value > 0 ? 4 : insects.bottom || 20,
-  }));
-
   useEffect(() => {
     if (!socket || !conversationId) return;
 
@@ -181,7 +127,7 @@ const Chat = () => {
     socket.emit(EmitMessages.JOIN_ROOM, conversationId);
     // Get user status
 
-    if (!isCommunity && chatWithId) {
+    if (isCommunity !== "true" && chatWithId) {
       socket.emit(EmitMessages.GET_USER_STATUS, chatWithId);
       // Listen for user status
       socket.on(ListenMessages.RECEIVE_USER_STATUS, (data: any) => {
@@ -205,15 +151,11 @@ const Chat = () => {
   const handleReply = (message: Message) => {
     setReplyingTo(message);
     setEditingMessage(null);
-    textInputRef.current?.focus();
   };
 
   const handleEdit = (message: Message) => {
     setEditingMessage(message);
     setReplyingTo(null);
-    onChangeText(message.message || "");
-    textRef.current = message.message || "";
-    textInputRef.current?.focus();
   };
 
   const handleDelete = async (message: Message) => {
@@ -267,204 +209,6 @@ const Chat = () => {
     }
   };
 
-  const handleSendMessage = async () => {
-    const trimmed = textRef.current.trim();
-    if ((!trimmed && selectedMedia.length === 0) || !myId || !conversationId)
-      return;
-
-    setIsUploading(true);
-    let uploadedMedia: any[] = [];
-
-    for (const media of selectedMedia) {
-      const uploadResult = await handleUploadFile(
-        { uri: media.uri, mimeType: media.mimeType, fileName: media.fileName },
-        BucketNames.chatFiles,
-      );
-      if (uploadResult.success && uploadResult.data) {
-        uploadedMedia.push({
-          url: uploadResult.data,
-          type: media.type === "video" ? "video" : "image",
-          fileName: media.fileName || undefined,
-          fileSize: media.fileSize || undefined,
-        });
-      }
-    }
-    setIsUploading(false);
-
-    const mentionMessageId = replyingTo?.id ?? null;
-    const tempId = editingMessage ? editingMessage.id : Date.now();
-    const optimisticMessage: Message = {
-      id: tempId,
-      createdAt: editingMessage
-        ? editingMessage.createdAt
-        : new Date().toISOString(),
-      senderId: myId,
-      conversationId: conversationId === "new" ? 0 : Number(conversationId),
-      message: trimmed,
-      media: editingMessage
-        ? editingMessage.media
-        : selectedMedia.map((m) => ({
-            url: m.uri,
-            type: m.type === "video" ? "video" : "image",
-            fileName: m.fileName || undefined,
-            fileSize: m.fileSize || undefined,
-          })),
-      isRead: editingMessage ? editingMessage.isRead : false,
-      isDeleted: editingMessage ? editingMessage.isDeleted : false,
-      isEdited: editingMessage ? true : false,
-      isSystemMessage: false,
-      mentionMessageId: editingMessage
-        ? editingMessage.mentionMessageId
-        : (mentionMessageId ?? null),
-      mentionMessage: editingMessage
-        ? editingMessage.mentionMessage
-        : (replyingTo ?? null),
-      sender: editingMessage ? editingMessage.sender : undefined,
-    };
-
-    if (editingMessage) {
-      // Optimistically update
-      queryClient.setQueryData(
-        [QueryKeys.messages, conversationId],
-        (old: any) => {
-          if (!old) return old;
-          return {
-            ...old,
-            pages: old.pages.map((page: Message[]) =>
-              page.map((m: Message) =>
-                m.id === tempId ? optimisticMessage : m,
-              ),
-            ),
-          };
-        },
-      );
-    } else {
-      // Optimistically insert at the front of page 0 (inverted list)
-      queryClient.setQueryData(
-        [QueryKeys.messages, conversationId],
-        (old: any) => {
-          if (!old) return { pages: [[]], pageParams: [0] };
-          const [firstPage, ...rest] = old.pages;
-          return {
-            ...old,
-            pages: [[optimisticMessage, ...firstPage], ...rest],
-          };
-        },
-      );
-    }
-
-    onChangeText("");
-    textRef.current = "";
-    setReplyingTo(null);
-    setEditingMessage(null);
-    setSelectedMedia([]);
-
-    let result: any;
-    let actualConversationId = conversationId;
-    let isNewChat = false;
-
-    if (editingMessage) {
-      result = await editMessage(editingMessage.id, trimmed);
-    } else if (conversationId === "new") {
-      result = await startNewChat(myId, chatWithId as string, {
-        message: trimmed,
-        media: uploadedMedia,
-      });
-
-      if (result && result[0]) {
-        actualConversationId = result[0].conversationId.toString();
-        // Update URL and reset query states for the new conversation
-        router.setParams({ id: actualConversationId });
-        isNewChat = true;
-        // Invalidate old search results etc
-        queryClient.invalidateQueries({ queryKey: [QueryKeys.privateChats] });
-      }
-    } else {
-      result = await sendMessage(conversationId as string, myId, {
-        message: trimmed,
-        mentionMessageId,
-        media: uploadedMedia,
-      });
-    }
-
-    if (result && result[0]) {
-      const confirmedMessage = {
-        ...result[0],
-        mentionMessage: optimisticMessage.mentionMessage,
-      };
-
-      // Replace the temp message (or update the edited one)
-      queryClient.setQueryData(
-        [QueryKeys.messages, actualConversationId],
-        (old: any) => {
-          if (!old) {
-            return {
-              pages: [[confirmedMessage]],
-              pageParams: [0],
-            };
-          }
-          return {
-            ...old,
-            pages: old.pages.map((page: Message[]) =>
-              page.map((m: Message) =>
-                m.id === tempId ? confirmedMessage : m,
-              ),
-            ),
-          };
-        },
-      );
-
-      // Emit socket event
-      socket?.emit(EmitMessages.SEND_MESSAGE, {
-        message: confirmedMessage,
-        receiverId: chatWithId,
-        isCommunity: isCommunity === "true",
-        isNewChat,
-      });
-
-      // Update the sender's inbox
-      queryClient.setQueryData(
-        [
-          isCommunity === "true"
-            ? QueryKeys.communityChats
-            : QueryKeys.privateChats,
-        ],
-        (old: any) => {
-          if (!old) return old;
-          return {
-            ...old,
-            pages: old.pages.map((page: any[]) =>
-              page.map((chat: any) =>
-                chat.conversationId?.toString() ===
-                actualConversationId?.toString()
-                  ? {
-                      ...chat,
-                      lastMessage: confirmedMessage,
-                      unreadMessageCount: 0,
-                    }
-                  : chat,
-              ),
-            ),
-          };
-        },
-      );
-    } else {
-      // Rollback
-      queryClient.setQueryData(
-        [QueryKeys.messages, conversationId],
-        (old: any) => {
-          if (!old) return old;
-          return {
-            ...old,
-            pages: old.pages.map((page: Message[]) =>
-              page.filter((m: Message) => m.id !== tempId),
-            ),
-          };
-        },
-      );
-    }
-  };
-
   return (
     <View
       className="flex-1 bg-light-background-secondary dark:bg-dark-background-secondary"
@@ -477,7 +221,7 @@ const Chat = () => {
         {/* header component */}
         <View className="bg-light-background-primary dark:bg-dark-background-primary h-24 w-full">
           <View className="h-full w-full bg-light-background-secondary dark:bg-dark-background-secondary rounded-b-[2.5rem] flex-row items-center justify-center px-6">
-            <CommonBackButton />
+            <CommonBackButton dismissKeyboard={true} />
 
             <Link
               href={`/chat/profile-info/${chat?.id}?isCommunity=${
@@ -611,222 +355,21 @@ const Chat = () => {
           )}
         </View>
 
-        {/* the input box for sending messages */}
-        <ReanimatedAnimated.View
-          style={[
-            {
-              width: "100%",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "transparent",
-            },
-            inputContainerAnimStyle,
-          ]}
-        >
-          <View
-            className={`bg-light-background-secondary dark:bg-dark-background-secondary w-[95%] mx-auto my-auto items-center px-2 py-2 h-auto rounded-3xl overflow-hidden`}
-          >
-            {selectedMedia.length > 0 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="flex-row mb-2 max-h-24 w-full"
-                contentContainerStyle={{ alignItems: "center", gap: 8 }}
-              >
-                {selectedMedia.map((item, index) => (
-                  <View key={index} className="relative">
-                    <Image
-                      source={{ uri: item.uri }}
-                      className="h-20 w-20 rounded-xl"
-                    />
-                    <Pressable
-                      onPress={() => {
-                        setSelectedMedia((prev) =>
-                          prev.filter((_, i) => i !== index),
-                        );
-                      }}
-                      className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1"
-                    >
-                      <MaterialIcons name="close" size={12} color="white" />
-                    </Pressable>
-                    {item.type === "video" && (
-                      <View className="absolute inset-0 items-center justify-center pointer-events-none">
-                        <Ionicons name="play-circle" size={24} color="white" />
-                      </View>
-                    )}
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-            <ReanimatedAnimated.View style={replyAnimatedStyle}>
-              {replyingTo ? (
-                <ReplyMessage
-                  message={replyingTo}
-                  onClose={() => {
-                    setReplyingTo(null);
-                  }}
-                  onPress={handleReplyPress}
-                  iconColor={iconColor}
-                  sender={
-                    myId && replyingTo?.senderId === myId
-                      ? "You"
-                      : (isCommunity === "true"
-                          ? replyingTo?.sender?.firstName +
-                            " " +
-                            replyingTo?.sender?.lastName
-                          : chat?.name) || "Unknown"
-                  }
-                />
-              ) : editingMessage ? (
-                <Pressable
-                  className="flex-row items-center w-full px-2 pt-1 pb-2 justify-between max-h-12"
-                  onPress={() => handleReplyPress(editingMessage.id)}
-                >
-                  <View className="flex-1">
-                    <Text
-                      className="text-orange-500 font-normal text-base text-ellipsis"
-                      numberOfLines={1}
-                    >
-                      Editing message
-                    </Text>
-                    <Text
-                      className="text-light-text-primary dark:text-dark-text-primary font-normal text-base text-ellipsis"
-                      numberOfLines={1}
-                    >
-                      {editingMessage.message || "Media"}
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={() => {
-                      setEditingMessage(null);
-                      onChangeText("");
-                      textRef.current = "";
-                    }}
-                  >
-                    <Entypo name="cross" size={24} color={iconColor} />
-                  </Pressable>
-                </Pressable>
-              ) : null}
-            </ReanimatedAnimated.View>
-
-            <View className="flex-row items-center w-full">
-              <Pressable
-                className="h-10 w-10 rounded-full overflow-hidden items-center justify-center"
-                onPress={async () => {
-                  const result = await ImagePicker.launchImageLibraryAsync({
-                    mediaTypes: ["images", "videos"],
-                    allowsMultipleSelection: true,
-                    quality: 0.8,
-                  });
-
-                  if (!result.canceled) {
-                    setSelectedMedia((prev) => [...prev, ...result.assets]);
-                  }
-                }}
-              >
-                <LinearGradient
-                  colors={gradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <FontAwesome5 name="plus" size={16} color="white" />
-                </LinearGradient>
-              </Pressable>
-              <TextInput
-                ref={textInputRef}
-                multiline
-                editable
-                numberOfLines={3}
-                placeholder="Type something..."
-                placeholderTextColor={placeholderColor}
-                className="ml-2 flex-1 text-light-text-primary dark:text-dark-text-primary font-normal text-lg"
-                onChangeText={(text) => {
-                  onChangeText(text);
-                  textRef.current = text;
-                }}
-                value={value}
-                style={{
-                  textAlignVertical: "center",
-                  paddingVertical: Platform.OS === "ios" ? 10 : 0,
-                }}
-              />
-              <Pressable
-                onPress={handleSendMessage}
-                disabled={
-                  (value.trim().length === 0 && selectedMedia.length === 0) ||
-                  isUploading
-                }
-                className="disabled:opacity-50"
-              >
-                {isUploading ? (
-                  <ActivityIndicator color={iconColor} size={24} />
-                ) : (
-                  <Ionicons
-                    name={"send"}
-                    size={chatTopBarIconSize}
-                    color={iconColor}
-                  />
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </ReanimatedAnimated.View>
+        <ChatInput
+          conversationId={conversationId as string}
+          myId={myId}
+          chatWithId={chatWithId as string}
+          isCommunity={isCommunity === "true"}
+          chatName={chat?.name}
+          replyingTo={replyingTo}
+          setReplyingTo={setReplyingTo}
+          editingMessage={editingMessage}
+          setEditingMessage={setEditingMessage}
+          handleReplyPress={handleReplyPress}
+        />
       </View>
     </View>
   );
 };
 
 export default Chat;
-
-interface ReplyMessageProps {
-  message: Message;
-  onClose: () => void;
-  onPress: (messageId: bigint | number) => void;
-  iconColor: string;
-  sender: string;
-}
-
-const ReplyMessage = ({
-  message,
-  onClose,
-  onPress,
-  iconColor,
-  sender,
-}: ReplyMessageProps) => {
-  const mediaLength = message.media?.length || 0;
-
-  return (
-    <Pressable
-      className="flex-row items-center w-full px-2 pt-1 pb-2 justify-between max-h-12"
-      onPress={() => onPress(message.id)}
-    >
-      <View className="flex-1">
-        <Text
-          className="text-orange-500 font-normal text-base text-ellipsis"
-          numberOfLines={1}
-        >
-          {sender}
-        </Text>
-        <Text
-          className="text-light-text-primary dark:text-dark-text-primary font-normal text-base text-ellipsis"
-          numberOfLines={1}
-        >
-          {message.message
-            ? message.message
-            : mediaLength > 1
-              ? "Media"
-              : message.media?.[0].type}
-        </Text>
-      </View>
-      <Pressable onPress={onClose}>
-        <Entypo name="cross" size={24} color={iconColor} />
-      </Pressable>
-    </Pressable>
-  );
-};

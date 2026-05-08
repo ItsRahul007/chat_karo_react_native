@@ -7,7 +7,7 @@ export const gradientIconButtonSize = 80;
 export const gradientIconButtonIconSize = 25;
 export const largeIconSize = 30;
 
-export const CHAT_PAGE_SIZE = 25;
+export const CHAT_PAGE_SIZE = 40;
 
 export const gradientColors: [string, string, ...string[]] = [
   ColorTheme.gradientFirst,
