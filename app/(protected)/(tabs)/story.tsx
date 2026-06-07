@@ -2,15 +2,33 @@ import CommonTopBar from "@/components/common/CommonTopBar";
 import MyStorySection from "@/components/story/MyStorySection";
 import OtherUsersStoryCard from "@/components/story/OtherUsersStoryCard";
 import ShowStory from "@/components/story/ShowStory";
-import { SearchParams } from "@/util/enum";
-import { otherUsersStory } from "@/util/sample.data";
+import { AuthContext } from "@/context/AuthContext";
+import { getStories } from "@/controller/story.controller";
+import { useIconColor } from "@/util/common.functions";
+import { QueryKeys, SearchParams } from "@/util/enum";
+import { useQuery } from "@tanstack/react-query";
 import React from "react";
-import { FlatList, View } from "react-native";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-const story = () => {
+const Story = () => {
+  const { user } = React.useContext(AuthContext);
+  const iconColor = useIconColor();
   const [showStory, setShowStory] = React.useState(false);
   const [currentStoryIndex, setCurrentStoryIndex] = React.useState(0);
+
+  const { data, isLoading } = useQuery({
+    queryKey: [QueryKeys.story, user?.id?.toString()],
+    queryFn: () => getStories(user!.id),
+    enabled: !!user?.id,
+  });
+
+  const myStory = data?.myStory ?? [];
+  const otherStories = data?.otherStories ?? [];
+  const seenStoryIds = React.useMemo(
+    () => new Set(data?.seenStoryIds ?? []),
+    [data?.seenStoryIds],
+  );
 
   return (
     <SafeAreaProvider>
@@ -22,34 +40,48 @@ const story = () => {
         />
 
         <View className="flex-1 bg-light-background-secondary dark:bg-dark-background-secondary">
-          <FlatList
-            data={otherUsersStory}
-            renderItem={({ item, index }) => (
-              <OtherUsersStoryCard
-                story={item}
-                onPress={() => {
-                  setCurrentStoryIndex(index);
-                  setShowStory(true);
-                }}
-              />
-            )}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            columnWrapperStyle={{
-              gap: 15,
-              paddingHorizontal: 15,
-            }}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              gap: 15,
-              paddingBottom: 100,
-            }}
-            ListHeaderComponent={<MyStorySection />}
-          />
+          {isLoading ? (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator color={iconColor} />
+            </View>
+          ) : (
+            <FlatList
+              data={otherStories}
+              renderItem={({ item, index }) => (
+                <OtherUsersStoryCard
+                  story={item}
+                  isSeen={item.every((row) => seenStoryIds.has(String(row.id)))}
+                  onPress={() => {
+                    setCurrentStoryIndex(index);
+                    setShowStory(true);
+                  }}
+                />
+              )}
+              keyExtractor={(item) => String(item[0]?.userId)}
+              numColumns={2}
+              columnWrapperStyle={{
+                gap: 15,
+                paddingHorizontal: 15,
+              }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                gap: 15,
+                paddingBottom: 100,
+              }}
+              ListHeaderComponent={<MyStorySection myStory={myStory} />}
+              ListEmptyComponent={
+                <View className="items-center justify-center py-10">
+                  <Text className="text-light-text-secondaryDark dark:text-dark-text-secondaryDark">
+                    No recent stories
+                  </Text>
+                </View>
+              }
+            />
+          )}
         </View>
 
         <ShowStory
-          stories={otherUsersStory}
+          stories={otherStories}
           showStory={showStory}
           onClose={() => setShowStory(false)}
           initialStoryIndex={currentStoryIndex}
@@ -60,4 +92,4 @@ const story = () => {
   );
 };
 
-export default story;
+export default Story;

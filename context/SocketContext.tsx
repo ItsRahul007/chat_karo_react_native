@@ -66,17 +66,14 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
     });
 
     socket.on("connect", () => {
-      console.log("🔌 Socket connected:", socket.id);
       setIsConnected(true);
     });
 
     socket.on("disconnect", (reason) => {
-      console.log("🔌 Socket disconnected:", reason);
       setIsConnected(false);
     });
 
     socket.on("connect_error", (error) => {
-      console.error("🔌 Socket connection error:", error.message);
       setIsConnected(false);
     });
 
@@ -91,21 +88,14 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
       socketRef.current = null;
       setIsConnected(false);
       setSocket(null);
-      console.log("🔌 Socket manually disconnected");
     }
   }, []);
 
   useEffect(() => {
     if (isLoggedIn && user) {
-      console.log("🔌 Attempting socket connection...");
+      // Attempting socket connection
       connectSocket();
     } else {
-      console.log(
-        "🔌 Skipping socket connection - isLoggedIn:",
-        isLoggedIn,
-        "user:",
-        !!user,
-      );
       disconnectSocket();
     }
 

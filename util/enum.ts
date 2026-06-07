@@ -22,6 +22,7 @@ enum QueryKeys {
   chatProfile = "chatProfile",
   newCommunity = "newCommunity",
   chatMedia = "chatMedia",
+  story = "story",
 }
 
 enum TableNames {
@@ -30,6 +31,8 @@ enum TableNames {
   messages = "messages",
   participants = "participants",
   inbox = "inbox",
+  story = "story",
+  storyViews = "story_views",
 }
 
 enum BucketNames {

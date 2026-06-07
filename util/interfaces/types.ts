@@ -92,6 +92,37 @@ type SingleCommunityChat = {
   isAdmin: boolean;
 };
 
+interface StoryRow {
+  id: number | string;
+  fileUrl: string;
+  fileName: string;
+  fileType: "image" | "video";
+  description: string | null;
+  createdAt: string;
+  userId: number | string;
+  users: {
+    id: number | string;
+    firstName: string | null;
+    lastName: string | null;
+    avatar: string | null;
+    userName: string | null;
+  } | null;
+}
+
+interface StoryViewer {
+  id: string;
+  viewerId: string;
+  storyId: string;
+  createdAt: Date;
+  users: {
+    id: number | string;
+    firstName: string | null;
+    lastName: string | null;
+    avatar: string | null;
+    userName: string | null;
+  } | null;
+}
+
 export type {
   Conversation,
   ConversationParticipant,
@@ -99,5 +130,7 @@ export type {
   Message,
   SingleChat,
   SingleCommunityChat,
+  StoryRow,
+  StoryViewer,
   UserProfile,
 };

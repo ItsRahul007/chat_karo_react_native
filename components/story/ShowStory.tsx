@@ -1,12 +1,21 @@
+import { AuthContext } from "@/context/AuthContext";
+import {
+  getStoryViewers,
+  recordStoryView,
+} from "@/controller/story.controller";
+import { getStoryAuthor, getStoryAuthorName } from "@/util/common.functions";
 import { profileInfoIconSize } from "@/util/constants";
-import { I_Story } from "@/util/types/story.types";
+import { QueryKeys } from "@/util/enum";
+import { StoryRow } from "@/util/interfaces/types";
 import { Entypo, Feather } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
   Modal,
+  Pressable,
   Text,
   useWindowDimensions,
   View,
@@ -28,6 +37,7 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import CommonRoundedIconButton from "../common/CommonRoundedIconButton";
 import MyBlurView from "../common/MyBlurView";
+import StoryViewers from "./StoryViewers";
 
 const ShowStory = ({
   stories,
@@ -37,13 +47,15 @@ const ShowStory = ({
   initialStoryIndex = 0,
   isMyStory = false,
 }: {
-  stories: I_Story[];
+  stories: StoryRow[][];
   showStory: boolean;
   onClose: () => void;
   initialMediaIndex?: number;
   initialStoryIndex?: number;
   isMyStory?: boolean;
 }) => {
+  const { user } = useContext(AuthContext);
+  const currentUserId = user?.id ?? null;
   const [currentStoryIndex, setCurrentStoryIndex] = useState(initialStoryIndex);
   const flatListRef = useRef<FlatList>(null);
   const { width } = useWindowDimensions();
@@ -130,6 +142,8 @@ const ShowStory = ({
                     index={index}
                     scrollX={scrollX}
                     isActive={index === currentStoryIndex}
+                    isMyStory={isMyStory}
+                    currentUserId={currentUserId}
                     initialMediaIndex={
                       index === initialStoryIndex ? initialMediaIndex : 0
                     }
@@ -152,26 +166,52 @@ const StoryCard = ({
   index,
   scrollX,
   isActive,
+  isMyStory,
+  currentUserId,
   initialMediaIndex,
   onClose,
   onSwipeLeft,
   onSwipeRight,
 }: {
-  story: I_Story;
+  story: StoryRow[];
   index: number;
   scrollX: SharedValue<number>;
   isActive: boolean;
+  isMyStory: boolean;
+  currentUserId: bigint | number | string | null;
   initialMediaIndex: number;
   onClose: () => void;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialMediaIndex);
-  const currentStory = story.media[currentIndex];
+  const [viewersOpen, setViewersOpen] = useState(false);
+  const currentStory = story[currentIndex];
+  const currentStoryId = currentStory?.id;
+
+  // Record a view once this slide is the active one — but never for my own
+  // story. The upsert is deduped server-side by the unique (storyId, viewerId).
+  useEffect(() => {
+    if (isActive && !isMyStory && currentUserId && currentStoryId) {
+      recordStoryView(currentStoryId, currentUserId);
+    }
+  }, [isActive, isMyStory, currentUserId, currentStoryId]);
+
+  // Who watched the current slide of my own story.
+  const { data: viewers = [] } = useQuery({
+    queryKey: [QueryKeys.story, "viewers", currentStoryId],
+    queryFn: () => getStoryViewers(currentStoryId!),
+    enabled: isMyStory && isActive && !!currentStoryId,
+  });
+
   // Guard against undefined currentStory if index is out of sync momentarily
   if (!currentStory) return null;
 
-  const timestamp = new Date(currentStory.timestamp).toLocaleTimeString([], {
+  const author = getStoryAuthor(story[0]?.users);
+  const authorName = getStoryAuthorName(story[0]?.users);
+  const authorAvatar = author?.avatar ?? "";
+
+  const timestamp = new Date(currentStory.createdAt).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -203,7 +243,7 @@ const StoryCard = ({
       // Because of padding, width is slightly larger than card width, but center is roughly same
       // Adjusting width check if needed, but width/2 is safe enough
       if (x > width / 2) {
-        if (currentIndex < story.media.length - 1) {
+        if (currentIndex < story.length - 1) {
           setCurrentIndex(currentIndex + 1);
         } else {
           onSwipeRight();
@@ -222,7 +262,7 @@ const StoryCard = ({
     <Animated.View className="flex-1 relative" style={animatedStyle}>
       {/* top section */}
       <View className="w-full h-16 flex-row items-start gap-x-1 px-4">
-        {story.media.map((_, index) => (
+        {story.map((_, index) => (
           <View
             key={index}
             className={`h-1 rounded-full flex-1 ${
@@ -236,11 +276,11 @@ const StoryCard = ({
       <View className="flex-1 max-h-[80%] overflow-hidden" collapsable={false}>
         <GestureDetector gesture={tapGesture}>
           <View className="w-full h-full">
-            {currentStory.mediaType === "video" ? (
-              <StoryVideo uri={currentStory.mediaUrl} isActive={isActive} />
+            {currentStory.fileType === "video" ? (
+              <StoryVideo uri={currentStory.fileUrl} isActive={isActive} />
             ) : (
               <Image
-                source={{ uri: currentStory.mediaUrl }}
+                source={{ uri: currentStory.fileUrl }}
                 className="w-full h-full"
                 resizeMode="contain"
               />
@@ -250,28 +290,57 @@ const StoryCard = ({
       </View>
 
       {/* bottom section */}
-      <View className="flex-row items-center justify-between px-4 absolute bottom-8 w-full">
-        <View className="flex-row items-center gap-x-2">
-          <Image
-            source={{ uri: story.avatar }}
-            className="w-14 h-14 rounded-full"
-          />
-          <View>
-            <Text className="text-white font-bold text-lg">{story.name}</Text>
-            <Text className="text-white font-normal text-xs">{timestamp}</Text>
+      <View className="absolute bottom-8 w-full gap-y-3 px-4">
+        {currentStory.description ? (
+          <Text className="text-white text-center font-normal text-base bg-black/20 px-3 py-2 rounded-2xl">
+            {currentStory.description}
+          </Text>
+        ) : null}
+        {isMyStory ? (
+          <Pressable
+            onPress={() => setViewersOpen(true)}
+            className="flex-row items-center justify-center gap-x-2 self-center bg-black/40 px-4 py-2 rounded-full"
+          >
+            <Feather name="eye" size={18} color="white" />
+            <Text className="text-white font-semibold text-sm">
+              {viewers.length} {viewers.length === 1 ? "view" : "views"}
+            </Text>
+          </Pressable>
+        ) : (
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-x-2">
+              <Image
+                source={{ uri: authorAvatar }}
+                className="w-14 h-14 rounded-full"
+              />
+              <View>
+                <Text className="text-white font-bold text-lg">
+                  {authorName}
+                </Text>
+                <Text className="text-white font-normal text-xs">
+                  {timestamp}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row gap-x-1">
+              <CommonRoundedIconButton
+                icon={<Feather name="download" size={profileInfoIconSize} />}
+                onPress={() => {}}
+              />
+              <CommonRoundedIconButton
+                icon={<Entypo name="share" size={profileInfoIconSize} />}
+                onPress={() => {}}
+              />
+            </View>
           </View>
-        </View>
-        <View className="flex-row gap-x-1">
-          <CommonRoundedIconButton
-            icon={<Feather name="download" size={profileInfoIconSize} />}
-            onPress={() => {}}
-          />
-          <CommonRoundedIconButton
-            icon={<Entypo name="share" size={profileInfoIconSize} />}
-            onPress={() => {}}
-          />
-        </View>
+        )}
       </View>
+
+      <StoryViewers
+        visible={viewersOpen}
+        viewers={viewers}
+        onClose={() => setViewersOpen(false)}
+      />
     </Animated.View>
   );
 };

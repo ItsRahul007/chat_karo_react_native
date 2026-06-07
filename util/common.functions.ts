@@ -2,7 +2,27 @@ import { ColorTheme } from "@/constants/colors";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import { useColorScheme } from "react-native";
 import { BucketNames } from "./enum";
+import { StoryRow } from "./interfaces/types";
 import { supabase } from "./supabase";
+
+type StoryAuthor = StoryRow["users"];
+
+const ONE_SECOND = 1000;
+const ONE_MINUTE = 60 * ONE_SECOND;
+const ONE_HOUR = 60 * ONE_MINUTE;
+const ONE_DAY = 24 * ONE_HOUR;
+
+// PostgREST returns a many-to-one embed as an object, but be defensive in case
+// it arrives as a single-element array.
+const getStoryAuthor = (users: StoryAuthor | StoryAuthor[]): StoryAuthor =>
+  Array.isArray(users) ? (users[0] ?? null) : users;
+
+const getStoryAuthorName = (users: StoryAuthor | StoryAuthor[]): string => {
+  const user = getStoryAuthor(users);
+  if (!user) return "";
+  const fullName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+  return fullName || user.userName || "";
+};
 
 const generateThumbnail = async (
   videoUrl: string,
@@ -51,6 +71,7 @@ const handleUploadFile = async (
 ): Promise<{
   success: boolean;
   data?: string;
+  fileName?: string;
 }> => {
   const formData = new FormData();
   const mimeType = file.mimeType || getMimeType(file.uri);
@@ -80,11 +101,24 @@ const handleUploadFile = async (
       .from(bucket)
       .getPublicUrl(data.path);
 
-    return { success: true, data: publicUrlData.publicUrl };
+    return {
+      success: true,
+      data: publicUrlData.publicUrl,
+      fileName: data.path,
+    };
   } catch (error) {
     console.error("Error uploading file:", error);
     return { success: false };
   }
+};
+
+const videoExtensions = ["mp4", "mov", "avi", "mkv", "webm", "m4v", "3gp"];
+
+// The story table has no mediaType column yet, so infer it from the file
+// extension. Falls back to "image" for extensionless / unknown urls.
+const inferMediaType = (uri: string): "image" | "video" => {
+  const ext = uri.split("?")[0].split(".").pop()?.toLowerCase();
+  return ext && videoExtensions.includes(ext) ? "video" : "image";
 };
 
 const useFormatedTime = (date: string): string => {
@@ -95,4 +129,15 @@ const useFormatedTime = (date: string): string => {
   return formatedDate;
 };
 
-export { generateThumbnail, handleUploadFile, useFormatedTime, useIconColor };
+export {
+  generateThumbnail,
+  getStoryAuthor,
+  getStoryAuthorName,
+  handleUploadFile,
+  inferMediaType,
+  ONE_DAY,
+  ONE_MINUTE,
+  ONE_SECOND,
+  useFormatedTime,
+  useIconColor,
+};

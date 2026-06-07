@@ -37,7 +37,6 @@ const MediaGrid = ({
 
       // Only request signed URLs for non-GIF media
       const nonGifMedia = media.filter((m) => m.type !== "gif");
-      const gifMedia = media.filter((m) => m.type === "gif");
 
       const paths = nonGifMedia.map((item) => {
         const pathArray = item.url.split("/");
