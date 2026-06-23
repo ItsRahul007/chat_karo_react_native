@@ -1,5 +1,6 @@
 import ChatInput from "@/components/chat/ChatInput";
 import ChatMessage from "@/components/chat/ChatMessage";
+import TypingIndicator from "@/components/chat/TypingIndicator";
 import CommonBackButton from "@/components/common/CommonBackButton";
 import GredientIcon from "@/components/common/GredientIcon";
 import ChatProfileSkeleton from "@/components/skeletons/ChatProfileSkeleton";
@@ -73,6 +74,8 @@ const Chat = () => {
   );
   // it can be Online, Offline, or last seen
   const [chatWithStatus, setChatWithStatus] = useState<string>("");
+  // whether the other user is currently typing in this conversation
+  const [isTyping, setIsTyping] = useState<boolean>(false);
 
   const flatListRef = React.useRef<FlatList>(null);
 
@@ -125,28 +128,52 @@ const Chat = () => {
 
     // Join the room for this conversation
     socket.emit(EmitMessages.JOIN_ROOM, conversationId);
-    // Get user status
+
+    const onUserStatus = (data: any) => {
+      if (data.userId === chatWithId) {
+        const status =
+          data.userStatus === "Online"
+            ? "Online"
+            : useFormatedTime(data.userStatus);
+
+        setChatWithStatus(status);
+      }
+    };
+
+    // The BE emits to the conversation room, so the event is already scoped to
+    // this chat — only guard against echoing our own typing back to us.
+    const onUserTyping = (data: any) => {
+      if (data?.userId?.toString() !== myId?.toString()) {
+        setIsTyping(true);
+      }
+    };
+
+    const onUserStopTyping = (data: any) => {
+      if (data?.userId?.toString() !== myId?.toString()) {
+        setIsTyping(false);
+      }
+    };
 
     if (isCommunity !== "true" && chatWithId) {
+      // Get user status
       socket.emit(EmitMessages.GET_USER_STATUS, chatWithId);
       // Listen for user status
-      socket.on(ListenMessages.RECEIVE_USER_STATUS, (data: any) => {
-        if (data.userId === chatWithId) {
-          const status =
-            data.userStatus === "Online"
-              ? "Online"
-              : useFormatedTime(data.userStatus);
-
-          setChatWithStatus(status);
-        }
-      });
+      socket.on(ListenMessages.RECEIVE_USER_STATUS, onUserStatus);
     }
+
+    // Listen for the other user's typing activity in this conversation
+    socket.on(ListenMessages.USER_TYPING, onUserTyping);
+    socket.on(ListenMessages.USER_STOP_TYPING, onUserStopTyping);
 
     return () => {
       // Leave the room when navigating away
       socket.emit(EmitMessages.LEAVE_ROOM, conversationId);
+      socket.off(ListenMessages.RECEIVE_USER_STATUS, onUserStatus);
+      socket.off(ListenMessages.USER_TYPING, onUserTyping);
+      socket.off(ListenMessages.USER_STOP_TYPING, onUserStopTyping);
+      setIsTyping(false);
     };
-  }, [socket, conversationId]);
+  }, [socket, conversationId, chatWithId, myId, isCommunity]);
 
   const handleReply = (message: Message) => {
     setReplyingTo(message);
@@ -257,9 +284,13 @@ const Chat = () => {
                           />
                         )}
                       </View>
-                      <Text className="text-base text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
-                        {chatWithStatus}
-                      </Text>
+                      {isTyping ? (
+                        <TypingIndicator />
+                      ) : (
+                        <Text className="text-base text-light-text-secondaryLight dark:text-dark-text-secondaryLight">
+                          {chatWithStatus}
+                        </Text>
+                      )}
                     </View>
                   </View>
                 )}

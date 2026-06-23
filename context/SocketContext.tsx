@@ -2,6 +2,8 @@ import {
   handleInboxUpdate,
   handleReceiveMessage,
   onUserRemovedFromCommunity,
+  onUserStopTyping,
+  onUserTyping,
 } from "@/controller/socket.controller";
 import { usePushNotification } from "@/custom-hooks/usePushNotification";
 import { Message } from "@/util/interfaces/types";
@@ -34,7 +36,7 @@ export const useSocket = () => useContext(SocketContext);
 
 // const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_SERVER_URL!;
 // use this command to get the ip: ipconfig getifaddr en0
-const SOCKET_URL = "http://192.168.0.112:3001";
+const SOCKET_URL = "http://192.168.0.108:3001";
 
 const SocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn, user } = useContext(AuthContext);
@@ -153,6 +155,26 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
       onUserRemovedFromCommunity({ ...data, queryClient });
     };
 
+    const onUserTypingEvent = (data: {
+      userId: string;
+      conversationId: string;
+      sender: string;
+    }) => {
+      onUserTyping({ ...data, queryClient });
+    };
+
+    const onUserStopTypingEvent = (data: {
+      userId: string;
+      conversationId: string;
+      sender: string;
+    }) => {
+      onUserStopTyping({ ...data, queryClient });
+    };
+
+    s.on(ListenMessages.USER_TYPING, onUserTypingEvent);
+
+    s.on(ListenMessages.USER_STOP_TYPING, onUserStopTypingEvent);
+
     s.on(
       ListenMessages.RECEIVE_MESSAGE,
       onReceiveMessageWhileInsideAConversation,
@@ -161,10 +183,6 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
 
     s.on(ListenMessages.USER_REMOVED_FROM_COMMUNITY, onUserRemovedByAdmin);
 
-    // Future events can be registered here:
-    // s.on(ListenMessages.USER_TYPING, onUserTyping);
-    // s.on(ListenMessages.USER_STOP_TYPING, onUserStopTyping);
-
     return () => {
       s.off(
         ListenMessages.RECEIVE_MESSAGE,
@@ -172,6 +190,8 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
       );
       s.off(ListenMessages.NEW_MESSAGE, onNewMessageWhileNotInConversation);
       s.off(ListenMessages.USER_REMOVED_FROM_COMMUNITY, onUserRemovedByAdmin);
+      s.off(ListenMessages.USER_TYPING, onUserTypingEvent);
+      s.off(ListenMessages.USER_STOP_TYPING, onUserStopTypingEvent);
     };
   }, [isConnected, user?.id, queryClient]);
 

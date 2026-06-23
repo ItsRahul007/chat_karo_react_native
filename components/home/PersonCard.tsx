@@ -8,10 +8,6 @@ import React, { useState } from "react";
 import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
 import ShowAvatar from "./ShowAvatar";
 
-interface PersonCardProps extends SingleChat {
-  isTyping?: boolean;
-}
-
 const PersonCard = ({
   firstName,
   lastName,
@@ -24,7 +20,7 @@ const PersonCard = ({
   onClick,
   isTyping = false,
   isMuted,
-}: PersonCardProps) => {
+}: SingleChat) => {
   const [isProfileClicked, setIsProfileClicked] = useState<boolean>(false);
   const formatedMessageTime = useFormatedTime(lastMessage.createdAt);
 

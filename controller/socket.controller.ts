@@ -1,5 +1,5 @@
 import { QueryKeys } from "@/util/enum";
-import { Message } from "@/util/interfaces/types";
+import { Message, SingleChat, UserTyping } from "@/util/interfaces/types";
 import { Toast } from "@/util/toast";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -110,4 +110,81 @@ export const onUserRemovedFromCommunity = ({
   queryClient.refetchQueries({
     queryKey: [QueryKeys.communityMembers, conversationId],
   });
+};
+
+// Sets the `isTyping` flag on a single private chat in the cache.
+const setChatTyping = (
+  queryClient: QueryClient,
+  userId: string,
+  conversationId: string,
+  isTyping: boolean,
+) => {
+  queryClient.setQueryData([QueryKeys.privateChats], (old: any) => {
+    if (!old) return old;
+
+    let changed = false;
+    const pages = old.pages.map((page: SingleChat[]) =>
+      page.map((chat) => {
+        if (
+          chat.chatWithId?.toString() === userId &&
+          chat.conversationId.toString() === conversationId
+        ) {
+          if (chat.isTyping === isTyping) return chat; // no-op
+          changed = true;
+          return { ...chat, isTyping };
+        }
+        return chat;
+      }),
+    );
+
+    return changed ? { ...old, pages } : old;
+  });
+};
+
+// Safety timers, keyed per chat, so a stuck "typing" state auto-clears even if a
+// USER_STOP_TYPING event is never delivered. The sender re-emits TYPING as a
+// heartbeat (see ChatInput), so this timer keeps getting pushed out while the
+// other user is actively typing.
+const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const TYPING_AUTO_CLEAR_MS = 1500;
+
+// make the isTyping true of that specific chat
+export const onUserTyping = ({
+  userId,
+  conversationId,
+  queryClient,
+}: UserTyping) => {
+  if (!userId || !conversationId) return;
+
+  const key = `${userId}-${conversationId}`;
+  setChatTyping(queryClient, userId, conversationId, true);
+
+  // (Re)arm the auto-clear timer.
+  const existing = typingTimers.get(key);
+  if (existing) clearTimeout(existing);
+  typingTimers.set(
+    key,
+    setTimeout(() => {
+      typingTimers.delete(key);
+      setChatTyping(queryClient, userId, conversationId, false);
+    }, TYPING_AUTO_CLEAR_MS),
+  );
+};
+
+// make the isTyping false of that specific chat
+export const onUserStopTyping = ({
+  userId,
+  conversationId,
+  queryClient,
+}: UserTyping) => {
+  if (!userId || !conversationId) return;
+
+  const key = `${userId}-${conversationId}`;
+  const existing = typingTimers.get(key);
+  if (existing) {
+    clearTimeout(existing);
+    typingTimers.delete(key);
+  }
+
+  setChatTyping(queryClient, userId, conversationId, false);
 };

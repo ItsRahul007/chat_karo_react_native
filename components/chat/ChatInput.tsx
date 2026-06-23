@@ -76,6 +76,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const textInputRef = useRef<TextInput>(null);
   const textRef = useRef("");
+  const isTypingRef = useRef(false);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingEmitRef = useRef(0);
 
   const replyAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -136,6 +139,52 @@ const ChatInput: React.FC<ChatInputProps> = ({
       textInputRef.current?.focus();
     }
   }, [editingMessage, replyingTo]);
+
+  const emitStopTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    if (!isTypingRef.current) return;
+    isTypingRef.current = false;
+    if (!socket || conversationId === "new") return;
+    socket.emit(EmitMessages.STOP_TYPING, {
+      conversationId,
+      chatWithId,
+      isCommunity,
+    });
+  };
+
+  const handleTyping = (text: string) => {
+    setValue(text);
+    textRef.current = text;
+
+    if (!socket || conversationId === "new") return;
+
+    // Heartbeat: re-emit TYPING at most once every 1.5s while the user keeps
+    // typing, so the receiver's auto-clear timer (3s) keeps getting pushed out
+    // and never expires mid-typing.
+    const now = Date.now();
+    if (!isTypingRef.current || now - lastTypingEmitRef.current > 1500) {
+      isTypingRef.current = true;
+      lastTypingEmitRef.current = now;
+      socket.emit(EmitMessages.TYPING, {
+        conversationId,
+        chatWithId,
+        isCommunity,
+      });
+    }
+
+    // Reset the inactivity timer; emit stop-typing once the user pauses
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(emitStopTyping, 1500);
+  };
+
+  // Make sure we don't leave a stale "typing" state behind on unmount
+  useEffect(() => {
+    return () => emitStopTyping();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSendMessage = async () => {
     const trimmed = textRef.current.trim();
@@ -223,6 +272,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
     setValue("");
     textRef.current = "";
+    emitStopTyping();
     setReplyingTo(null);
     setEditingMessage(null);
     setSelectedMedia([]);
@@ -424,10 +474,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             placeholder="Type something..."
             placeholderTextColor={placeholderColor}
             className="ml-2 flex-1 text-light-text-primary dark:text-dark-text-primary font-normal text-lg"
-            onChangeText={(text) => {
-              setValue(text);
-              textRef.current = text;
-            }}
+            onChangeText={handleTyping}
             value={value}
             style={{
               textAlignVertical: "center",

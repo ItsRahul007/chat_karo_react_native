@@ -1,3 +1,5 @@
+import { QueryClient } from "@tanstack/react-query";
+
 interface UserProfile {
   id: bigint;
   createdAt: string;
@@ -74,6 +76,7 @@ type SingleChat = {
   isPinned: boolean;
   isMuted: boolean;
   isBlocked: boolean;
+  isTyping?: boolean;
   onClick?: () => void;
 };
 
@@ -123,6 +126,13 @@ interface StoryViewer {
   } | null;
 }
 
+type UserTyping = {
+  conversationId: string;
+  sender: string;
+  userId: string;
+  queryClient: QueryClient;
+};
+
 export type {
   Conversation,
   ConversationParticipant,
@@ -133,4 +143,5 @@ export type {
   StoryRow,
   StoryViewer,
   UserProfile,
+  UserTyping,
 };
