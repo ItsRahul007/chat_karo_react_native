@@ -21,3 +21,17 @@ export function trimVideo(
     outputPath,
   );
 }
+
+/**
+ * Extracts a single frame from the video at `inputUri` near `timeMs`
+ * (milliseconds), as a JPEG scaled to fit within `maxSize`x`maxSize` px.
+ *
+ * @returns the extracted image's `file://` URI.
+ */
+export function getVideoFrame(
+  inputUri: string,
+  timeMs: number,
+  maxSize = 120,
+): Promise<string> {
+  return VideoTrimmer.getFrameAt(inputUri, Math.round(timeMs), maxSize);
+}

@@ -1,24 +1,32 @@
 package expo.modules.videotrimmer
 
+import android.content.Context
+import android.graphics.Bitmap
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
 import android.net.Uri
+import android.os.Build
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.io.File
+import java.io.FileOutputStream
 import java.nio.ByteBuffer
 
 class VideoTrimmerModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("VideoTrimmer")
 
-    // Runs off the main thread, so the (blocking) muxing work is safe here.
+    // Both run off the main thread, so the blocking native work is safe here.
     AsyncFunction("trim") { uri: String, startMs: Double, endMs: Double, outputPath: String ->
       trim(uri, startMs.toLong(), endMs.toLong(), outputPath)
+    }
+
+    AsyncFunction("getFrameAt") { uri: String, timeMs: Double, maxSize: Int ->
+      getFrameAt(uri, timeMs.toLong(), maxSize)
     }
   }
 
@@ -30,7 +38,7 @@ class VideoTrimmerModule : Module() {
     val extractor = MediaExtractor()
     var muxer: MediaMuxer? = null
     try {
-      setDataSource(extractor, uri)
+      setExtractorSource(extractor, uri)
 
       // Map every source track into the muxer.
       val trackCount = extractor.trackCount
@@ -99,7 +107,45 @@ class VideoTrimmerModule : Module() {
     }
   }
 
-  private fun setDataSource(extractor: MediaExtractor, uri: String) {
+  // Extracts a single frame near `timeMs` as a JPEG in the cache and returns its
+  // file URI. Snaps to the closest sync frame, so it's fast (no decode loop).
+  private fun getFrameAt(uri: String, timeMs: Long, maxSize: Int): String {
+    val context = appContext.reactContext
+      ?: throw CodedException("ERR_FRAME_FAILED", "No app context", null)
+    val retriever = MediaMetadataRetriever()
+    try {
+      applyRetrieverSource(retriever, context, uri)
+      val timeUs = timeMs * 1000
+      val bitmap: Bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && maxSize > 0) {
+        retriever.getScaledFrameAtTime(
+          timeUs,
+          MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+          maxSize,
+          maxSize,
+        )
+      } else {
+        retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+      } ?: throw CodedException("ERR_FRAME_FAILED", "No frame at $timeMs ms", null)
+
+      val outFile = File(context.cacheDir, "vt_frame_${uri.hashCode()}_$timeMs.jpg")
+      FileOutputStream(outFile).use { out ->
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
+      }
+      bitmap.recycle()
+      return "file://${outFile.absolutePath}"
+    } catch (e: CodedException) {
+      throw e
+    } catch (e: Exception) {
+      throw CodedException("ERR_FRAME_FAILED", "Failed to extract frame: ${e.message}", e)
+    } finally {
+      try {
+        retriever.release()
+      } catch (_: Exception) {
+      }
+    }
+  }
+
+  private fun setExtractorSource(extractor: MediaExtractor, uri: String) {
     val context = appContext.reactContext
     when {
       uri.startsWith("content://") && context != null -> {
@@ -112,17 +158,23 @@ class VideoTrimmerModule : Module() {
     }
   }
 
+  private fun applyRetrieverSource(
+    retriever: MediaMetadataRetriever,
+    context: Context,
+    uri: String,
+  ) {
+    when {
+      uri.startsWith("content://") -> retriever.setDataSource(context, Uri.parse(uri))
+      uri.startsWith("file://") -> retriever.setDataSource(Uri.parse(uri).path)
+      else -> retriever.setDataSource(uri)
+    }
+  }
+
   private fun rotationOf(uri: String): Int? {
+    val context = appContext.reactContext ?: return null
     val retriever = MediaMetadataRetriever()
     return try {
-      val context = appContext.reactContext
-      if (uri.startsWith("content://") && context != null) {
-        retriever.setDataSource(context, Uri.parse(uri))
-      } else if (uri.startsWith("file://")) {
-        retriever.setDataSource(Uri.parse(uri).path)
-      } else {
-        retriever.setDataSource(uri)
-      }
+      applyRetrieverSource(retriever, context, uri)
       retriever
         .extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
         ?.toIntOrNull()

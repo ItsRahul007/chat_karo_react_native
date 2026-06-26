@@ -7,7 +7,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
-import { getFrameAt } from "react-native-video-trim";
+import { getVideoFrame } from "@/modules/video-trimmer";
 
 const HANDLE_W = 2; // visual width of the thin handle line
 const HIT_W = 36; // width of the invisible touch target around each handle
@@ -15,11 +15,6 @@ const TRACK_H = 56;
 const FRAME_COUNT = 6;
 // Don't let the selectable window collapse to nothing.
 const MIN_DURATION_MS = 1000;
-
-const toFileUri = (path: string): string =>
-  path.startsWith("file://") || path.startsWith("content://")
-    ? path
-    : `file://${path}`;
 
 const formatTime = (ms: number): string => {
   const totalSeconds = Math.max(0, Math.round(ms / 1000));
@@ -81,12 +76,10 @@ const VideoTrimmer = ({
       );
       const results = await Promise.all(
         times.map((time) =>
-          getFrameAt(uri, { time, quality: 50, maxWidth: 120, maxHeight: 120 })
-            .then((r) => toFileUri(r.outputPath))
-            .catch((err) => {
-              console.warn(`[VideoTrimmer] frame at ${time}ms failed`, err);
-              return null;
-            }),
+          getVideoFrame(uri, time, 120).catch((err) => {
+            console.warn(`[VideoTrimmer] frame at ${time}ms failed`, err);
+            return null;
+          }),
         ),
       );
       const frameUris = results.filter((r): r is string => !!r);

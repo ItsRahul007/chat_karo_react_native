@@ -12,6 +12,13 @@ declare class VideoTrimmerModule extends NativeModule {
     endMs: number,
     outputPath: string,
   ): Promise<string>;
+
+  /**
+   * Extracts a single frame near `timeMs` (snapped to the closest keyframe) as
+   * a JPEG, scaled to fit within `maxSize`x`maxSize` px. Resolves with the
+   * output image's file URI.
+   */
+  getFrameAt(uri: string, timeMs: number, maxSize: number): Promise<string>;
 }
 
 export default requireNativeModule<VideoTrimmerModule>("VideoTrimmer");
