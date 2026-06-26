@@ -74,7 +74,8 @@
       ],
       "expo-web-browser",
       "@react-native-google-signin/google-signin",
-      "expo-notifications"
+      "expo-notifications",
+      "./plugins/withDebugKeystore"
     ],
     "experiments": {
       "typedRoutes": true,
