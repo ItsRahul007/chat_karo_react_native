@@ -45,6 +45,7 @@ const StoryViewers = ({
         </View>
 
         <FlatList
+          className="flex-1"
           data={viewers}
           keyExtractor={(item, idx) => `${item.id}-${idx}`}
           showsVerticalScrollIndicator={false}
@@ -63,7 +64,7 @@ const StoryViewers = ({
                 <Text className="text-light-text-primary dark:text-dark-text-primary font-semibold">
                   {getStoryAuthorName(item.users)}
                 </Text>
-                <Text className="text-light-text-secondary dark:text-dark-text-secondary text-xs">
+                <Text className="text-light-text-primary dark:text-dark-text-primary text-xs">
                   {formatViewedAt(item.createdAt)}
                 </Text>
               </View>
