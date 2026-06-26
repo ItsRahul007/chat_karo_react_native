@@ -22,18 +22,13 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { trim } from "react-native-video-trim";
+import { trimVideo } from "@/modules/video-trimmer";
 import VideoTrimmer, { type TrimRange } from "./VideoTrimmer";
 
 // Stories cap videos at 1 minute.
 const MAX_VIDEO_DURATION_MS = 60 * 1000;
-// Slack so sub-second rounding on the handles doesn't force a needless re-encode.
+// Slack so sub-second rounding on the handles doesn't force a needless re-trim.
 const TRIM_EPSILON_MS = 250;
-
-const toFileUri = (path: string): string =>
-  path.startsWith("file://") || path.startsWith("content://")
-    ? path
-    : `file://${path}`;
 
 // Filename built from the current date down to the second, e.g.
 // "2026-06-26_14-30-45". An index suffix is added by the caller so videos
@@ -189,8 +184,7 @@ const CreateStory = ({
     // Temp files we create for trimmed clips — deleted after upload, win or lose.
     const tempFiles: File[] = [];
     try {
-      // Run the headless trim for each clipped video, write it to a uniquely
-      // named temp file, then post everything.
+      // Trim each clipped video into a uniquely named temp file, then post.
       const payload = await Promise.all(
         items.map(async (a, i) => {
           const description = captions[a.uri] ?? "";
@@ -200,30 +194,19 @@ const CreateStory = ({
           }
 
           const { startMs, endMs } = rangeFor(a, trimRanges);
+          const dest = new File(Paths.cache, `${timestampName()}_${i}.mp4`);
           console.log(
             `[CreateStory] item ${i}: trimming ${startMs}–${endMs}ms of`,
             a.uri,
+            "->",
+            dest.uri,
           );
-          const result = await trim(a.uri, {
-            startTime: startMs,
-            endTime: endMs,
-            saveToPhoto: false,
-          });
-          console.log(
-            `[CreateStory] item ${i}: trim output`,
-            result.outputPath,
-            `duration=${result.duration}ms`,
-          );
-
-          // Move the trimmed clip into a date-time-named temp file in the cache.
-          const dest = new File(Paths.cache, `${timestampName()}_${i}.mp4`);
-          const source = new File(toFileUri(result.outputPath));
-          source.move(dest);
+          const outUri = await trimVideo(a.uri, startMs, endMs, dest.uri);
           tempFiles.push(dest);
-          console.log(`[CreateStory] item ${i}: temp file`, dest.uri);
+          console.log(`[CreateStory] item ${i}: trimmed file`, outUri);
 
           return {
-            asset: { uri: dest.uri, type: "video" as const },
+            asset: { uri: outUri, type: "video" as const },
             description,
           };
         }),
