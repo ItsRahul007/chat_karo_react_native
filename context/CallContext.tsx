@@ -1,6 +1,16 @@
 import { AuthContext } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
+import {
+  cancelAllCallNotifications,
+  cancelIncomingCallNotification,
+  dispatchNotifeeEvent,
+  requestCallNotificationPermission,
+  showIncomingCallNotification,
+  showOngoingCallNotification,
+  subscribeToCallActions,
+} from "@/util/callNotifications";
 import { EmitMessages, ListenMessages } from "@/util/socket.calls";
+import notifee from "@notifee/react-native";
 import { useRouter } from "expo-router";
 import {
   createContext,
@@ -50,6 +60,8 @@ export interface CallContextType {
   isMuted: boolean;
   isSpeakerOn: boolean;
   isCameraOn: boolean;
+  // Whether the local camera is currently front-facing (drives the PiP mirror)
+  isFrontCamera: boolean;
   // Whether the remote peer's camera is currently on (drives video vs avatar UI)
   isRemoteCameraOn: boolean;
   callDuration: number; // seconds
@@ -74,6 +86,7 @@ export interface CallContextType {
   toggleMute: () => void;
   toggleSpeaker: () => void;
   toggleCamera: () => void;
+  switchCamera: () => void;
 }
 
 const STUN_SERVERS = {
@@ -95,6 +108,7 @@ const CallContext = createContext<CallContextType>({
   isMuted: false,
   isSpeakerOn: false,
   isCameraOn: true,
+  isFrontCamera: true,
   isRemoteCameraOn: true,
   callDuration: 0,
   conversationId: null,
@@ -108,6 +122,7 @@ const CallContext = createContext<CallContextType>({
   toggleMute: () => {},
   toggleSpeaker: () => {},
   toggleCamera: () => {},
+  switchCamera: () => {},
 });
 
 export const useCall = () => useContext(CallContext);
@@ -128,6 +143,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
+  const [isFrontCamera, setIsFrontCamera] = useState(true);
   const [isRemoteCameraOn, setIsRemoteCameraOn] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -203,16 +219,39 @@ const CallProvider = ({ children }: PropsWithChildren) => {
     }
   }, [callState]);
 
+  // Force the audio route (speaker vs earpiece). Called both on toggle AND after
+  // WebRTC has (re)configured the audio session — react-native-webrtc takes over
+  // the native audio session on connect / when a remote track arrives and will
+  // clobber whatever route we set, so a single call gets silently overridden.
+  const applyAudioRoute = useCallback((speaker: boolean) => {
+    try {
+      InCallManager.setForceSpeakerphoneOn(speaker);
+    } catch {
+      // native module may be unavailable (e.g. web); ignore
+    }
+  }, []);
+
   // Apply the speaker/earpiece route whenever it changes during an active call.
   useEffect(() => {
     if (callState === "connecting" || callState === "connected") {
-      try {
-        InCallManager.setForceSpeakerphoneOn(isSpeakerOn);
-      } catch {
-        // ignore if unavailable
-      }
+      applyAudioRoute(isSpeakerOn);
+      // Re-apply shortly after to win the race against WebRTC's own audio-session
+      // setup, which otherwise resets the route right after we set it.
+      const t = setTimeout(() => applyAudioRoute(isSpeakerOnRef.current), 500);
+      return () => clearTimeout(t);
     }
-  }, [isSpeakerOn, callState]);
+  }, [isSpeakerOn, callState, applyAudioRoute]);
+
+  // When the remote stream arrives WebRTC reconfigures the audio session, which
+  // resets the route. Re-assert our chosen route so the speaker toggle sticks.
+  useEffect(() => {
+    if (
+      remoteStream &&
+      (callState === "connecting" || callState === "connected")
+    ) {
+      applyAudioRoute(isSpeakerOnRef.current);
+    }
+  }, [remoteStream, callState, applyAudioRoute]);
 
   // ─── Helpers ───────────────────────────────────────────────────
   const getMediaStream = useCallback(
@@ -317,6 +356,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
     setIsMuted(false);
     setIsSpeakerOn(false);
     setIsCameraOn(true);
+    setIsFrontCamera(true);
     setIsRemoteCameraOn(true);
     setCallDuration(0);
     setConversationId(null);
@@ -545,14 +585,22 @@ const CallProvider = ({ children }: PropsWithChildren) => {
             video: { facingMode: "user", width: 640, height: 480 },
           });
           const videoTrack = (videoStream as MediaStream).getVideoTracks()[0];
-          if (videoTrack) {
-            // Add new video track to peer connection
-            pc.addTrack(videoTrack, localStream || (videoStream as MediaStream));
+          if (videoTrack && localStream) {
+            // Build a brand-new MediaStream carrying the existing audio track
+            // plus the new video track. Mutating the existing stream in place
+            // keeps the same reactTag, so the local RTCView (which was mounted
+            // on an audio-only stream) never wires up a video sink and the
+            // preview stays blank. A fresh stream forces RTCView to remount and
+            // render the camera.
+            const upgradedStream = new MediaStream([
+              ...(localStream.getTracks() as any[]),
+              videoTrack,
+            ] as any);
 
-            // Update local stream to include video track
-            if (localStream) {
-              (localStream as any).addTrack(videoTrack);
-            }
+            // Add the new video track to the peer connection (new m-line) and
+            // expose the upgraded stream to the UI.
+            pc.addTrack(videoTrack, upgradedStream);
+            setLocalStream(upgradedStream);
 
             setCallType("video");
             setIsCameraOn(true);
@@ -576,6 +624,127 @@ const CallProvider = ({ children }: PropsWithChildren) => {
       }
     }
   }, [localStream, isCameraOn, callType, renegotiate]);
+
+  // Flip between the front and back camera on the active video track.
+  const switchCamera = useCallback(() => {
+    if (!localStream) return;
+    const videoTrack = localStream.getVideoTracks()[0] as any;
+    if (videoTrack && typeof videoTrack._switchCamera === "function") {
+      videoTrack._switchCamera();
+      setIsFrontCamera((prev) => !prev);
+    }
+  }, [localStream]);
+
+  // ─── Native OS call notifications ──────────────────────────────
+  // Request permission + wire notifee's foreground events (button presses /
+  // taps while the app is open) into the same action bus the background
+  // handler (index.js) uses. Set up once.
+  useEffect(() => {
+    requestCallNotificationPermission();
+    const unsubscribe = notifee.onForegroundEvent(dispatchNotifeeEvent);
+    return unsubscribe;
+  }, []);
+
+  // The action subscription is registered once but must call the *latest*
+  // action handlers, so read them through a ref refreshed every render.
+  const notifActionsRef = useRef({
+    acceptCall,
+    rejectCall,
+    toggleMute,
+    toggleSpeaker,
+    endCall,
+    conversationId,
+  });
+  notifActionsRef.current = {
+    acceptCall,
+    rejectCall,
+    toggleMute,
+    toggleSpeaker,
+    endCall,
+    conversationId,
+  };
+
+  // Map notification actions → call actions. "open" brings the call screen
+  // forward (used by the body tap and the full-screen intent).
+  useEffect(() => {
+    const unsubscribe = subscribeToCallActions((action) => {
+      const a = notifActionsRef.current;
+      switch (action) {
+        case "open":
+          if (a.conversationId) router.push(`/call/${a.conversationId}` as any);
+          break;
+        case "accept":
+          a.acceptCall();
+          break;
+        case "decline":
+          a.rejectCall();
+          break;
+        case "mute":
+          a.toggleMute();
+          break;
+        case "speaker":
+          a.toggleSpeaker();
+          break;
+        case "hangup":
+          a.endCall();
+          break;
+      }
+    });
+    return unsubscribe;
+  }, [router]);
+
+  // Show / clear the incoming-call notification (full-screen intent + Accept /
+  // Decline) as the ring state comes and goes.
+  useEffect(() => {
+    if (callState === "incoming_ringing" && incomingCallData) {
+      showIncomingCallNotification({
+        callerName: incomingCallData.callerName,
+        callType: incomingCallData.callType,
+        isCommunity: incomingCallData.isCommunity,
+      });
+    } else {
+      cancelIncomingCallNotification();
+    }
+  }, [callState, incomingCallData]);
+
+  // Show / update the ongoing-call notification (foreground service with Mute /
+  // Speaker / Hang up). Re-runs each second while connected so the timer ticks,
+  // and whenever mute/speaker flip so the button labels stay in sync.
+  useEffect(() => {
+    if (
+      callState === "outgoing_ringing" ||
+      callState === "connecting" ||
+      callState === "connected"
+    ) {
+      const mins = Math.floor(callDuration / 60)
+        .toString()
+        .padStart(2, "0");
+      const secs = (callDuration % 60).toString().padStart(2, "0");
+      const statusText =
+        callState === "outgoing_ringing"
+          ? "Ringing…"
+          : callState === "connecting"
+            ? "Connecting…"
+            : `${mins}:${secs}`;
+
+      showOngoingCallNotification({
+        remoteName: remoteUserName ?? "Ongoing call",
+        callType: callType ?? "audio",
+        isMuted,
+        isSpeakerOn,
+        statusText,
+      });
+    } else if (callState === "idle") {
+      cancelAllCallNotifications();
+    }
+  }, [
+    callState,
+    callDuration,
+    isMuted,
+    isSpeakerOn,
+    remoteUserName,
+    callType,
+  ]);
 
   // ─── Socket event listeners ────────────────────────────────────
   useEffect(() => {
@@ -768,6 +937,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
         isMuted,
         isSpeakerOn,
         isCameraOn,
+        isFrontCamera,
         isRemoteCameraOn,
         callDuration,
         conversationId,
@@ -781,6 +951,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
         toggleMute,
         toggleSpeaker,
         toggleCamera,
+        switchCamera,
       }}
     >
       {children}

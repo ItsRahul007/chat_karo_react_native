@@ -1,0 +1,37 @@
+diff --git a/node_modules/react-native-incall-manager/android/src/main/java/com/zxcpoiu/incallmanager/InCallManagerModule.java b/node_modules/react-native-incall-manager/android/src/main/java/com/zxcpoiu/incallmanager/InCallManagerModule.java
+index 10cb1e5..8f44407 100644
+--- a/node_modules/react-native-incall-manager/android/src/main/java/com/zxcpoiu/incallmanager/InCallManagerModule.java
++++ b/node_modules/react-native-incall-manager/android/src/main/java/com/zxcpoiu/incallmanager/InCallManagerModule.java
+@@ -861,6 +861,32 @@ public class InCallManagerModule extends ReactContextBaseJavaModule implements L
+ 
+     @ReactMethod
+     public void setSpeakerphoneOn(final boolean enable) {
++        // On Android 12+ (API 31) AudioManager.setSpeakerphoneOn() is deprecated and is
++        // a no-op while another module (e.g. WebRTC) holds MODE_IN_COMMUNICATION. Route
++        // via the modern setCommunicationDevice() API instead so the speaker toggle works.
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
++            Log.d(TAG, "setSpeakerphoneOn() [API31+]: " + enable);
++            audioManager.setMode(defaultAudioMode);
++            int targetType = enable
++                    ? AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
++                    : AudioDeviceInfo.TYPE_BUILTIN_EARPIECE;
++            AudioDeviceInfo target = null;
++            for (AudioDeviceInfo device : audioManager.getAvailableCommunicationDevices()) {
++                if (device.getType() == targetType) {
++                    target = device;
++                    break;
++                }
++            }
++            if (target != null) {
++                boolean ok = audioManager.setCommunicationDevice(target);
++                Log.d(TAG, "setCommunicationDevice(" + targetType + ") success=" + ok);
++            } else if (!enable) {
++                // No explicit earpiece (e.g. tablet) — let the system pick the default route.
++                audioManager.clearCommunicationDevice();
++            }
++            return;
++        }
++
+         if (enable != audioManager.isSpeakerphoneOn())  {
+             Log.d(TAG, "setSpeakerphoneOn(): " + enable);
+ 	    audioManager.setMode(defaultAudioMode);
