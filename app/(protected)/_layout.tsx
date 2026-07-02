@@ -1,3 +1,5 @@
+import IncomingCallOverlay from "@/components/call/IncomingCallOverlay";
+import CallProvider from "@/context/CallContext";
 import SocketProvider from "@/context/SocketContext";
 import { usePushNotification } from "@/custom-hooks/usePushNotification";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,11 +14,15 @@ export default function ProtectedLayout() {
   return (
     <>
       <SocketProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
+        <CallProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+          <IncomingCallOverlay />
+        </CallProvider>
       </SocketProvider>
       <StatusBar style="auto" />
     </>
   );
 }
+

@@ -6,6 +6,7 @@ import GredientIcon from "@/components/common/GredientIcon";
 import ChatProfileSkeleton from "@/components/skeletons/ChatProfileSkeleton";
 import MessageListSkeleton from "@/components/skeletons/MessageListSkeleton";
 import { ColorTheme } from "@/constants/colors";
+import { useCall } from "@/context/CallContext";
 import { AuthContext } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import {
@@ -61,6 +62,7 @@ const Chat = () => {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
   const iconColor = useIconColor();
+  const { startCall } = useCall();
 
   const placeholderColor =
     theme === "light"
@@ -294,30 +296,52 @@ const Chat = () => {
                     </View>
                   </View>
                 )}
-                <View className="flex-row items-center justify-end gap-x-5">
-                  <GredientIcon
-                    icon={
-                      <Ionicons
-                        name={"videocam"}
-                        size={chatTopBarIconSize}
-                        color={iconColor}
-                      />
-                    }
-                    onPress={() => {}}
-                  />
-                  <GredientIcon
-                    icon={
-                      <Ionicons
-                        name={"call"}
-                        size={chatTopBarIconSize}
-                        color={iconColor}
-                      />
-                    }
-                    onPress={() => {}}
-                  />
-                </View>
               </View>
             </Link>
+
+            {/* Call icons — outside <Link> so they trigger calls, not navigation */}
+            <View className="flex-row items-center justify-end gap-x-5 ml-2">
+              <GredientIcon
+                icon={
+                  <Ionicons
+                    name={"videocam"}
+                    size={chatTopBarIconSize}
+                    color={iconColor}
+                  />
+                }
+                onPress={() => {
+                  if (!chat || conversationId === "new") return;
+                  startCall({
+                    calleeId: isCommunity !== "true" ? (chatWithId as string) : undefined,
+                    callType: "video",
+                    conversationId: conversationId as string,
+                    isCommunity: isCommunity === "true",
+                    calleeName: chat.name || "Unknown",
+                    calleeAvatar: chat.avatar || "",
+                  });
+                }}
+              />
+              <GredientIcon
+                icon={
+                  <Ionicons
+                    name={"call"}
+                    size={chatTopBarIconSize}
+                    color={iconColor}
+                  />
+                }
+                onPress={() => {
+                  if (!chat || conversationId === "new") return;
+                  startCall({
+                    calleeId: isCommunity !== "true" ? (chatWithId as string) : undefined,
+                    callType: "audio",
+                    conversationId: conversationId as string,
+                    isCommunity: isCommunity === "true",
+                    calleeName: chat.name || "Unknown",
+                    calleeAvatar: chat.avatar || "",
+                  });
+                }}
+              />
+            </View>
           </View>
         </View>
 
