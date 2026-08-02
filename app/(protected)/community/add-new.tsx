@@ -2,15 +2,13 @@ import AddMemberCard from "@/components/common/AddMemberCard";
 import BackgroundGredientIconButton from "@/components/common/BackgroundGredientIconButton";
 import CommonTopBar from "@/components/common/CommonTopBar";
 import GredientIcon from "@/components/common/GredientIcon";
+import { AppText as Text, AppTextInput as TextInput } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import { createCommunity, getPrivateChats } from "@/controller/chat.controller";
 
 import { handleUploadFile, useIconColor } from "@/util/common.functions";
 import {
-  chatTopBarIconSize,
-  gradientIconButtonIconSize,
-  gradientIconButtonSize,
-} from "@/util/constants";
+  chatTopBarIconSize, gradientIconButtonIconSize, gradientIconButtonSize, } from "@/util/constants";
 import { BucketNames, QueryKeys, SearchParams } from "@/util/enum";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import { Toast } from "@/util/toast";
@@ -27,8 +25,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";

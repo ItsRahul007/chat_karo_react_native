@@ -1,3 +1,4 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -8,7 +9,6 @@ import {
   Image,
   Pressable,
   ScrollView,
-  Text,
   useColorScheme,
   View,
 } from "react-native";

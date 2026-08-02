@@ -116,8 +116,14 @@ const usePushNotification = (queryClient: QueryClient): I_PushNotification => {
             };
           };
 
-          queryClient.setQueryData([QueryKeys.privateChats], updateUnread);
-          queryClient.setQueryData([QueryKeys.communityChats], updateUnread);
+          queryClient.setQueriesData(
+            { queryKey: [QueryKeys.privateChats] },
+            updateUnread,
+          );
+          queryClient.setQueriesData(
+            { queryKey: [QueryKeys.communityChats] },
+            updateUnread,
+          );
 
           router.navigate(
             `/chat/${data.conversationId}?chatWithId=${data.chatWithId}` as any,

@@ -1,6 +1,7 @@
 import useFetch from "@/custom-hooks/useFetch";
+import { AppText as Text } from "@/components/common/AppText";
 import { generateThumbnail, useIconColor } from "@/util/common.functions";
-import { ActivityIndicator, Image, Text, View } from "react-native";
+import { ActivityIndicator, Image, View } from "react-native";
 
 // Renders a thumbnail for a story slide. Images render directly; videos resolve
 // a poster frame via generateThumbnail. `className` controls size/rounding.

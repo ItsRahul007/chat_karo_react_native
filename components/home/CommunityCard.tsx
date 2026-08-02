@@ -1,3 +1,4 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { SingleCommunityChat } from "@/util/interfaces/types";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Link } from "expo-router";
@@ -5,7 +6,6 @@ import React, { useState } from "react";
 import {
   Image,
   Pressable,
-  Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,

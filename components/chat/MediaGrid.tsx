@@ -1,8 +1,9 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { BucketNames } from "@/util/enum";
 import { MediaAttachment } from "@/util/interfaces/types";
 import { supabase } from "@/util/supabase";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import MediaItem from "./MediaItem";
 
 const MediaGrid = ({

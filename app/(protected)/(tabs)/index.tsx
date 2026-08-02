@@ -4,18 +4,14 @@ import GredientIcon from "@/components/common/GredientIcon";
 import MyBlurView from "@/components/common/MyBlurView";
 import CommunityList from "@/components/home/CommunityList";
 import PersonCard from "@/components/home/PersonCard";
+import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
 import {
-  getPrivateChats,
-  updateLastReadTime,
-} from "@/controller/chat.controller";
+  getPrivateChats, updateLastReadTime, } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
 import {
-  CHAT_PAGE_SIZE,
-  gradientIconButtonIconSize,
-  gradientIconButtonSize,
-} from "@/util/constants";
+  CHAT_PAGE_SIZE, gradientIconButtonIconSize, gradientIconButtonSize, } from "@/util/constants";
 import { QueryKeys, SearchParams } from "@/util/enum";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -26,7 +22,6 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  Text,
   useColorScheme,
   View,
 } from "react-native";

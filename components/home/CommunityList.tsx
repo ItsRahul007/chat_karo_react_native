@@ -1,15 +1,14 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import {
-  getCommunityChats,
-  updateLastReadTime,
-} from "@/controller/chat.controller";
+  getCommunityChats, updateLastReadTime, } from "@/controller/chat.controller";
 
 import { QueryKeys } from "@/util/enum";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import React, { useContext, useMemo } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import CommunityCard from "./CommunityCard";
 
 const CommunityList = ({ iconColor }: { iconColor: string }) => {
@@ -37,22 +36,25 @@ const CommunityList = ({ iconColor }: { iconColor: string }) => {
   );
 
   const setUnreadMessageCountToZero = (conversationId: bigint) => {
-    queryClient.setQueryData([QueryKeys.communityChats], (old: any) => {
-      if (!old) return old;
-      return {
-        ...old,
-        pages: old.pages.map((page: any[]) =>
-          page.map((chat: any) =>
-            chat.conversationId?.toString() === conversationId.toString()
-              ? {
-                  ...chat,
-                  unreadMessageCount: 0,
-                }
-              : chat,
+    queryClient.setQueriesData(
+      { queryKey: [QueryKeys.communityChats] },
+      (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any[]) =>
+            page.map((chat: any) =>
+              chat.conversationId?.toString() === conversationId.toString()
+                ? {
+                    ...chat,
+                    unreadMessageCount: 0,
+                  }
+                : chat,
+            ),
           ),
-        ),
-      };
-    });
+        };
+      },
+    );
 
     // update lastReadTime in participants in DB
     updateLastReadTime(conversationId, user?.id!);

@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { AppText as Text } from "@/components/common/AppText";
+import { View } from "react-native";
 
 interface OptionsProps {
   actionButton: React.ReactNode;

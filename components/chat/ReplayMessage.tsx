@@ -1,6 +1,7 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { Message } from "@/util/interfaces/types";
 import { Entypo } from "@expo/vector-icons";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 
 interface ReplyMessageProps {
   message: Message;

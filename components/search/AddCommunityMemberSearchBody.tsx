@@ -1,17 +1,16 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import { addCommunityMembers } from "@/controller/chat.controller";
 import { searchPerson } from "@/controller/search.controller";
 import {
-  gradientIconButtonIconSize,
-  gradientIconButtonSize,
-} from "@/util/constants";
+  gradientIconButtonIconSize, gradientIconButtonSize, } from "@/util/constants";
 import { QueryKeys } from "@/util/enum";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import { Entypo } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useContext, useEffect, useState } from "react";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, View } from "react-native";
 import AddMemberCard from "../common/AddMemberCard";
 import BackgroundGredientIconButton from "../common/BackgroundGredientIconButton";
 import PersonCardSkeleton from "../skeletons/PersonCardSkeleton";

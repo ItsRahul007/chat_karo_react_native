@@ -1,9 +1,10 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { chatTopBarIconSize } from "@/util/constants";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { Entypo } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import React from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 
 interface MembersListProps {
   id: string;

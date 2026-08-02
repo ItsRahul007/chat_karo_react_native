@@ -1,3 +1,4 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import { deleteStory } from "@/controller/story.controller";
 import { QueryKeys } from "@/util/enum";
@@ -8,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 import CreateStory from "./CreateStory";
 import MyStoryCard from "./MyStoryCard";
 import ShowStory from "./ShowStory";

@@ -1,6 +1,7 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import React, { useEffect } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,

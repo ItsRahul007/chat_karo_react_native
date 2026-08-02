@@ -1,9 +1,10 @@
 import AddCommunityMemberSearchBody from "@/components/search/AddCommunityMemberSearchBody";
 import CommunitySearchBody from "@/components/search/CommunitySearchBody";
 import PersonSearchBody from "@/components/search/PersonSearchBody";
+import { AppText as Text } from "@/components/common/AppText";
 import { SearchParams } from "@/util/enum";
 import { useLocalSearchParams } from "expo-router";
-import { KeyboardAvoidingView, Platform, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const Search = () => {

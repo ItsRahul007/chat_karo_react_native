@@ -1,3 +1,4 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
 import { useIconColor } from "@/util/common.functions";
@@ -6,7 +7,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import React, { useContext } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 import CommonBackButton from "./CommonBackButton";
 
 type BaseProps = {

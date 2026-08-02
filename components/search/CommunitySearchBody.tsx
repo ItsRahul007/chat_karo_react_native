@@ -1,7 +1,8 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { searchCommunity } from "@/controller/search.controller";
 import { CommunityCardProps } from "@/util/interfaces/commonInterfaces";
 import React, { useEffect, useState } from "react";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, View } from "react-native";
 import SearchCommunityCard from "./SearchCommunityCard";
 import CommunityCardSkeleton from "../skeletons/CommunityCardSkeleton";
 import SearchHeader from "./SearchHeader";

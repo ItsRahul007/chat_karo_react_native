@@ -1,3 +1,4 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { profileInfoIconSize } from "@/util/constants";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
@@ -5,7 +6,6 @@ import {
   Image,
   Modal,
   Pressable,
-  Text,
   TouchableWithoutFeedback,
   View,
 } from "react-native";

@@ -1,11 +1,12 @@
 import UnreadMessageCount from "@/components/home/UnreadMessageCount";
+import { AppText as Text } from "@/components/common/AppText";
 import { useFormatedTime } from "@/util/common.functions";
 import { SingleChat } from "@/util/interfaces/types";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Link } from "expo-router";
 import React, { useState } from "react";
-import { Image, Pressable, Text, TouchableOpacity, View } from "react-native";
+import { Image, Pressable, TouchableOpacity, View } from "react-native";
 import ShowAvatar from "./ShowAvatar";
 
 const PersonCard = ({

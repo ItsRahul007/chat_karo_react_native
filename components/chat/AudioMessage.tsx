@@ -1,3 +1,4 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
@@ -6,7 +7,6 @@ import React from "react";
 import {
   ActivityIndicator,
   Pressable,
-  Text,
   useColorScheme,
   View,
 } from "react-native";

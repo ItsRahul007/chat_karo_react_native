@@ -1,6 +1,7 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import React from "react";
-import { Modal, Pressable, Text, View } from "react-native";
+import { Modal, Pressable, View } from "react-native";
 
 interface MemberActionsModalProps {
   visible: boolean;

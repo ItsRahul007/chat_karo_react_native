@@ -1,10 +1,10 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Animated,
   PanResponder,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";

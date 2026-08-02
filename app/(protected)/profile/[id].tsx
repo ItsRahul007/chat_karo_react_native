@@ -1,10 +1,9 @@
 import CommonBackButton from "@/components/common/CommonBackButton";
+import { AppText as Text, AppTextInput as TextInput } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
 import {
-  createUser,
-  updateUser as updateUserProfile,
-} from "@/controller/profile.controller";
+  createUser, updateUser as updateUserProfile, } from "@/controller/profile.controller";
 import { handleUploadFile } from "@/util/common.functions";
 import { BucketNames } from "@/util/enum";
 import { supabase } from "@/util/supabase";
@@ -19,8 +18,6 @@ import {
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
-  Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

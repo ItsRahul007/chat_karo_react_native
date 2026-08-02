@@ -1,12 +1,13 @@
 import MediaItem from "@/components/chat/MediaItem";
 import CommonTopBar from "@/components/common/CommonTopBar";
+import { AppText as Text } from "@/components/common/AppText";
 import { getChatMediaById } from "@/controller/chat.controller";
 import { CHAT_PAGE_SIZE } from "@/util/constants";
 import { QueryKeys } from "@/util/enum";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const AlFiles = () => {

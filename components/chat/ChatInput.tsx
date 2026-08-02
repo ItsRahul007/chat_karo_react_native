@@ -1,3 +1,4 @@
+import { AppTextInput as TextInput } from "@/components/common/AppText";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
@@ -11,9 +12,9 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  TextInput,
   useColorScheme,
   View,
+  type TextInput as RNTextInput,
 } from "react-native";
 import ReanimatedAnimated, {
   useAnimatedStyle,
@@ -74,7 +75,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     ImagePicker.ImagePickerAsset[]
   >([]);
   const [isUploading, setIsUploading] = useState(false);
-  const textInputRef = useRef<TextInput>(null);
+  const textInputRef = useRef<RNTextInput>(null);
   const textRef = useRef("");
   const isTypingRef = useRef(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

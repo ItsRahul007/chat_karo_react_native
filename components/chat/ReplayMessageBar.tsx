@@ -1,8 +1,9 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { useIconColor } from "@/util/common.functions";
 import { Message } from "@/util/interfaces/types";
 import { Entypo } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import ReanimatedAnimated from "react-native-reanimated";
 import ReplyMessage from "./ReplayMessage";
 

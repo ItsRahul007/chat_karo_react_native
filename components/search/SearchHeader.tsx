@@ -1,8 +1,9 @@
+import { AppTextInput as TextInput } from "@/components/common/AppText";
 import { useIconColor } from "@/util/common.functions";
 import { chatTopBarIconSize } from "@/util/constants";
 import { FontAwesome } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, TextInput, View } from "react-native";
+import { Pressable, View } from "react-native";
 import CommonBackButton from "../common/CommonBackButton";
 
 const SearchHeader = ({

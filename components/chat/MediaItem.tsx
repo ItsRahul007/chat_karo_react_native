@@ -1,3 +1,5 @@
+import { AppText as Text } from "@/components/common/AppText";
+import { FontFamily } from "@/constants/fonts";
 import { saveMediaIntoDevice } from "@/controller/chat.controller";
 import useFetch from "@/custom-hooks/useFetch";
 import { generateThumbnail, useIconColor } from "@/util/common.functions";
@@ -13,7 +15,6 @@ import {
   Linking,
   Modal,
   Pressable,
-  Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -196,7 +197,14 @@ const RenderContent = ({
             paddingVertical: 1,
           }}
         >
-          <Text style={{ color: "white", fontSize: 9, fontWeight: "700" }}>
+          <Text
+            style={{
+              color: "white",
+              fontSize: 9,
+              fontFamily: FontFamily.bold,
+              fontWeight: "700",
+            }}
+          >
             GIF
           </Text>
         </View>

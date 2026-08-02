@@ -36,7 +36,7 @@ export const useSocket = () => useContext(SocketContext);
 
 // const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_SERVER_URL!;
 // use this command to get the ip: ipconfig getifaddr en0
-const SOCKET_URL = "http://192.168.0.111:3001";
+const SOCKET_URL = "http://192.168.0.104:3001";
 
 const SocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn, user } = useContext(AuthContext);
@@ -139,6 +139,13 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
       isCommunity: boolean;
       isNewChat: boolean;
     }) => {
+      /*
+      * keep the thread cache in sync too — otherwise a conversation that was
+      ? opened earlier is served from cache without the messages that arrived
+      ? while we were outside of it
+      */
+      handleReceiveMessage(queryClient, message);
+
       //* update the chat, increment unread count
       handleInboxUpdate({
         queryClient,

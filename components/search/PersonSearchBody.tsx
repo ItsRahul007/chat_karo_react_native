@@ -1,8 +1,9 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import { searchPerson } from "@/controller/search.controller";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import React, { useContext, useEffect, useState } from "react";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, View } from "react-native";
 import SearchPersonCard from "./SearchPersonCard";
 import PersonCardSkeleton from "../skeletons/PersonCardSkeleton";
 import SearchHeader from "./SearchHeader";

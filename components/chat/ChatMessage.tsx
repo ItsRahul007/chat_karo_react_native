@@ -1,9 +1,10 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import { Message } from "@/util/interfaces/types";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import React, { useContext, useRef, useState } from "react";
-import { Animated, Image, Pressable, Text, View } from "react-native";
+import { Animated, Image, Pressable, View } from "react-native";
 import MediaGrid from "./MediaGrid";
 import MessageOptionsModal from "./MessageOptionsModal";
 import SwipeToReply from "./SwipeToReply";

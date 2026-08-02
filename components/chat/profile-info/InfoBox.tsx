@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { AppText as Text } from "@/components/common/AppText";
+import { View } from "react-native";
 
 const InfoBox = ({ title, value }: { title: string; value: string }) => {
   return (

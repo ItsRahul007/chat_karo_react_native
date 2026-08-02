@@ -1,11 +1,8 @@
-import {
-  getStoryAuthor,
-  getStoryAuthorName,
-  useIconColor,
-} from "@/util/common.functions";
+import { AppText as Text } from "@/components/common/AppText";
+import { getStoryAuthor, getStoryAuthorName, useIconColor, } from "@/util/common.functions";
 import { StoryViewer } from "@/util/interfaces/types";
 import { Feather } from "@expo/vector-icons";
-import { FlatList, Image, Pressable, Text, View } from "react-native";
+import { FlatList, Image, Pressable, View } from "react-native";
 
 const formatViewedAt = (value: Date | string): string =>
   new Date(value).toLocaleString([], {

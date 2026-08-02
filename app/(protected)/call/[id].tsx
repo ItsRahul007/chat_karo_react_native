@@ -1,4 +1,6 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
+import { FontFamily } from "@/constants/fonts";
 import { useCall } from "@/context/CallContext";
 import { gradientColors } from "@/util/constants";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -9,7 +11,6 @@ import {
   Image,
   Pressable,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -445,11 +446,13 @@ const styles = StyleSheet.create({
   remoteUserName: {
     color: "#e6e4fc",
     fontSize: 22,
+    fontFamily: FontFamily.bold,
     fontWeight: "700",
   },
   statusText: {
     color: "#a09bc5",
     fontSize: 15,
+    fontFamily: FontFamily.medium,
     fontWeight: "500",
   },
   centerSection: {
@@ -566,6 +569,7 @@ const styles = StyleSheet.create({
   controlLabel: {
     color: "#a09bc5",
     fontSize: 11,
+    fontFamily: FontFamily.medium,
     fontWeight: "500",
   },
 });

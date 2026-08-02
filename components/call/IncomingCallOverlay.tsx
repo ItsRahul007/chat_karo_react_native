@@ -1,16 +1,11 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
+import { FontFamily } from "@/constants/fonts";
 import { useCall } from "@/context/CallContext";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef } from "react";
-import {
-  Animated,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Animated, Image, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const IncomingCallOverlay = () => {
@@ -159,6 +154,7 @@ const styles = StyleSheet.create({
   callTypeLabel: {
     color: "#a09bc5",
     fontSize: 14,
+    fontFamily: FontFamily.semibold,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 2,
@@ -198,6 +194,7 @@ const styles = StyleSheet.create({
   callerName: {
     color: "#e6e4fc",
     fontSize: 28,
+    fontFamily: FontFamily.bold,
     fontWeight: "700",
   },
   callStatus: {
@@ -230,6 +227,7 @@ const styles = StyleSheet.create({
   buttonLabel: {
     color: "#a09bc5",
     fontSize: 13,
+    fontFamily: FontFamily.medium,
     fontWeight: "500",
   },
 });

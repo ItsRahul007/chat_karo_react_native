@@ -1,3 +1,4 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import CommonTopBar from "@/components/common/CommonTopBar";
 import CommunityCard from "@/components/home/CommunityCard";
@@ -7,7 +8,7 @@ import { CHAT_PAGE_SIZE } from "@/util/constants";
 import { QueryKeys, SearchParams } from "@/util/enum";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import React, { useContext, useMemo } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const index = () => {

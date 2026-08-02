@@ -1,7 +1,8 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import { Link } from "expo-router";
 import React from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 
 const SearchPersonCard = ({
   avatar,

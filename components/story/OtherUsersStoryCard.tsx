@@ -1,6 +1,7 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { getStoryAuthor, getStoryAuthorName } from "@/util/common.functions";
 import { StoryRow } from "@/util/interfaces/types";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 import StoryThumbnail from "./StoryThumbnail";
 
 const OtherUsersStoryCard = ({

@@ -2,14 +2,13 @@ import BackgroundGredientIconButton from "@/components/common/BackgroundGredient
 import CommonBackButton from "@/components/common/CommonBackButton";
 import MemberActionsModal from "@/components/community/MemberActionsModal";
 import MemberItem from "@/components/community/MemberItem";
+import { AppText as Text } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import { getChatMembersById } from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
 import {
-  gradientIconButtonIconSize,
-  gradientIconButtonSize,
-} from "@/util/constants";
+  gradientIconButtonIconSize, gradientIconButtonSize, } from "@/util/constants";
 import { QueryKeys, SearchParams } from "@/util/enum";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { EmitMessages } from "@/util/socket.calls";
@@ -18,7 +17,7 @@ import { Entypo } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocalSearchParams } from "expo-router";
 import React, { useContext, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const Members = () => {

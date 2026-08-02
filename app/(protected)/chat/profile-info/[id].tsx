@@ -6,30 +6,19 @@ import BackgroundGredientIconButton from "@/components/common/BackgroundGredient
 import CommonBackButton from "@/components/common/CommonBackButton";
 import CustomIconSwitch from "@/components/common/CustomIconSwitch";
 import SkeletonBase from "@/components/skeletons/SkeletonBase";
+import { AppText as Text, AppTextInput as TextInput } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
 import {
-  getChatMediaById,
-  getChatMembersById,
-  getChatProfileById,
-  toggleMute,
-  updateCommunityProfile,
-} from "@/controller/chat.controller";
+  getChatMediaById, getChatMembersById, getChatProfileById, toggleMute, updateCommunityProfile, } from "@/controller/chat.controller";
 import { handleUploadFile, useIconColor } from "@/util/common.functions";
 import {
-  chatTopBarIconSize,
-  gradientIconButtonIconSize,
-  profileInfoIconSize,
-} from "@/util/constants";
+  chatTopBarIconSize, gradientIconButtonIconSize, profileInfoIconSize, } from "@/util/constants";
 import { BucketNames, QueryKeys } from "@/util/enum";
 import { SingleUser } from "@/util/interfaces/commonInterfaces";
 import { Toast } from "@/util/toast";
 import {
-  Entypo,
-  Feather,
-  Fontisto,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
+  Entypo, Feather, Fontisto, MaterialCommunityIcons, } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { Link, useLocalSearchParams } from "expo-router";
@@ -40,8 +29,6 @@ import {
   Image,
   Pressable,
   ScrollView,
-  Text,
-  TextInput,
   useColorScheme,
   View,
 } from "react-native";

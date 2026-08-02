@@ -5,15 +5,13 @@ import CommonBackButton from "@/components/common/CommonBackButton";
 import GredientIcon from "@/components/common/GredientIcon";
 import ChatProfileSkeleton from "@/components/skeletons/ChatProfileSkeleton";
 import MessageListSkeleton from "@/components/skeletons/MessageListSkeleton";
+import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import { useCall } from "@/context/CallContext";
 import { AuthContext } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import {
-  deleteMessage,
-  getChatById,
-  getChatProfileById,
-} from "@/controller/chat.controller";
+  deleteMessage, getChatById, getChatProfileById, } from "@/controller/chat.controller";
 import { useFormatedTime, useIconColor } from "@/util/common.functions";
 import { CHAT_PAGE_SIZE, chatTopBarIconSize } from "@/util/constants";
 import { QueryKeys } from "@/util/enum";
@@ -21,17 +19,13 @@ import { Message } from "@/util/interfaces/types";
 import { EmitMessages, ListenMessages } from "@/util/socket.calls";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
-  useInfiniteQuery,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+  useInfiniteQuery, useQuery, useQueryClient, } from "@tanstack/react-query";
 import { Link, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
-  Text,
   useColorScheme,
   View,
 } from "react-native";
@@ -238,6 +232,8 @@ const Chat = () => {
     }
   };
 
+  console.log(chat?.avatar);
+
   return (
     <View
       className="flex-1 bg-light-background-secondary dark:bg-dark-background-secondary"
@@ -263,12 +259,20 @@ const Chat = () => {
                   <ChatProfileSkeleton />
                 ) : (
                   <View className="flex-row items-center gap-x-2 flex-1">
-                    <View className="rounded-full h-14 w-14 overflow-hidden">
-                      <Image
-                        source={{ uri: chat?.avatar }}
-                        className="h-full w-full"
-                        resizeMode="contain"
-                      />
+                    <View className="rounded-full h-14 w-14 overflow-hidden items-center justify-center bg-light-background-secondary dark:bg-dark-background-secondary">
+                      {chat?.avatar ? (
+                        <Image
+                          source={{ uri: chat.avatar }}
+                          className="h-full w-full"
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <Ionicons
+                          name={isCommunity === "true" ? "people" : "person"}
+                          size={28}
+                          color={placeholderColor}
+                        />
+                      )}
                     </View>
                     <View className="flex-1">
                       <View className="flex-row items-center gap-x-1">
@@ -312,7 +316,10 @@ const Chat = () => {
                 onPress={() => {
                   if (!chat || conversationId === "new") return;
                   startCall({
-                    calleeId: isCommunity !== "true" ? (chatWithId as string) : undefined,
+                    calleeId:
+                      isCommunity !== "true"
+                        ? (chatWithId as string)
+                        : undefined,
                     callType: "video",
                     conversationId: conversationId as string,
                     isCommunity: isCommunity === "true",
@@ -332,7 +339,10 @@ const Chat = () => {
                 onPress={() => {
                   if (!chat || conversationId === "new") return;
                   startCall({
-                    calleeId: isCommunity !== "true" ? (chatWithId as string) : undefined,
+                    calleeId:
+                      isCommunity !== "true"
+                        ? (chatWithId as string)
+                        : undefined,
                     callType: "audio",
                     conversationId: conversationId as string,
                     isCommunity: isCommunity === "true",

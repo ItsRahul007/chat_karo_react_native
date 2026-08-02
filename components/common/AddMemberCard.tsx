@@ -1,6 +1,7 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { PersonCardProps } from "@/util/interfaces/commonInterfaces";
 import { Entypo } from "@expo/vector-icons";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 
 interface AddMemberCardProps {
   isSelected: boolean;

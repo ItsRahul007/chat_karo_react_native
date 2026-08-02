@@ -2,13 +2,14 @@ import CommonTopBar from "@/components/common/CommonTopBar";
 import MyStorySection from "@/components/story/MyStorySection";
 import OtherUsersStoryCard from "@/components/story/OtherUsersStoryCard";
 import ShowStory from "@/components/story/ShowStory";
+import { AppText as Text } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import { getStories } from "@/controller/story.controller";
 import { useIconColor } from "@/util/common.functions";
 import { QueryKeys, SearchParams } from "@/util/enum";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const Story = () => {

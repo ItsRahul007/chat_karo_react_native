@@ -1,5 +1,6 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { MediaAttachment } from "@/util/interfaces/types";
-import { Modal, Platform, Pressable, Text, View } from "react-native";
+import { Modal, Platform, Pressable, View } from "react-native";
 import MediaGrid from "./MediaGrid";
 
 interface MessageOptionsModalProps {

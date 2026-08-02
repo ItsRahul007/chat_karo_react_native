@@ -39,6 +39,20 @@ export function handleReceiveMessage(
   });
 }
 
+/*
+ * Mirrors the ordering used by getPrivateChats/getCommunityChats so a chat that
+ * just received a message moves to the same spot a refetch would put it in.
+ */
+const compareChats = (a: any, b: any) => {
+  if (!!a.isPinned !== !!b.isPinned) return a.isPinned ? -1 : 1;
+  const unreadDiff = (b.unreadMessageCount || 0) - (a.unreadMessageCount || 0);
+  if (unreadDiff !== 0) return unreadDiff;
+  return (
+    new Date(b.lastMessage?.createdAt ?? 0).getTime() -
+    new Date(a.lastMessage?.createdAt ?? 0).getTime()
+  );
+};
+
 /**
  * Updates the inbox (privateChats) cache when a message arrives.
  * Sets the lastMessage and optionally increments the unread count.
@@ -60,7 +74,7 @@ export function handleInboxUpdate({
     ? QueryKeys.communityChats
     : QueryKeys.privateChats;
 
-  /* 
+  /*
   * if it's a new chat means receiver doesn't have inside the chat and it is defiently a new message call
   ? in that case refetch the chat lists again
   */
@@ -70,26 +84,55 @@ export function handleInboxUpdate({
   }
 
   const isEditedMessage = message.isEdited;
+  const conversationId = message.conversationId?.toString();
+  let matched = false;
 
-  queryClient.setQueryData([firstKey], (old: any) => {
-    if (!old) return old;
-    return {
-      ...old,
-      pages: old.pages.map((page: any[]) =>
-        page.map((chat: any) =>
-          chat.conversationId?.toString() === message.conversationId?.toString()
-            ? {
-                ...chat,
-                lastMessage: message,
-                unreadMessageCount: incrementUnread
-                  ? (chat.unreadMessageCount || 0) + (isEditedMessage ? 0 : 1)
-                  : chat.unreadMessageCount,
-              }
-            : chat,
-        ),
-      ),
-    };
+  /*
+  * setQueriesData does a prefix match, so this hits both [communityChats] and
+  ? [communityChats, userId] — setQueryData would silently miss the latter
+  */
+  queryClient.setQueriesData({ queryKey: [firstKey] }, (old: any) => {
+    if (!old?.pages) return old;
+
+    const pageSizes = old.pages.map((page: any[]) => page.length);
+    let found = false;
+
+    const chats = old.pages.flat().map((chat: any) => {
+      if (chat.conversationId?.toString() !== conversationId) return chat;
+      found = true;
+      return {
+        ...chat,
+        lastMessage: message,
+        unreadMessageCount: incrementUnread
+          ? (chat.unreadMessageCount || 0) + (isEditedMessage ? 0 : 1)
+          : chat.unreadMessageCount,
+      };
+    });
+
+    if (!found) return old;
+    matched = true;
+
+    chats.sort(compareChats);
+
+    // re-chunk into the same page sizes so pagination keeps working
+    let offset = 0;
+    const pages = pageSizes.map((size: number) => {
+      const page = chats.slice(offset, offset + size);
+      offset += size;
+      return page;
+    });
+
+    return { ...old, pages };
   });
+
+  /*
+  ? the conversation isn't in the cached pages yet (first message of a chat the
+  ? receiver hasn't loaded, or it lives on a page that was never fetched)
+  * refetch instead of dropping the update on the floor
+  */
+  if (!matched) {
+    queryClient.refetchQueries({ queryKey: [firstKey] });
+  }
 }
 
 export const onUserRemovedFromCommunity = ({

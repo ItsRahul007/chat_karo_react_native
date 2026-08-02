@@ -1,3 +1,4 @@
+import { AppText as Text, AppTextInput as TextInput } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import { createStories } from "@/controller/story.controller";
 import { QueryKeys } from "@/util/enum";
@@ -16,8 +17,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  Text,
-  TextInput,
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";

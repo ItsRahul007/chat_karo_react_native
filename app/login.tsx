@@ -1,12 +1,7 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import React, { useContext, useEffect } from "react";
-import {
-  Image,
-  Text,
-  TouchableOpacity,
-  View,
-  useColorScheme,
-} from "react-native";
+import { Image, TouchableOpacity, View, useColorScheme } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,

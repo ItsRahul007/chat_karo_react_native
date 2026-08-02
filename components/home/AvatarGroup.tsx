@@ -1,5 +1,6 @@
 import React from "react";
-import { Image, Text, View } from "react-native";
+import { AppText as Text } from "@/components/common/AppText";
+import { Image, View } from "react-native";
 
 const limit = 5;
 

@@ -1,8 +1,7 @@
+import { AppText as Text } from "@/components/common/AppText";
 import { AuthContext } from "@/context/AuthContext";
 import {
-  getStoryViewers,
-  recordStoryView,
-} from "@/controller/story.controller";
+  getStoryViewers, recordStoryView, } from "@/controller/story.controller";
 import { getStoryAuthor, getStoryAuthorName } from "@/util/common.functions";
 import { profileInfoIconSize } from "@/util/constants";
 import { QueryKeys } from "@/util/enum";
@@ -16,7 +15,6 @@ import {
   Image,
   Modal,
   Pressable,
-  Text,
   useWindowDimensions,
   View,
   ViewToken,
