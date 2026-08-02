@@ -1,3 +1,4 @@
+import { sendMessage, updateLastReadTime } from "@/controller/chat.controller";
 import {
   handleInboxUpdate,
   handleReceiveMessage,
@@ -6,7 +7,7 @@ import {
   onUserTyping,
 } from "@/controller/socket.controller";
 import { usePushNotification } from "@/custom-hooks/usePushNotification";
-import { Message } from "@/util/interfaces/types";
+import { Message, UserProfile } from "@/util/interfaces/types";
 import { EmitMessages, ListenMessages } from "@/util/socket.calls";
 import { supabase } from "@/util/supabase";
 import { useQueryClient } from "@tanstack/react-query";
@@ -202,8 +203,102 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
     };
   }, [isConnected, user?.id, queryClient]);
 
+  // ─── Notification quick actions ──────────────────────────────────
+  /*
+   * A notification action taken while the app was killed is replayed on the
+   * next launch, which can land before the profile query has resolved. Rather
+   * than drop the action, park it until the user id shows up and run it then.
+   */
+  type UserAction = (myId: UserProfile["id"]) => Promise<void>;
+
+  const userIdRef = useRef(user?.id);
+  userIdRef.current = user?.id;
+  const pendingActionsRef = useRef<UserAction[]>([]);
+
+  const withUserId = useCallback(
+    (action: UserAction) => {
+      const myId = userIdRef.current;
+      if (myId) return action(myId);
+
+      return new Promise<void>((resolve) => {
+        pendingActionsRef.current.push(async (resolvedId) => {
+          await action(resolvedId);
+          resolve();
+        });
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const myId = user?.id;
+    if (!myId || pendingActionsRef.current.length === 0) return;
+
+    const queued = pendingActionsRef.current;
+    pendingActionsRef.current = [];
+    queued.forEach((action) =>
+      action(myId).catch((error) =>
+        console.log("Error running queued notification action:", error),
+      ),
+    );
+  }, [user?.id]);
+
+  /*
+   * Inline reply from the notification tray. Persists the message, then mirrors
+   * what ChatInput does after a send: fan it out over the socket and fold it
+   * into the caches so the thread is already correct when the app is opened.
+   */
+  const handleNotificationReply = useCallback(
+    ({
+      conversationId,
+      chatWithId,
+      isCommunity,
+      text,
+    }: {
+      conversationId: string;
+      chatWithId?: string;
+      isCommunity: boolean;
+      text: string;
+    }) =>
+      withUserId(async (myId) => {
+        const result = await sendMessage(conversationId, myId, {
+          message: text,
+        });
+        const sentMessage: Message | undefined = result?.[0];
+        if (!sentMessage) return;
+
+        socketRef.current?.emit(EmitMessages.SEND_MESSAGE, {
+          message: sentMessage,
+          receiverId: chatWithId,
+          isCommunity,
+          isNewChat: false,
+        });
+
+        handleReceiveMessage(queryClient, sentMessage);
+        handleInboxUpdate({
+          queryClient,
+          message: sentMessage,
+          isCommunity,
+          incrementUnread: false,
+        });
+
+        // Replying implies the chat has been read.
+        await updateLastReadTime(conversationId, myId);
+      }),
+    [queryClient, withUserId],
+  );
+
+  const handleNotificationMarkAsRead = useCallback(
+    ({ conversationId }: { conversationId: string }) =>
+      withUserId((myId) => updateLastReadTime(conversationId, myId)),
+    [withUserId],
+  );
+
   // ─── Push token registration ─────────────────────────────────────
-  const { expoPushToken } = usePushNotification(queryClient);
+  const { expoPushToken } = usePushNotification(queryClient, {
+    onReply: handleNotificationReply,
+    onMarkAsRead: handleNotificationMarkAsRead,
+  });
 
   useEffect(() => {
     if (isConnected && socketRef.current && expoPushToken?.data) {

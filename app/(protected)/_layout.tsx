@@ -1,16 +1,16 @@
 import IncomingCallOverlay from "@/components/call/IncomingCallOverlay";
 import CallProvider from "@/context/CallContext";
 import SocketProvider from "@/context/SocketContext";
-import { usePushNotification } from "@/custom-hooks/usePushNotification";
-import { useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
+/*
+ * Push notifications are set up inside SocketProvider — it owns the socket and
+ * the logged-in user, which the notification quick actions (Reply / Mark as
+ * read) need. Registering the hook here as well would double-handle every
+ * notification response and send inline replies twice.
+ */
 export default function ProtectedLayout() {
-  const queryClient = useQueryClient();
-
-  usePushNotification(queryClient);
-
   return (
     <>
       <SocketProvider>

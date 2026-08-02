@@ -11,17 +11,33 @@ import { useCall } from "@/context/CallContext";
 import { AuthContext } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import {
-  deleteMessage, getChatById, getChatProfileById, } from "@/controller/chat.controller";
+  deleteMessage,
+  getChatById,
+  getChatProfileById,
+} from "@/controller/chat.controller";
 import { useFormatedTime, useIconColor } from "@/util/common.functions";
 import { CHAT_PAGE_SIZE, chatTopBarIconSize } from "@/util/constants";
 import { QueryKeys } from "@/util/enum";
+import {
+  dismissConversationNotifications,
+  setActiveConversationId,
+} from "@/util/messageNotifications";
 import { Message } from "@/util/interfaces/types";
 import { EmitMessages, ListenMessages } from "@/util/socket.calls";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
-  useInfiniteQuery, useQuery, useQueryClient, } from "@tanstack/react-query";
-import { Link, useLocalSearchParams } from "expo-router";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { Link, useFocusEffect, useLocalSearchParams } from "expo-router";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -171,6 +187,22 @@ const Chat = () => {
     };
   }, [socket, conversationId, chatWithId, myId, isCommunity]);
 
+  /*
+   * Opening a chat counts as reading it: clear anything this conversation left
+   * in the notification tray, and register it as the active conversation so
+   * pushes that arrive while it's on screen don't pop a banner over the thread.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (!conversationId || conversationId === "new") return;
+
+      setActiveConversationId(conversationId);
+      dismissConversationNotifications(conversationId);
+
+      return () => setActiveConversationId(null);
+    }, [conversationId]),
+  );
+
   const handleReply = (message: Message) => {
     setReplyingTo(message);
     setEditingMessage(null);
@@ -231,8 +263,6 @@ const Chat = () => {
       }, 2000);
     }
   };
-
-  console.log(chat?.avatar);
 
   return (
     <View

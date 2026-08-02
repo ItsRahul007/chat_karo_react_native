@@ -1,4 +1,12 @@
 import { QueryKeys } from "@/util/enum";
+import {
+  dismissConversationNotifications,
+  ensureMessageNotificationCategory,
+  getActiveConversationId,
+  MessageNotificationAction,
+  MessageNotificationData,
+  readNotificationData,
+} from "@/util/messageNotifications";
 import { QueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
@@ -12,18 +20,69 @@ interface I_PushNotification {
   expoPushToken?: Notifications.ExpoPushToken;
 }
 
-const usePushNotification = (queryClient: QueryClient): I_PushNotification => {
-  const router = useRouter();
+/**
+ * Actions triggered from a message notification's buttons. Supplied by the
+ * caller (SocketContext) because sending a reply needs the socket and the
+ * logged-in user, neither of which this hook has access to.
+ */
+export interface PushNotificationHandlers {
+  onReply?: (params: {
+    conversationId: string;
+    chatWithId?: string;
+    isCommunity: boolean;
+    text: string;
+  }) => Promise<void> | void;
+  onMarkAsRead?: (params: {
+    conversationId: string;
+    isCommunity: boolean;
+  }) => Promise<void> | void;
+}
 
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: true,
+/*
+ * A push that arrives for the chat that's currently open is folded straight
+ * into the thread by the socket listeners — showing a banner on top of it would
+ * just cover the message the user is already reading.
+ */
+Notifications.setNotificationHandler({
+  handleNotification: async (notification) => {
+    const data = readNotificationData(notification.request.content.data);
+    const isActiveChat =
+      !!data.conversationId &&
+      data.conversationId.toString() === getActiveConversationId();
+
+    return {
+      shouldPlaySound: !isActiveChat,
       shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldShowInForeground: true,
-    }),
-  });
+      shouldShowBanner: !isActiveChat,
+      shouldShowList: !isActiveChat,
+    };
+  },
+});
+
+/*
+ * Guards against one event being handled twice (which, for the Reply action,
+ * would send the message twice) if a second instance of this hook is ever
+ * mounted alongside the one in SocketProvider.
+ *
+ * Keyed on the response object itself, deliberately: Android keeps a
+ * direct-reply notification alive so the user can fire several replies from it,
+ * and consecutive pushes to the same chat can reuse a notification identifier.
+ * Anything derived from (identifier, actionIdentifier) would treat those later
+ * replies as repeats and drop them.
+ */
+const handledResponses = new WeakSet<Notifications.NotificationResponse>();
+
+const markResponseHandled = (response: Notifications.NotificationResponse) => {
+  if (handledResponses.has(response)) return false;
+  handledResponses.add(response);
+  return true;
+};
+
+const usePushNotification = (
+  queryClient: QueryClient,
+  handlers?: PushNotificationHandlers,
+): I_PushNotification => {
+  const router = useRouter();
 
   const [expoPushToken, setExpoPushToken] = useState<
     Notifications.ExpoPushToken | undefined
@@ -34,6 +93,11 @@ const usePushNotification = (queryClient: QueryClient): I_PushNotification => {
 
   const notificationListener = useRef<Notifications.Subscription>(null);
   const responseListener = useRef<Notifications.Subscription>(null);
+
+  // Handlers are re-created on every render; keep the latest in a ref so the
+  // listener effect stays mounted for the lifetime of the hook.
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
 
   const registerPushNotification = async (): Promise<
     Notifications.ExpoPushToken | undefined
@@ -87,50 +151,134 @@ const usePushNotification = (queryClient: QueryClient): I_PushNotification => {
     }
   };
 
+  /*
+   * Zero the unread badge for a conversation across both inbox caches. Used by
+   * every path that counts as "read": tapping the notification, the Mark as
+   * read button, and replying inline.
+   */
+  const resetUnreadInCache = (conversationId: string) => {
+    const updateUnread = (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page: any[]) =>
+          page.map((chat: any) =>
+            chat.conversationId?.toString() === conversationId
+              ? { ...chat, unreadMessageCount: 0 }
+              : chat,
+          ),
+        ),
+      };
+    };
+
+    queryClient.setQueriesData(
+      { queryKey: [QueryKeys.privateChats] },
+      updateUnread,
+    );
+    queryClient.setQueriesData(
+      { queryKey: [QueryKeys.communityChats] },
+      updateUnread,
+    );
+  };
+
+  const openConversation = (data: MessageNotificationData) => {
+    const conversationId = data.conversationId!.toString();
+    resetUnreadInCache(conversationId);
+    // The chat screen dismisses the rest of the conversation's notifications on
+    // mount, but do it here too so the tray clears even if navigation is slow.
+    dismissConversationNotifications(conversationId);
+    // Community chats have no single counterpart — the screen resolves the
+    // profile from the conversation id instead, so leave chatWithId off.
+    const params = [`isCommunity=${data.isCommunity === true}`];
+    if (data.chatWithId) params.push(`chatWithId=${data.chatWithId}`);
+
+    router.navigate(`/chat/${conversationId}?${params.join("&")}` as any);
+  };
+
+  const handleResponse = async (
+    response: Notifications.NotificationResponse,
+  ) => {
+    if (!markResponseHandled(response)) return;
+
+    const data = readNotificationData(response.notification.request.content.data);
+    const conversationId = data.conversationId?.toString();
+    const isCommunity = data.isCommunity === true;
+
+    // ─── Reply ───────────────────────────────────────────────────
+    if (
+      response.actionIdentifier === MessageNotificationAction.reply &&
+      conversationId
+    ) {
+      const text = (response.userText ?? "").trim();
+      if (!text) return;
+
+      resetUnreadInCache(conversationId);
+      /*
+       * Deliberately left in the tray. Android keeps a direct-reply
+       * notification alive so you can carry on a short back-and-forth without
+       * opening the app — dismissing here would cut that off after one message.
+       * It clears when the chat is opened or "Mark as read" is pressed.
+       */
+      await handlersRef.current?.onReply?.({
+        conversationId,
+        chatWithId: data.chatWithId?.toString(),
+        isCommunity,
+        text,
+      });
+      return;
+    }
+
+    // ─── Mark as read ────────────────────────────────────────────
+    if (
+      response.actionIdentifier === MessageNotificationAction.markAsRead &&
+      conversationId
+    ) {
+      resetUnreadInCache(conversationId);
+      await handlersRef.current?.onMarkAsRead?.({
+        conversationId,
+        isCommunity,
+      });
+      await dismissConversationNotifications(conversationId);
+      return;
+    }
+
+    // ─── Body tap (default action) ───────────────────────────────
+    if (conversationId) {
+      openConversation(data);
+    } else if (data.url) {
+      router.navigate(data.url as any);
+    }
+  };
+
   useEffect(() => {
+    ensureMessageNotificationCategory();
     registerPushNotification().then((token) => setExpoPushToken(token));
 
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
         setNotification(notification);
+
+        /*
+         * The handler above already suppresses the banner for the chat that's
+         * open, but on iOS a suppressed notification is still delivered — drop
+         * it so an open conversation never accumulates unread banners.
+         */
+        const data = readNotificationData(notification.request.content.data);
+        if (
+          data.conversationId &&
+          data.conversationId.toString() === getActiveConversationId()
+        ) {
+          Notifications.dismissNotificationAsync(
+            notification.request.identifier,
+          ).catch(() => {});
+        }
       });
 
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        const data = response.notification.request.content.data;
-
-        if (data?.conversationId) {
-          // Reset unread count to 0 in cache when clicking on a notification
-          const updateUnread = (old: any) => {
-            if (!old) return old;
-            return {
-              ...old,
-              pages: old.pages.map((page: any[]) =>
-                page.map((chat: any) =>
-                  chat.conversationId?.toString() ===
-                  data.conversationId?.toString()
-                    ? { ...chat, unreadMessageCount: 0 }
-                    : chat,
-                ),
-              ),
-            };
-          };
-
-          queryClient.setQueriesData(
-            { queryKey: [QueryKeys.privateChats] },
-            updateUnread,
-          );
-          queryClient.setQueriesData(
-            { queryKey: [QueryKeys.communityChats] },
-            updateUnread,
-          );
-
-          router.navigate(
-            `/chat/${data.conversationId}?chatWithId=${data.chatWithId}` as any,
-          );
-        } else if (data?.url) {
-          router.navigate(data.url as any);
-        }
+        handleResponse(response).catch((error) =>
+          console.log("Error handling notification response:", error),
+        );
       });
 
     return () => {
