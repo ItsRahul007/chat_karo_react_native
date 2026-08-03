@@ -8,10 +8,15 @@ import { AppText as Text } from "@/components/common/AppText";
 import { ColorTheme } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
 import {
-  getPrivateChats, updateLastReadTime, } from "@/controller/chat.controller";
+  getPrivateChats,
+  updateLastReadTime,
+} from "@/controller/chat.controller";
 import { useIconColor } from "@/util/common.functions";
 import {
-  CHAT_PAGE_SIZE, gradientIconButtonIconSize, gradientIconButtonSize, } from "@/util/constants";
+  CHAT_PAGE_SIZE,
+  gradientIconButtonIconSize,
+  gradientIconButtonSize,
+} from "@/util/constants";
 import { QueryKeys, SearchParams } from "@/util/enum";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -93,7 +98,7 @@ const index = () => {
         {/* top bar */}
         <View className="h-14">
           <CommonTopBar
-            name="Rahul"
+            name={user?.firstName ?? "User"}
             searchParams={SearchParams.person}
             showSearch
           />

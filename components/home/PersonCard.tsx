@@ -56,7 +56,7 @@ const PersonCard = ({
           <View className="flex-1">
             <View className="flex-row items-center gap-x-1">
               <Text
-                className="text-light-text-primary dark:text-dark-text-primary font-bold overflow-ellipsis max-w-[90%]"
+                className="text-light-text-primary dark:text-dark-text-primary font-medium overflow-ellipsis max-w-[90%]"
                 numberOfLines={1}
               >
                 {firstName + " " + lastName}
