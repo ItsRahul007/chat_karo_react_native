@@ -21,7 +21,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { AppState, Vibration } from "react-native";
+import { AppState, Platform, Vibration } from "react-native";
 import InCallManager from "react-native-incall-manager";
 import {
   mediaDevices,
@@ -234,15 +234,37 @@ const CallProvider = ({ children }: PropsWithChildren) => {
   // clobber whatever route we set, so a single call gets silently overridden.
   const applyAudioRoute = useCallback((speaker: boolean) => {
     try {
-      InCallManager.setForceSpeakerphoneOn(speaker);
+      if (Platform.OS === "android") {
+        // setForceSpeakerphoneOn() does nothing for us on Android. It routes
+        // through InCallManager's selectAudioDevice(), which bails out unless
+        // the target device is already in its `audioDevices` set — and that set
+        // is only ever filled by updateAudioRoute(), which returns immediately
+        // because we open the session with `auto: false`. So the only thing
+        // that ever set the route was start(), which forces the speaker on for
+        // video calls: the speaker latched on and the toggle never moved it.
+        // setSpeakerphoneOn() actuates the route directly instead.
+        InCallManager.setSpeakerphoneOn(speaker);
+      } else {
+        // iOS has no such gate. Note we must NOT use setSpeakerphoneOn() here:
+        // its "on" path sets the category's DefaultToSpeaker option, and once
+        // that is set, overriding the output port back to none still lands on
+        // the loudspeaker — the same latched-on bug, in the other direction.
+        InCallManager.setForceSpeakerphoneOn(speaker);
+      }
     } catch {
       // native module may be unavailable (e.g. web); ignore
     }
   }, []);
 
   // Apply the speaker/earpiece route whenever it changes during an active call.
+  // Includes outgoing_ringing: the audio session is already up by then (the
+  // ringback is playing through it), so the toggle has to work there too.
   useEffect(() => {
-    if (callState === "connecting" || callState === "connected") {
+    if (
+      callState === "outgoing_ringing" ||
+      callState === "connecting" ||
+      callState === "connected"
+    ) {
       applyAudioRoute(isSpeakerOn);
       // Re-apply shortly after to win the race against WebRTC's own audio-session
       // setup, which otherwise resets the route right after we set it.
