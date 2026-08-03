@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- Receives the Decline button press. Fully qualified because a library
+         manifest's relative names resolve against the merged app package. -->
+    <receiver
+      android:name="expo.modules.callnotification.CallActionReceiver"
+      android:exported="false" />
+  </application>
+</manifest>

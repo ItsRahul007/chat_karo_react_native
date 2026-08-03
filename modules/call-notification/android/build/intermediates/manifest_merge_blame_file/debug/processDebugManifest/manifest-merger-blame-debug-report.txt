@@ -1,0 +1,22 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="expo.modules.callnotification" >
+4
+5    <uses-sdk android:minSdkVersion="24" />
+6
+7    <application>
+7-->/Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:2:3-8:17
+8
+9        <!--
+10         Receives the Decline button press. Fully qualified because a library
+11         manifest's relative names resolve against the merged app package.
+12        -->
+13        <receiver
+13-->/Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:5:5-7:34
+14            android:name="expo.modules.callnotification.CallActionReceiver"
+14-->/Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:6:7-70
+15            android:exported="false" />
+15-->/Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:7:7-31
+16    </application>
+17
+18</manifest>

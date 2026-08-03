@@ -1,0 +1,24 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:1:1-9:12
+INJECTED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:1:1-9:12
+	package
+		INJECTED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:1:11-69
+application
+ADDED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:2:3-8:17
+receiver#expo.modules.callnotification.CallActionReceiver
+ADDED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:5:5-7:34
+	android:exported
+		ADDED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:7:7-31
+	android:name
+		ADDED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml:6:7-70
+uses-sdk
+INJECTED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml
+INJECTED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/rahul/development/personal/chat-app/chat_karo_react_native/modules/call-notification/android/src/main/AndroidManifest.xml

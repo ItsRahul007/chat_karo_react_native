@@ -21,7 +21,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Vibration } from "react-native";
+import { AppState, Vibration } from "react-native";
 import InCallManager from "react-native-incall-manager";
 import {
   mediaDevices,
@@ -693,19 +693,37 @@ const CallProvider = ({ children }: PropsWithChildren) => {
     return unsubscribe;
   }, [router]);
 
+  // Tracked so the incoming-call notification can be posted quietly while the
+  // user is already looking at the app.
+  const [isAppActive, setIsAppActive] = useState(
+    () => AppState.currentState === "active",
+  );
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) =>
+      setIsAppActive(next === "active"),
+    );
+    return () => sub.remove();
+  }, []);
+
   // Show / clear the incoming-call notification (full-screen intent + Accept /
-  // Decline) as the ring state comes and goes.
+  // Decline) as the ring state comes and goes. Re-runs when the app is
+  // foregrounded / backgrounded mid-ring, which flips the notification between
+  // the silent and the alerting variant.
   useEffect(() => {
     if (callState === "incoming_ringing" && incomingCallData) {
       showIncomingCallNotification({
         callerName: incomingCallData.callerName,
+        callerAvatar: incomingCallData.callerAvatar,
         callType: incomingCallData.callType,
         isCommunity: incomingCallData.isCommunity,
+        // The in-app overlay is already ringing when the app is open, so the
+        // notification stays quiet — it only alerts if the user has left.
+        silent: isAppActive,
       });
     } else {
       cancelIncomingCallNotification();
     }
-  }, [callState, incomingCallData]);
+  }, [callState, incomingCallData, isAppActive]);
 
   // Show / update the ongoing-call notification (foreground service with Mute /
   // Speaker / Hang up). Re-runs each second while connected so the timer ticks,
