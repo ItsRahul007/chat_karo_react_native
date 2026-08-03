@@ -60,8 +60,30 @@ const CallScreen = () => {
 
   const insets = useSafeAreaInsets();
 
-  // Show/hide the controls + top bar. Tap the screen to toggle; while a call is
-  // connected they auto-hide after a few seconds so the video isn't obscured.
+  // ─── What's actually on screen ─────────────────────────────────
+  // Whether the peer is negotiated to send video. Recomputed on
+  // remoteStreamVersion because the peer connection mutates one MediaStream in
+  // place, so the object identity never changes when a track is added.
+  const remoteHasVideo = useMemo(
+    () => !!remoteStream && (remoteStream as any).getVideoTracks?.().length > 0,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [remoteStream, remoteStreamVersion],
+  );
+  const remoteVideoVisible = remoteHasVideo && isRemoteCameraOn;
+  // Show local PiP only when our camera is on and we're actually sending video
+  const localHasVideo =
+    !!localStream && (localStream as any).getVideoTracks?.().length > 0;
+  const showLocalPiP = isCameraOn && localHasVideo;
+  // Fall back to the avatar whenever there's no remote picture to show.
+  const showRemoteAvatar = !remoteVideoVisible;
+
+  // Show/hide the controls + top bar. The chrome only gets out of the way when
+  // there is a picture underneath it worth uncovering; with no video on screen
+  // the name and buttons stay up. Deriving this from what's rendered rather
+  // than from callType means every transition is covered on its own — an audio
+  // call, a video call where both cameras end up off, and an audio call
+  // upgraded to video all land in the right mode without special-casing.
+  const autoHideControls = remoteVideoVisible || showLocalPiP;
   const [controlsVisible, setControlsVisible] = useState(true);
   const controlsOpacity = useRef(new Animated.Value(1)).current;
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,17 +105,28 @@ const CallScreen = () => {
   }, [controlsVisible, controlsOpacity]);
 
   // Auto-hide the controls a few seconds after they appear while connected.
+  // Only while video is on screen.
   useEffect(() => {
     clearHideTimer();
-    if (controlsVisible && callState === "connected") {
+    if (autoHideControls && controlsVisible && callState === "connected") {
       hideTimerRef.current = setTimeout(() => setControlsVisible(false), 4000);
     }
     return clearHideTimer;
-  }, [controlsVisible, callState, clearHideTimer]);
+  }, [autoHideControls, controlsVisible, callState, clearHideTimer]);
+
+  // Bring the controls back the moment the video goes away — otherwise a call
+  // that drops to audio while they're faded out would strand them hidden with
+  // no way to get them back.
+  useEffect(() => {
+    if (!autoHideControls) {
+      setControlsVisible(true);
+    }
+  }, [autoHideControls]);
 
   const toggleControls = useCallback(() => {
+    if (!autoHideControls) return;
     setControlsVisible((prev) => !prev);
-  }, []);
+  }, [autoHideControls]);
 
   // ─── Draggable self-view (PiP) ─────────────────────────────────
   // The local preview can be dragged and snaps to the nearest screen corner on
@@ -209,24 +242,6 @@ const CallScreen = () => {
   const pipAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.value }, { translateY: ty.value }],
   }));
-
-  // Whether the peer is negotiated to send video. Recomputed on
-  // remoteStreamVersion because the peer connection mutates one MediaStream in
-  // place, so the object identity never changes when a track is added.
-  const remoteHasVideo = useMemo(
-    () => !!remoteStream && (remoteStream as any).getVideoTracks?.().length > 0,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [remoteStream, remoteStreamVersion],
-  );
-  // The remote RTCView stays mounted for as long as there's a video track —
-  // it must not be unmounted when the peer's camera goes off. Tearing down and
-  // re-adding the native surface mid-call is what left the remote view blank;
-  // the avatar is drawn over the top instead (see showRemoteAvatar).
-  const showRemoteAvatar = !remoteHasVideo || !isRemoteCameraOn;
-  // Show local PiP only when our camera is on and we're actually sending video
-  const localHasVideo =
-    !!localStream && (localStream as any).getVideoTracks?.().length > 0;
-  const showLocalPiP = isCameraOn && localHasVideo;
 
   const formattedDuration = useMemo(() => {
     const mins = Math.floor(callDuration / 60);
