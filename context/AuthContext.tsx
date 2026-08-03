@@ -1,4 +1,5 @@
 import { QueryKeys, TableNames } from "@/util/enum";
+import { cacheNotificationIdentity } from "@/util/notificationIdentity";
 import { UserProfile } from "@/util/interfaces/types";
 import { supabase } from "@/util/supabase";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
@@ -135,6 +136,25 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
       router.replace("/profile/new");
     }
   }, [session, isProfileLoading, userProfile, isAuthChecked, router]);
+
+  /*
+   * Mirror the profile to storage for notification handlers, which can run with
+   * no React tree alive (a killed app woken by a direct reply) and still need
+   * to know who "me" is to write the message row.
+   */
+  useEffect(() => {
+    cacheNotificationIdentity(
+      userProfile
+        ? {
+            id: userProfile.id.toString(),
+            name: [userProfile.firstName, userProfile.lastName]
+              .filter(Boolean)
+              .join(" "),
+            avatar: userProfile.avatar || undefined,
+          }
+        : null,
+    );
+  }, [userProfile]);
 
   const isReady = isAuthChecked && (!session || !isProfileLoading);
 

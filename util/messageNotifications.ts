@@ -1,5 +1,6 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import { clearMessageThread } from "./messageThreadNotifications";
 
 /**
  * Message-notification plumbing: the interactive category (Reply / Mark as
@@ -98,12 +99,18 @@ export const ensureMessageNotificationCategory = async () => {
  * Clear every delivered notification belonging to a conversation. Used when the
  * chat is opened and after "Mark as read", so an already-read chat never leaves
  * a stale banner in the tray.
+ *
+ * Covers both renderers: the notifee thread notification (Android) and any
+ * plain expo notification, which is what iOS gets and what Android falls back
+ * to if the background task didn't run.
  */
 export const dismissConversationNotifications = async (
   conversationId: string | number | undefined | null,
 ) => {
   if (!conversationId || conversationId === "new") return;
   const target = conversationId.toString();
+
+  await clearMessageThread(target);
 
   try {
     const presented = await Notifications.getPresentedNotificationsAsync();

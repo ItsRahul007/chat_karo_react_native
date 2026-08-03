@@ -1,4 +1,4 @@
-import { QueryKeys } from "@/util/enum";
+import { resetUnreadInCache } from "@/controller/socket.controller";
 import {
   dismissConversationNotifications,
   ensureMessageNotificationCategory,
@@ -7,6 +7,8 @@ import {
   MessageNotificationData,
   readNotificationData,
 } from "@/util/messageNotifications";
+import { handleMessagePush } from "@/util/backgroundMessageTask";
+import { supportsMessageThreads } from "@/util/messageThreadNotifications";
 import { QueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
@@ -42,19 +44,26 @@ export interface PushNotificationHandlers {
  * A push that arrives for the chat that's currently open is folded straight
  * into the thread by the socket listeners — showing a banner on top of it would
  * just cover the message the user is already reading.
+ *
+ * On Android a message push is re-rendered as a notifee thread notification, so
+ * expo's own banner is suppressed to avoid showing both.
  */
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const data = readNotificationData(notification.request.content.data);
+    const isMessage = !!data.conversationId;
     const isActiveChat =
-      !!data.conversationId &&
-      data.conversationId.toString() === getActiveConversationId();
+      isMessage &&
+      data.conversationId!.toString() === getActiveConversationId();
+
+    const suppress =
+      isActiveChat || (isMessage && supportsMessageThreads);
 
     return {
-      shouldPlaySound: !isActiveChat,
+      shouldPlaySound: !suppress,
       shouldSetBadge: false,
-      shouldShowBanner: !isActiveChat,
-      shouldShowList: !isActiveChat,
+      shouldShowBanner: !suppress,
+      shouldShowList: !suppress,
     };
   },
 });
@@ -151,39 +160,12 @@ const usePushNotification = (
     }
   };
 
-  /*
-   * Zero the unread badge for a conversation across both inbox caches. Used by
-   * every path that counts as "read": tapping the notification, the Mark as
-   * read button, and replying inline.
-   */
-  const resetUnreadInCache = (conversationId: string) => {
-    const updateUnread = (old: any) => {
-      if (!old) return old;
-      return {
-        ...old,
-        pages: old.pages.map((page: any[]) =>
-          page.map((chat: any) =>
-            chat.conversationId?.toString() === conversationId
-              ? { ...chat, unreadMessageCount: 0 }
-              : chat,
-          ),
-        ),
-      };
-    };
-
-    queryClient.setQueriesData(
-      { queryKey: [QueryKeys.privateChats] },
-      updateUnread,
-    );
-    queryClient.setQueriesData(
-      { queryKey: [QueryKeys.communityChats] },
-      updateUnread,
-    );
-  };
+  const markRead = (conversationId: string) =>
+    resetUnreadInCache(queryClient, conversationId);
 
   const openConversation = (data: MessageNotificationData) => {
     const conversationId = data.conversationId!.toString();
-    resetUnreadInCache(conversationId);
+    markRead(conversationId);
     // The chat screen dismisses the rest of the conversation's notifications on
     // mount, but do it here too so the tray clears even if navigation is slow.
     dismissConversationNotifications(conversationId);
@@ -212,7 +194,7 @@ const usePushNotification = (
       const text = (response.userText ?? "").trim();
       if (!text) return;
 
-      resetUnreadInCache(conversationId);
+      markRead(conversationId);
       /*
        * Deliberately left in the tray. Android keeps a direct-reply
        * notification alive so you can carry on a short back-and-forth without
@@ -233,7 +215,7 @@ const usePushNotification = (
       response.actionIdentifier === MessageNotificationAction.markAsRead &&
       conversationId
     ) {
-      resetUnreadInCache(conversationId);
+      markRead(conversationId);
       await handlersRef.current?.onMarkAsRead?.({
         conversationId,
         isCommunity,
@@ -258,19 +240,36 @@ const usePushNotification = (
       Notifications.addNotificationReceivedListener((notification) => {
         setNotification(notification);
 
+        const { content, identifier } = notification.request;
+        const data = readNotificationData(content.data);
+
         /*
          * The handler above already suppresses the banner for the chat that's
-         * open, but on iOS a suppressed notification is still delivered — drop
-         * it so an open conversation never accumulates unread banners.
+         * open, but a suppressed notification is still delivered — drop it so
+         * an open conversation never accumulates unread banners.
          */
-        const data = readNotificationData(notification.request.content.data);
         if (
           data.conversationId &&
           data.conversationId.toString() === getActiveConversationId()
         ) {
-          Notifications.dismissNotificationAsync(
-            notification.request.identifier,
-          ).catch(() => {});
+          Notifications.dismissNotificationAsync(identifier).catch(() => {});
+          return;
+        }
+
+        /*
+         * Foreground pushes go through the same rebuild as background ones.
+         * The background task also fires here, so both paths can run for one
+         * message — addMessageToThread dedupes on the message id.
+         */
+        if (supportsMessageThreads && data.conversationId) {
+          handleMessagePush({
+            title: content.title ?? undefined,
+            message: content.body ?? undefined,
+            dataString: JSON.stringify(content.data ?? {}),
+            tag: identifier,
+          }).catch((error) =>
+            console.log("Error rebuilding foreground notification:", error),
+          );
         }
       });
 

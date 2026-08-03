@@ -39,6 +39,39 @@ export function handleReceiveMessage(
   });
 }
 
+/**
+ * Zero a conversation's unread badge in both inbox caches. Used by every path
+ * that counts as "read": opening the chat, tapping a notification, the
+ * notification's Mark as read button, and replying inline.
+ */
+export function resetUnreadInCache(
+  queryClient: QueryClient,
+  conversationId: string,
+) {
+  const updateUnread = (old: any) => {
+    if (!old?.pages) return old;
+    return {
+      ...old,
+      pages: old.pages.map((page: any[]) =>
+        page.map((chat: any) =>
+          chat.conversationId?.toString() === conversationId
+            ? { ...chat, unreadMessageCount: 0 }
+            : chat,
+        ),
+      ),
+    };
+  };
+
+  queryClient.setQueriesData(
+    { queryKey: [QueryKeys.privateChats] },
+    updateUnread,
+  );
+  queryClient.setQueriesData(
+    { queryKey: [QueryKeys.communityChats] },
+    updateUnread,
+  );
+}
+
 /*
  * Mirrors the ordering used by getPrivateChats/getCommunityChats so a chat that
  * just received a message moves to the same spot a refetch would put it in.

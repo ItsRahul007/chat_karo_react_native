@@ -5,12 +5,23 @@ import {
   onUserRemovedFromCommunity,
   onUserStopTyping,
   onUserTyping,
+  resetUnreadInCache,
 } from "@/controller/socket.controller";
 import { usePushNotification } from "@/custom-hooks/usePushNotification";
 import { Message, UserProfile } from "@/util/interfaces/types";
+import {
+  handleMessageNotifeeEvent,
+  OpenChatEvent,
+  subscribeToNotificationOpens,
+  subscribeToNotificationReads,
+  subscribeToNotificationReplies,
+} from "@/util/messageNotificationActions";
+import { supportsMessageThreads } from "@/util/messageThreadNotifications";
 import { EmitMessages, ListenMessages } from "@/util/socket.calls";
 import { supabase } from "@/util/supabase";
+import notifee from "@notifee/react-native";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import {
   createContext,
   PropsWithChildren,
@@ -39,9 +50,13 @@ export const useSocket = () => useContext(SocketContext);
 // use this command to get the ip: ipconfig getifaddr en0
 const SOCKET_URL = "http://192.168.0.104:3001";
 
+// A cold start has exactly one launching notification; read it once per process.
+let consumedInitialNotification = false;
+
 const SocketProvider = ({ children }: PropsWithChildren) => {
   const { isLoggedIn, user } = useContext(AuthContext);
   const queryClient = useQueryClient();
+  const router = useRouter();
   const socketRef = useRef<Socket | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -293,6 +308,86 @@ const SocketProvider = ({ children }: PropsWithChildren) => {
       withUserId((myId) => updateLastReadTime(conversationId, myId)),
     [withUserId],
   );
+
+  // ─── notifee thread notifications (Android) ──────────────────────
+  /*
+   * On Android, message notifications are rebuilt by notifee and their buttons
+   * are handled outside the React tree — the reply is already written to the
+   * database by then. What's left is the part that needs a live app: fanning
+   * the message out over the socket, updating the caches, and navigating.
+   */
+  useEffect(() => {
+    if (!supportsMessageThreads) return;
+
+    const unsubscribeForeground = notifee.onForegroundEvent((event) => {
+      handleMessageNotifeeEvent(event).catch((error) =>
+        console.log("Error handling message notification event:", error),
+      );
+    });
+
+    const unsubscribeReplies = subscribeToNotificationReplies(
+      ({ message, conversationId, chatWithId, isCommunity }) => {
+        socketRef.current?.emit(EmitMessages.SEND_MESSAGE, {
+          message,
+          receiverId: chatWithId,
+          isCommunity,
+          isNewChat: false,
+        });
+
+        handleReceiveMessage(queryClient, message);
+        handleInboxUpdate({
+          queryClient,
+          message,
+          isCommunity,
+          incrementUnread: false,
+        });
+        resetUnreadInCache(queryClient, conversationId);
+      },
+    );
+
+    const unsubscribeReads = subscribeToNotificationReads(({ conversationId }) =>
+      resetUnreadInCache(queryClient, conversationId),
+    );
+
+    const openChat = ({
+      conversationId,
+      chatWithId,
+      isCommunity,
+    }: OpenChatEvent) => {
+      resetUnreadInCache(queryClient, conversationId);
+      const params = [`isCommunity=${isCommunity}`];
+      if (chatWithId) params.push(`chatWithId=${chatWithId}`);
+      router.navigate(`/chat/${conversationId}?${params.join("&")}` as any);
+    };
+
+    const unsubscribeOpens = subscribeToNotificationOpens(openChat);
+
+    /*
+     * A tap that cold-started the app fires its notifee event before this
+     * listener exists, so pick it up from the initial notification instead.
+     * Notifee documents this as consumed on first read, but the flag makes sure
+     * a re-run of this effect can't navigate the user a second time.
+     */
+    if (!consumedInitialNotification) {
+      consumedInitialNotification = true;
+      notifee.getInitialNotification().then((initial) => {
+        const data = initial?.notification?.data;
+        if (!data?.conversationId) return;
+        openChat({
+          conversationId: data.conversationId.toString(),
+          chatWithId: data.chatWithId ? data.chatWithId.toString() : undefined,
+          isCommunity: data.isCommunity === "true",
+        });
+      });
+    }
+
+    return () => {
+      unsubscribeForeground();
+      unsubscribeReplies();
+      unsubscribeReads();
+      unsubscribeOpens();
+    };
+  }, [queryClient, router]);
 
   // ─── Push token registration ─────────────────────────────────────
   const { expoPushToken } = usePushNotification(queryClient, {

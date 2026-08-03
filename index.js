@@ -1,18 +1,21 @@
 // Custom entry point. Registers notifee handlers at the top level — before the
-// React tree mounts — so call-notification actions work while the app is
-// backgrounded (and, on Android, when launched headless for a background event).
+// React tree mounts — so call- and message-notification actions work while the
+// app is backgrounded (and, on Android, when launched headless for a
+// background event).
 import notifee from "@notifee/react-native";
 import {
   cancelAllCallNotifications,
   dispatchNotifeeEvent,
 } from "@/util/callNotifications";
+import { registerBackgroundMessageTask } from "@/util/backgroundMessageTask";
+import { handleMessageNotifeeEvent } from "@/util/messageNotificationActions";
 
 // Background event handler: fires for action-button presses / taps while the
-// app is backgrounded or quit. dispatchNotifeeEvent re-broadcasts the action on
-// an in-process event bus, which the CallContext picks up while the JS runtime
-// is alive (kept alive by the ongoing-call foreground service). If the app was
-// killed, there's no live call to drive, so we just clear the notification.
+// app is backgrounded or quit. Notifee allows exactly one of these, so message
+// actions get first refusal and call actions handle whatever is left.
 notifee.onBackgroundEvent(async (event) => {
+  if (await handleMessageNotifeeEvent(event)) return;
+
   const action = dispatchNotifeeEvent(event);
   if (action === "decline" || action === "hangup") {
     // Best-effort cleanup; the CallContext also handles this if it's alive.
@@ -24,6 +27,10 @@ notifee.onBackgroundEvent(async (event) => {
 // returned promise pending for the service's lifetime; teardown happens via
 // stopForegroundService() in the call notification helpers.
 notifee.registerForegroundService(() => new Promise(() => {}));
+
+// Rebuilds incoming message pushes as threaded notifications. Registered here
+// so it is in place before the React tree mounts, and survives a killed app.
+registerBackgroundMessageTask();
 
 // Hand off to expo-router's real entry (registers the root component). This
 // import is intentionally last: the notifee handlers above must be registered
