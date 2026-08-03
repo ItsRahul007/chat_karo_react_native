@@ -57,6 +57,10 @@ export interface CallContextType {
   incomingCallData: IncomingCallData | null;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
+  // Bumped every time a track is added to the remote stream. The peer
+  // connection reuses one MediaStream object for the whole call, so this is
+  // what tells the UI "the tracks changed, re-read them".
+  remoteStreamVersion: number;
   isMuted: boolean;
   isSpeakerOn: boolean;
   isCameraOn: boolean;
@@ -105,6 +109,7 @@ const CallContext = createContext<CallContextType>({
   incomingCallData: null,
   localStream: null,
   remoteStream: null,
+  remoteStreamVersion: 0,
   isMuted: false,
   isSpeakerOn: false,
   isCameraOn: true,
@@ -140,6 +145,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
     useState<IncomingCallData | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [remoteStreamVersion, setRemoteStreamVersion] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
@@ -161,6 +167,9 @@ const CallProvider = ({ children }: PropsWithChildren) => {
   // Latest values readable inside effects/handlers without re-subscribing
   const callTypeRef = useRef<CallType | null>(null);
   const isSpeakerOnRef = useRef(false);
+  // Long-lived peer-connection listeners need the current cleanupCall, not the
+  // one captured when the connection was created.
+  const cleanupCallRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     callTypeRef.current = callType;
@@ -286,27 +295,39 @@ const CallProvider = ({ children }: PropsWithChildren) => {
     // When remote peer adds their stream
     pcAny.addEventListener("track", (event: any) => {
       if (event.streams && event.streams[0]) {
+        // react-native-webrtc hands back the *same* MediaStream object for
+        // every track on the connection (audio first, then video), so calling
+        // the setter again is a no-op as far as React is concerned. Bump a
+        // version alongside it so the call screen re-reads the track list —
+        // otherwise a video track that lands after the first render (or in a
+        // later renegotiation) never makes it to the UI.
         setRemoteStream(event.streams[0] as MediaStream);
+        setRemoteStreamVersion((v) => v + 1);
       }
 
-      // Track the remote video track's mute state so we can fall back to the
-      // avatar (audio-style) UI when the peer turns their camera off.
       const track = event.track;
       if (track && track.kind === "video") {
-        setIsRemoteCameraOn(track.enabled !== false && !track.muted);
-        track.addEventListener?.("mute", () => setIsRemoteCameraOn(false));
-        track.addEventListener?.("unmute", () => setIsRemoteCameraOn(true));
+        // A remote video track means the peer is set up to send video. Whether
+        // frames are actually arriving yet is a separate question — do NOT gate
+        // rendering on `track.muted` here. react-native-webrtc derives `muted`
+        // from a frame counter and fires `mute` when no frame has decoded
+        // within 3s of the track being created, which on a real call is *before*
+        // ICE and DTLS have finished. Treating that as "their camera is off"
+        // hides the remote video for the entire call. Camera state now comes
+        // from an explicit signal the peer sends (CAMERA_TOGGLED).
+        setIsRemoteCameraOn(true);
         track.addEventListener?.("ended", () => setIsRemoteCameraOn(false));
       }
     });
 
     pcAny.addEventListener("iceconnectionstatechange", () => {
       console.log("📶 ICE connection state:", pc.iceConnectionState);
-      if (
-        pc.iceConnectionState === "disconnected" ||
-        pc.iceConnectionState === "failed"
-      ) {
-        cleanupCall();
+      // "disconnected" is routinely transient (network blip, handover) and
+      // recovers on its own — only tear the call down once ICE has actually
+      // given up. cleanupCall is read through a ref because this listener
+      // outlives the render it was created in.
+      if (pc.iceConnectionState === "failed") {
+        cleanupCallRef.current();
       }
     });
 
@@ -353,6 +374,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
     setIncomingCallData(null);
     setLocalStream(null);
     setRemoteStream(null);
+    setRemoteStreamVersion(0);
     setIsMuted(false);
     setIsSpeakerOn(false);
     setIsCameraOn(true);
@@ -364,6 +386,8 @@ const CallProvider = ({ children }: PropsWithChildren) => {
     setRemoteUserName(null);
     setRemoteUserAvatar(null);
   }, [localStream, stopRinging]);
+
+  cleanupCallRef.current = cleanupCall;
 
   const startCallTimer = useCallback(() => {
     setCallDuration(0);
@@ -562,6 +586,20 @@ const CallProvider = ({ children }: PropsWithChildren) => {
     }
   }, [socket]);
 
+  // Tell the peer whether our camera is on. They can't infer it reliably from
+  // the media itself (a stalled track looks identical to a disabled one while
+  // the connection is still coming up), so we say so explicitly.
+  const announceCameraState = useCallback(
+    (enabled: boolean) => {
+      if (!socket || !remoteUserIdRef.current) return;
+      socket.emit(EmitMessages.CAMERA_TOGGLE, {
+        targetId: remoteUserIdRef.current,
+        enabled,
+      });
+    },
+    [socket],
+  );
+
   const toggleCamera = useCallback(async () => {
     const pc = peerConnectionRef.current;
     if (!pc) return;
@@ -573,6 +611,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
         if (videoTrack) {
           videoTrack.enabled = false;
           setIsCameraOn(false);
+          announceCameraState(false);
         }
       }
     } else {
@@ -605,6 +644,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
             setCallType("video");
             setIsCameraOn(true);
             setIsSpeakerOn(true);
+            announceCameraState(true);
 
             // A new m-line was added — renegotiate so the peer receives video.
             await renegotiate();
@@ -619,11 +659,12 @@ const CallProvider = ({ children }: PropsWithChildren) => {
           if (videoTrack) {
             videoTrack.enabled = true;
             setIsCameraOn(true);
+            announceCameraState(true);
           }
         }
       }
     }
-  }, [localStream, isCameraOn, callType, renegotiate]);
+  }, [localStream, isCameraOn, callType, renegotiate, announceCameraState]);
 
   // Flip between the front and back camera on the active video track.
   const switchCamera = useCallback(() => {
@@ -923,6 +964,14 @@ const CallProvider = ({ children }: PropsWithChildren) => {
       }
     };
 
+    // Peer turned their camera on/off
+    const onRemoteCameraToggled = (data: {
+      enabled: boolean;
+      from: string;
+    }) => {
+      setIsRemoteCameraOn(data.enabled);
+    };
+
     socket.on(ListenMessages.INCOMING_CALL, onIncomingCall);
     socket.on(ListenMessages.CALL_ACCEPTED, onCallAccepted);
     socket.on(ListenMessages.CALL_REJECTED, onCallRejected);
@@ -931,6 +980,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
     socket.on(ListenMessages.WEBRTC_OFFER, onWebRTCOffer);
     socket.on(ListenMessages.WEBRTC_ANSWER, onWebRTCAnswer);
     socket.on(ListenMessages.ICE_CANDIDATE, onICECandidate);
+    socket.on(ListenMessages.CAMERA_TOGGLED, onRemoteCameraToggled);
 
     return () => {
       socket.off(ListenMessages.INCOMING_CALL, onIncomingCall);
@@ -941,6 +991,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
       socket.off(ListenMessages.WEBRTC_OFFER, onWebRTCOffer);
       socket.off(ListenMessages.WEBRTC_ANSWER, onWebRTCAnswer);
       socket.off(ListenMessages.ICE_CANDIDATE, onICECandidate);
+      socket.off(ListenMessages.CAMERA_TOGGLED, onRemoteCameraToggled);
     };
   }, [socket, myId, callState, cleanupCall, startCallTimer, router]);
 
@@ -952,6 +1003,7 @@ const CallProvider = ({ children }: PropsWithChildren) => {
         incomingCallData,
         localStream,
         remoteStream,
+        remoteStreamVersion,
         isMuted,
         isSpeakerOn,
         isCameraOn,

@@ -42,6 +42,7 @@ const CallScreen = () => {
     callState,
     localStream,
     remoteStream,
+    remoteStreamVersion,
     isMuted,
     isSpeakerOn,
     isCameraOn,
@@ -209,12 +210,19 @@ const CallScreen = () => {
     transform: [{ translateX: tx.value }, { translateY: ty.value }],
   }));
 
-  // Whether the peer is actually sending a video track
-  const remoteHasVideo =
-    !!remoteStream && (remoteStream as any).getVideoTracks?.().length > 0;
-  // Show remote video only when the peer has a video track AND their camera is on.
-  // When they turn their camera off we fall back to the avatar (audio) UI.
-  const showRemoteVideo = remoteHasVideo && isRemoteCameraOn;
+  // Whether the peer is negotiated to send video. Recomputed on
+  // remoteStreamVersion because the peer connection mutates one MediaStream in
+  // place, so the object identity never changes when a track is added.
+  const remoteHasVideo = useMemo(
+    () => !!remoteStream && (remoteStream as any).getVideoTracks?.().length > 0,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [remoteStream, remoteStreamVersion],
+  );
+  // The remote RTCView stays mounted for as long as there's a video track —
+  // it must not be unmounted when the peer's camera goes off. Tearing down and
+  // re-adding the native surface mid-call is what left the remote view blank;
+  // the avatar is drawn over the top instead (see showRemoteAvatar).
+  const showRemoteAvatar = !remoteHasVideo || !isRemoteCameraOn;
   // Show local PiP only when our camera is on and we're actually sending video
   const localHasVideo =
     !!localStream && (localStream as any).getVideoTracks?.().length > 0;
@@ -242,16 +250,28 @@ const CallScreen = () => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Background */}
-      {showRemoteVideo ? (
-        // Remote video as full-screen background
+      {remoteHasVideo ? (
+        // Remote video as full-screen background. Keyed on the stream version
+        // so the native surface re-attaches if the track set changes (e.g. an
+        // audio call being upgraded to video mid-call).
         <RTCView
+          key={`remote-${remoteStreamVersion}`}
           streamURL={(remoteStream as any).toURL()}
           style={StyleSheet.absoluteFill}
           objectFit="cover"
           zOrder={0}
         />
       ) : (
-        // Audio call / camera off / waiting → gradient background
+        // Audio call / waiting → gradient background
+        <LinearGradient
+          colors={["#1a0a3e", "#0e0848", "#220c61"]}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+
+      {/* Peer's camera is off but their video track is still live — cover the
+          (frozen/black) remote surface rather than unmounting it. */}
+      {remoteHasVideo && !isRemoteCameraOn && (
         <LinearGradient
           colors={["#1a0a3e", "#0e0848", "#220c61"]}
           style={StyleSheet.absoluteFill}
@@ -259,7 +279,7 @@ const CallScreen = () => {
       )}
 
       {/* Dark overlay for readability when video is showing */}
-      {showRemoteVideo && <View style={styles.videoOverlay} />}
+      {!showRemoteAvatar && <View style={styles.videoOverlay} />}
 
       {/* Full-screen tap layer — tap anywhere to show/hide the controls.
           The top bar and bottom controls render after this, so they sit on
@@ -300,7 +320,7 @@ const CallScreen = () => {
       )}
 
       {/* Center — avatar (shown when no remote video / camera is off) */}
-      {!showRemoteVideo && (
+      {showRemoteAvatar && (
         <View style={styles.centerSection}>
           <View style={styles.avatarContainer}>
             <LinearGradient
