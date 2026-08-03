@@ -81,7 +81,7 @@ const ShowAvatar = ({
                   />
                 </View>
                 <View className="w-full flex-1 px-6 items-start justify-center bg-light-background-secondary dark:bg-dark-comunityCard-background">
-                  <Text className="text-xl text-light-text-primary dark:text-dark-text-primary">
+                  <Text className="text-xl font-medium  text-light-text-primary dark:text-dark-text-primary">
                     {name}
                   </Text>
                 </View>

@@ -70,12 +70,15 @@ const PersonCard = ({
               )}
             </View>
             {isTyping ? (
-              <Text className="text-gradientSecond font-semibold">
+              <Text
+                className="text-gradientSecond font-medium"
+                numberOfLines={1}
+              >
                 Typing...
               </Text>
             ) : (
               <Text
-                className={`overflow-ellipsis ${
+                className={`overflow-ellipsis text-base ${
                   unreadMessageCount && unreadMessageCount > 0
                     ? `text-light-text-secondaryDark dark:text-dark-text-secondaryDark ${
                         lastMessage.isDeleted ? "italic" : ""
@@ -89,16 +92,6 @@ const PersonCard = ({
                 {lastDisplayMessage}
               </Text>
             )}
-            {/* <Text
-              className={`overflow-ellipsis ${
-                unreadMessageCount && unreadMessageCount > 0
-                  ? "text-light-text-secondaryDark dark:text-dark-text-secondaryDark"
-                  : "text-light-text-secondaryLight dark:text-dark-text-secondaryLight"
-              }`}
-              numberOfLines={1}
-            >
-              {lastMessage.message}
-            </Text> */}
           </View>
           <View className="items-end gap-y-1">
             <Text

@@ -62,7 +62,7 @@ const CommunityCard = ({
             <View className="flex-1">
               <View className="flex-row items-center gap-x-1">
                 <Text
-                  className="font-semibold text-lg text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary overflow-ellipsis"
+                  className="font-medium text-lg text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary overflow-ellipsis"
                   numberOfLines={1}
                 >
                   {firstName}
@@ -134,12 +134,12 @@ const MessageBox = ({
 }) => {
   return (
     <View className="flex-row gap-x-1 items-center">
-      <Text className="text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary font-bold text-base">
+      <Text className="text-light-comunityCard-textPrimary dark:text-dark-comunityCard-textPrimary font-medium text-base">
         {messagedPersonName}
       </Text>
       <View className="flex-1">
         <Text
-          className="overflow-ellipsis text-light-comunityCard-textSecondary dark:text-light-comunityCard-textSecondary font-semibold text-base"
+          className="overflow-ellipsis text-light-comunityCard-textSecondary dark:text-light-comunityCard-textSecondary text-sm"
           numberOfLines={1}
         >
           {lastMessage}
