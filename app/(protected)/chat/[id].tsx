@@ -305,7 +305,7 @@ const Chat = () => {
                       )}
                     </View>
                     <View className="flex-1">
-                      <View className="flex-row items-center gap-x-1">
+                      <View className="flex-row items-center gap-x-1 p-0">
                         <Text
                           className="font-medium text-lg text-light-text-primary dark:text-dark-text-primary overflow-ellipsis max-w-[80%]"
                           numberOfLines={1}

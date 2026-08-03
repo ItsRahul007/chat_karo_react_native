@@ -42,7 +42,7 @@
       ],
       "package": "com.rahulghosh.chatkaro",
       "googleServicesFile": "./google-services.json",
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "output": "static",

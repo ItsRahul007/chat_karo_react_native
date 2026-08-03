@@ -68,7 +68,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const { socket } = useSocket();
   const iconColor = useIconColor();
   const router = useRouter();
+  // keyboardOffset drives the input bar's marginBottom and is the ONLY thing
+  // that lifts the bar, on both platforms. Android used to also pan the whole
+  // window (windowSoftInputMode="adjustPan"), which stacked on top of this and
+  // made the bar overshoot, then snap back on the first keystroke once the pan
+  // was recalculated. It is "adjustResize" now — a no-op under edge-to-edge —
+  // so the header stays put and the message list gives up the space instead.
   const keyboardOffset = useSharedValue(0);
+  const keyboardVisible = useSharedValue(0);
+  const keyboardVisibleRef = useRef(false);
 
   const [value, setValue] = useState("");
   const [selectedMedia, setSelectedMedia] = useState<
@@ -94,16 +102,22 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const inputContainerAnimStyle = useAnimatedStyle(() => ({
     marginBottom: keyboardOffset.value,
-    paddingBottom: keyboardOffset.value > 0 ? 4 : insets.bottom || 20,
+    // With the keyboard up the bottom inset is covered by the keyboard itself,
+    // so the safe-area padding would only add a gap.
+    paddingBottom: keyboardVisible.value ? 4 : insets.bottom || 20,
   }));
 
   useEffect(() => {
     // Reset to 0 on every mount — prevents stale keyboard height from a previous visit
     keyboardOffset.value = 0;
+    keyboardVisible.value = 0;
+    keyboardVisibleRef.current = false;
 
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       (e) => {
+        keyboardVisible.value = 1;
+        keyboardVisibleRef.current = true;
         keyboardOffset.value = withTiming(e.endCoordinates.height, {
           duration: 250,
         });
@@ -113,6 +127,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
     const hideSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
+        keyboardVisible.value = 0;
+        keyboardVisibleRef.current = false;
         keyboardOffset.value = withTiming(0, { duration: 250 });
       },
     );
@@ -134,7 +150,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       textRef.current = editingMessage.message || "";
     }
     if (editingMessage || replyingTo) {
-      if (keyboardOffset.value === 0) {
+      if (!keyboardVisibleRef.current) {
         textInputRef.current?.blur();
       }
       textInputRef.current?.focus();
